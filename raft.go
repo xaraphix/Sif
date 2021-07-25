@@ -36,10 +36,11 @@ type RaftNode struct {
 	// Peers         []Peer
 	// Log           []*pb.Log
 
-	ElectionTimeout     time.Duration
-	HeartbeatTimeout    time.Duration
-	LeaderHeartbeatRate time.Duration
-	LeaderLastHeartbeat time.Time
+	ElectionTimeout       time.Duration
+	HeartbeatTimeout      time.Duration
+	LeaderHeartbeatRate   time.Duration
+	LeaderLastHeartbeat   time.Time
+	LastELectionStartedAt time.Time
 }
 
 func CreateRaftNode() (*RaftNode, error) {

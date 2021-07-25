@@ -1,38 +1,56 @@
 package raft
 
 import (
-	"reflect"
-	"testing"
 	"time"
+
+	. "github.com/onsi/ginkgo"
+	. "github.com/onsi/gomega"
 )
 
-func TestNodeShouldBecomeAFollowerOnInitialize(t *testing.T) {
-	node, err := CreateRaftNode()
+var _ = Describe("Raft Node", func() {
 
-	if err != nil {
-		t.Error("Node could not be initialized")
-	}
+	Context("RaftNode initialization", func() {
+		When("The Raft node boots up", func() {
 
-	assertEqual(t, node.CurrentRole, FOLLOWER)
-}
+			It("Should check if it's booting up from a crash", func() {})
+			It("Should load up the logs", func() {})
+			It("Should check if it was a leader before crashing", func() {})
+			It("Should become a follower if it wasn't a leader on crash", func() {
 
-func TestNodeShouldBecomeCandidateOnLeaderHeartBeatTimeout(t *testing.T) {
+				node, _ := CreateRaftNode()
+				Expect(node.CurrentRole).To(Equal(FOLLOWER))
+			})
 
-	node, _ := CreateRaftNode()
-	assertEqual(t, node.CurrentRole, FOLLOWER)
+			It("Should start the leader heartbeat monitor", func() {
 
-	node.LeaderLastHeartbeat = time.Now()
+				node, _ := CreateRaftNode()
+				Expect(node.CurrentRole).To(Equal(FOLLOWER))
+			})
 
-	time.Sleep(node.HeartbeatTimeout)
+		})
+	})
 
-	assertEqual(t, node.CurrentRole, CANDIDATE)
+	Context("RaftNode Timeouts", func() {
+		When("Raft Node's Leader Heartbeat Monitor times out", func() {
+			It("Should become a candidate", func() {
 
-}
+				node, _ := CreateRaftNode()
+				Expect(node.CurrentRole).To(Equal(FOLLOWER))
+				node.LeaderLastHeartbeat = time.Now()
+				time.Sleep(node.HeartbeatTimeout)
+				Expect(node.CurrentRole).To(Equal(CANDIDATE))
+			})
 
-func assertEqual(t *testing.T, a interface{}, b interface{}) {
-	if a == b {
-		return
-	}
-	// debug.PrintStack()
-	t.Errorf("Received %v (type %v), expected %v (type %v)", a, reflect.TypeOf(a), b, reflect.TypeOf(b))
-}
+			It("Should Vote for itself", func() {})
+			It("Should Increment the current term", func() {})
+			It("Should Request votes from peers", func() {})
+		})
+
+		When("Raft Node's Election times out", func() {
+			It("Should Vote for itself", func() {})
+			It("Should Increment the current term", func() {})
+			It("Should Request votes from peers", func() {})
+		})
+
+	})
+})
