@@ -48,6 +48,7 @@ type Heart struct {
 type LeaderHeartbeatMonitor struct {
 	HeartbeatTimeout    time.Duration
 	LeaderLastHeartbeat time.Time
+	Stopped             bool
 }
 
 type ElectionMonitor struct {
@@ -55,45 +56,54 @@ type ElectionMonitor struct {
 	LastELectionStartedAt time.Time
 }
 
-func (monitor *LeaderHeartbeatMonitor) Start() {
+func (rn *RaftNode) StartLeaderHeartbeatMonitor() {
 
-	go func(lhm *LeaderHeartbeatMonitor) {
+	go func(r *RaftNode) {
 
 		for {
-			time.Sleep(monitor.HeartbeatTimeout)
 
-			if time.Since(lhm.LeaderLastHeartbeat) >= lhm.HeartbeatTimeout {
-				raftnode.Mu.Lock()
-				raftnode.CurrentRole = CANDIDATE
-				raftnode.Mu.Unlock()
+			if time.Since(r.LeaderHeartbeatMonitor.LeaderLastHeartbeat) >= r.LeaderHeartbeatMonitor.HeartbeatTimeout {
+				r.Mu.Lock()
+				r.CurrentRole = CANDIDATE
+				r.VotedFor = raftnode.Id
+				r.CurrentTerm = raftnode.CurrentTerm + 1
+				r.Mu.Unlock()
 			}
 
+			if r.LeaderHeartbeatMonitor.Stopped {
+				break
+			}
+
+			time.Sleep(r.LeaderHeartbeatMonitor.HeartbeatTimeout)
 		}
-	}(monitor)
+	}(rn)
 }
 
 func (em *ElectionMonitor) Start() {
 
 }
 
-func NewRaftNode() (*RaftNode, error) {
-
-	once.Do(func() {
-		Init()
-	})
-
-	return raftnode, nil
-}
-
-func Init() {
-	raftnode = &RaftNode{}
-	initializeRaftNode(raftnode)
-	raftnode.LeaderHeartbeatMonitor.Start()
+func NewRaftNode(returnExistingIfPresent bool) *RaftNode {
+	if returnExistingIfPresent {
+		once.Do(func() {
+			raftnode = &RaftNode{}
+			initializeRaftNode(raftnode)
+			raftnode.StartLeaderHeartbeatMonitor()
+		})
+		return raftnode
+	} else {
+		raftnode = &RaftNode{}
+		initializeRaftNode(raftnode)
+		raftnode.StartLeaderHeartbeatMonitor()
+		return raftnode
+	}
 }
 
 func initializeRaftNode(rn *RaftNode) {
 	rn.CurrentRole = FOLLOWER
+	rn.CurrentTerm = 0
 	rn.LeaderHeartbeatMonitor = &LeaderHeartbeatMonitor{
+		Stopped:             false,
 		LeaderLastHeartbeat: time.Time{},
 		HeartbeatTimeout:    time.Duration(rand.Intn(150)+150) * time.Millisecond,
 	}

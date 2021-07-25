@@ -16,12 +16,12 @@ var _ = Describe("Raft Node", func() {
 			It("Should load up the logs", func() {})
 			It("Should check if it was a leader before crashing", func() {})
 			It("Should become a follower if it wasn't a leader on crash", func() {
-				node, _ := NewRaftNode()
+				node := NewRaftNode(false)
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
 			})
 
 			It("Should start the leader heartbeat monitor", func() {
-				node, _ := NewRaftNode()
+				node := NewRaftNode(false)
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
 				time.Sleep(node.LeaderHeartbeatMonitor.HeartbeatTimeout)
 				Expect(node.CurrentRole).To(Equal(CANDIDATE))
@@ -32,18 +32,19 @@ var _ = Describe("Raft Node", func() {
 
 	Context("RaftNode Timeouts", func() {
 		When("Raft Node's Leader Heartbeat Monitor times out", func() {
-			It("Should become a candidate", func() {
-
-				Init()
-				node, _ := NewRaftNode()
-				Expect(node.CurrentRole).To(Equal(FOLLOWER))
+			It(`Should become a candidate
+								 Vote for iteself
+								 Increment the current term
+								 request votes from peers`, func() {
+				node := NewRaftNode(false)
 				node.LeaderHeartbeatMonitor.LeaderLastHeartbeat = time.Now()
+				term_0 := node.CurrentTerm
 				time.Sleep(node.LeaderHeartbeatMonitor.HeartbeatTimeout)
-				Expect(node.CurrentRole).To(Equal(CANDIDATE))
-			})
 
-			It("Should Vote for itself", func() {})
-			It("Should Increment the current term", func() {})
+				Expect(node.CurrentRole).To(Equal(CANDIDATE))
+				Expect(node.VotedFor).To(Equal(raftnode.Id))
+				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
+			})
 			It("Should Request votes from peers", func() {})
 		})
 
