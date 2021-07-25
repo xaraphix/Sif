@@ -16,15 +16,15 @@ var _ = Describe("Raft Node", func() {
 			It("Should load up the logs", func() {})
 			It("Should check if it was a leader before crashing", func() {})
 			It("Should become a follower if it wasn't a leader on crash", func() {
-
-				node, _ := CreateRaftNode()
+				node, _ := NewRaftNode()
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
 			})
 
 			It("Should start the leader heartbeat monitor", func() {
-
-				node, _ := CreateRaftNode()
+				node, _ := NewRaftNode()
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
+				time.Sleep(node.LeaderHeartbeatMonitor.HeartbeatTimeout)
+				Expect(node.CurrentRole).To(Equal(CANDIDATE))
 			})
 
 		})
@@ -34,10 +34,11 @@ var _ = Describe("Raft Node", func() {
 		When("Raft Node's Leader Heartbeat Monitor times out", func() {
 			It("Should become a candidate", func() {
 
-				node, _ := CreateRaftNode()
+				Init()
+				node, _ := NewRaftNode()
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
-				node.LeaderLastHeartbeat = time.Now()
-				time.Sleep(node.HeartbeatTimeout)
+				node.LeaderHeartbeatMonitor.LeaderLastHeartbeat = time.Now()
+				time.Sleep(node.LeaderHeartbeatMonitor.HeartbeatTimeout)
 				Expect(node.CurrentRole).To(Equal(CANDIDATE))
 			})
 

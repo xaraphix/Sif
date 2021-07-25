@@ -36,37 +36,69 @@ type RaftNode struct {
 	// Peers         []Peer
 	// Log           []*pb.Log
 
+	LeaderHeartbeatMonitor *LeaderHeartbeatMonitor
+	ElectionMonitor        *ElectionMonitor
+	Heart                  *Heart
+}
+
+type Heart struct {
+	DurationBetweenBeats time.Duration
+}
+
+type LeaderHeartbeatMonitor struct {
+	HeartbeatTimeout    time.Duration
+	LeaderLastHeartbeat time.Time
+}
+
+type ElectionMonitor struct {
 	ElectionTimeout       time.Duration
-	HeartbeatTimeout      time.Duration
-	LeaderHeartbeatRate   time.Duration
-	LeaderLastHeartbeat   time.Time
 	LastELectionStartedAt time.Time
 }
 
-func CreateRaftNode() (*RaftNode, error) {
+func (monitor *LeaderHeartbeatMonitor) Start() {
+
+	go func(lhm *LeaderHeartbeatMonitor) {
+
+		for {
+			time.Sleep(monitor.HeartbeatTimeout)
+
+			if time.Since(lhm.LeaderLastHeartbeat) >= lhm.HeartbeatTimeout {
+				raftnode.Mu.Lock()
+				raftnode.CurrentRole = CANDIDATE
+				raftnode.Mu.Unlock()
+			}
+
+		}
+	}(monitor)
+}
+
+func (em *ElectionMonitor) Start() {
+
+}
+
+func NewRaftNode() (*RaftNode, error) {
+
 	once.Do(func() {
-		raftnode = &RaftNode{}
-		initializeRaftNode(raftnode)
-		startLeaderHeartbeatMonitor(raftnode)
+		Init()
 	})
 
 	return raftnode, nil
 }
 
-func initializeRaftNode(rn *RaftNode) {
-	rn.CurrentRole = FOLLOWER
-	rn.LeaderLastHeartbeat = time.Now()
-	rn.HeartbeatTimeout = time.Duration(rand.Intn(150)+150) * time.Millisecond
+func Init() {
+	raftnode = &RaftNode{}
+	initializeRaftNode(raftnode)
+	raftnode.LeaderHeartbeatMonitor.Start()
 }
 
-func startLeaderHeartbeatMonitor(rn *RaftNode) {
-	go func(n *RaftNode) {
-		for {
-			if time.Since(n.LeaderLastHeartbeat) >= n.HeartbeatTimeout {
-				n.CurrentRole = CANDIDATE
-			}
-
-			time.Sleep(rn.HeartbeatTimeout)
-		}
-	}(rn)
+func initializeRaftNode(rn *RaftNode) {
+	rn.CurrentRole = FOLLOWER
+	rn.LeaderHeartbeatMonitor = &LeaderHeartbeatMonitor{
+		LeaderLastHeartbeat: time.Time{},
+		HeartbeatTimeout:    time.Duration(rand.Intn(150)+150) * time.Millisecond,
+	}
+	rn.ElectionMonitor = &ElectionMonitor{
+		ElectionTimeout:       time.Duration(rand.Intn(150)+150) * time.Millisecond,
+		LastELectionStartedAt: time.Time{},
+	}
 }
