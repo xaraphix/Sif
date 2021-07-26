@@ -90,11 +90,21 @@ var _ = Describe("Raft Node", func() {
 
 	Describe("Raft Node Election", func() {
 		When("Raft Node Initiates an election", func() {
-			It("Should make concurrent RPC calls to all its peers", func() {})
-			It("If Majority Votes Against it within the election time duration, it should become a follower", func() {})
-			It("If Majority Votes In Favor within the election time duration, it should become a leader", func() {})
-			It("On becoming a leader it should send heartbeats to all its peers", func() {})
-			It("Should restart election if it cannot make a decision within the election time duration", func() {})
+			It("Should make concurrent RPC calls to all its peers", func() {
+				Fail("")
+			})
+			It("If Majority Votes Against it within the election time duration, it should become a follower", func() {
+				Fail("")
+			})
+			It("If Majority Votes In Favor within the election time duration, it should become a leader", func() {
+				Fail("")
+			})
+			It("On becoming a leader it should send heartbeats to all its peers", func() {
+				Fail("")
+			})
+			It("Should restart election if it cannot make a decision within the election time duration", func() {
+				Fail("")
+			})
 		})
 	})
 })
