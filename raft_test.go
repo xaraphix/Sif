@@ -23,7 +23,7 @@ var _ = Describe("Raft Node", func() {
 			It("Should start the leader heartbeat monitor", func() {
 				node := NewRaftNode(false)
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
-				time.Sleep(node.LeaderHeartbeatMonitor.HeartbeatTimeout)
+				time.Sleep(node.LeaderHeartbeatMonitor.TimeoutDuration)
 				Expect(node.CurrentRole).To(Equal(CANDIDATE))
 			})
 
@@ -33,25 +33,56 @@ var _ = Describe("Raft Node", func() {
 	Context("RaftNode Timeouts", func() {
 		When("Raft Node's Leader Heartbeat Monitor times out", func() {
 			It(`Should become a candidate
-								 Vote for iteself
-								 Increment the current term
-								 request votes from peers`, func() {
+			  Vote for iteself
+			  Increment the current term
+			  request votes from peers`, func() {
 				node := NewRaftNode(false)
-				node.LeaderHeartbeatMonitor.LeaderLastHeartbeat = time.Now()
 				term_0 := node.CurrentTerm
-				time.Sleep(node.LeaderHeartbeatMonitor.HeartbeatTimeout)
+				node.LeaderHeartbeatMonitor.LastResetAt = time.Now()
+				for {
+					if node.CurrentTerm == term_0+1 {
+						break
+					}
+				}
 
+				node.LeaderHeartbeatMonitor.StopMonitor()
 				Expect(node.CurrentRole).To(Equal(CANDIDATE))
 				Expect(node.VotedFor).To(Equal(raftnode.Id))
 				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
+				time.Sleep(node.LeaderHeartbeatMonitor.TimeoutDuration * 2)
+				Expect(node.CurrentRole).To(Equal(CANDIDATE))
+				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
+
 			})
 			It("Should Request votes from peers", func() {})
 		})
 
 		When("Raft Node's Election times out", func() {
-			It("Should Vote for itself", func() {})
-			It("Should Increment the current term", func() {})
-			It("Should Request votes from peers", func() {})
+			It(`Should Vote for itself
+								 Increment the current term
+			           Request votes from peers`, func() {
+
+				node := NewRaftNode(false)
+				node.LeaderHeartbeatMonitor.Stopped = true
+				term_0 := node.CurrentTerm
+				node.StartElectionMonitor()
+
+				//leader heartbeat monitor + election monitor increases term by 2
+				// more refined unit test would be stop leader heartbeat monitor when raftNode is created
+				for {
+					if node.CurrentTerm == term_0+2 {
+						break
+					}
+				}
+
+				node.ElectionMonitor.StopMonitor()
+				Expect(node.CurrentRole).To(Equal(CANDIDATE))
+				Expect(node.VotedFor).To(Equal(raftnode.Id))
+				Expect(node.CurrentTerm).To(Equal(term_0 + 2))
+				time.Sleep(node.ElectionMonitor.TimeoutDuration * 2)
+				Expect(node.CurrentRole).To(Equal(CANDIDATE))
+				Expect(node.CurrentTerm).To(Equal(term_0 + 2))
+			})
 		})
 
 	})
