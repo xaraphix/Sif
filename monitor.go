@@ -27,7 +27,8 @@ func turnOnElectionMonitor(rn *RaftNode) {
 	go func(r *RaftNode) {
 		for {
 			if time.Since(r.ElectionMonitor.LastResetAt) >= r.ElectionMonitor.TimeoutDuration &&
-				rn.ElectionMonitor.Stopped == false {
+				rn.ElectionMonitor.Stopped == false &&
+				rn.ElectionInProgress == false {
 				rn.StartElection()
 			}
 

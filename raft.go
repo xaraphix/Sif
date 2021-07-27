@@ -4,8 +4,6 @@ import (
 	"math/rand"
 	"sync"
 	"time"
-
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -14,8 +12,9 @@ const (
 )
 
 var (
-	once     sync.Once
-	raftnode *RaftNode
+	once        sync.Once
+	raftnode    *RaftNode
+	raftAdapter *RaftAdapter
 )
 
 type Node struct {
@@ -35,13 +34,12 @@ type Node struct {
 	NextIndex     int32
 	MatchIndex    int32
 	PrevLogIndex  int32
-	// Peers         []Peer
-	// Log           []*pb.Log
-
+	Peers         []Peer
 }
 
 type RaftNode struct {
 	Node
+	ElectionInProgress     bool
 	LeaderHeartbeatMonitor *LeaderHeartbeatMonitor
 	ElectionMonitor        *ElectionMonitor
 	Heart                  *Heart
@@ -51,76 +49,41 @@ type Heart struct {
 	DurationBetweenBeats time.Duration
 }
 
-type LeaderHeartbeatMonitor struct {
-	Monitor
-}
-
-type ElectionMonitor struct {
-	Monitor
-}
-
-type Monitor struct {
-	TimeoutDuration time.Duration
-	LastResetAt     time.Time
-	Stopped         bool
-}
-
-func (m *Monitor) StopMonitor() {
-	m.Stopped = true
-}
-
 func (rn *RaftNode) StartLeaderHeartbeatMonitor() {
-
-	rn.LeaderHeartbeatMonitor.Stopped = false
-	rn.LeaderHeartbeatMonitor.LastResetAt = time.Now()
-
-	go func(r *RaftNode) {
-		for {
-			if time.Since(r.LeaderHeartbeatMonitor.LastResetAt) >= r.LeaderHeartbeatMonitor.TimeoutDuration &&
-				rn.LeaderHeartbeatMonitor.Stopped == false {
-				rn.StartElection()
-			}
-
-			if r.LeaderHeartbeatMonitor.Stopped {
-				break
-			}
-
-			time.Sleep(r.LeaderHeartbeatMonitor.TimeoutDuration)
-		}
-	}(rn)
+	turnOnLeaderHeartbeatMonitor(rn)
 }
 
 func (rn *RaftNode) StartElectionMonitor() {
-
-	rn.ElectionMonitor.Stopped = false
-	rn.ElectionMonitor.LastResetAt = time.Now()
-	go func(r *RaftNode) {
-		for {
-			if time.Since(r.ElectionMonitor.LastResetAt) >= r.ElectionMonitor.TimeoutDuration &&
-				rn.ElectionMonitor.Stopped == false {
-				rn.StartElection()
-			}
-
-			if r.ElectionMonitor.Stopped {
-				break
-			}
-
-			time.Sleep(r.ElectionMonitor.TimeoutDuration)
-		}
-	}(rn)
+	turnOnElectionMonitor(rn)
 }
 
 func (rn *RaftNode) StartElection() {
-	rn.Mu.Lock()
-	rn.CurrentRole = CANDIDATE
-	rn.VotedFor = raftnode.Id
-	logrus.WithFields(logrus.Fields{
-		"currentTerm":    rn.CurrentTerm,
-		"newCurrentTerm": rn.CurrentTerm + 1,
-	}).Info("Incrementing CurrentTerm")
-	rn.CurrentTerm = raftnode.CurrentTerm + 1
-	rn.StartElectionMonitor()
-	rn.Mu.Unlock()
+	startElection(rn)
+}
+
+func (rn *RaftNode) RequestVotes() {
+	voteResponseChannel := make(chan VoteResponse, len(rn.Peers))
+	requestVotesFromPeers(rn, voteResponseChannel)
+	counter := 1
+
+	for response := range voteResponseChannel {
+		rn.UpdateVotesRecieved(response)
+		if counter == len(rn.Peers) {
+			break
+		}
+		counter = counter + 1
+	}
+
+	close(voteResponseChannel)
+
+}
+
+func (rn *RaftNode) GenerateVoteRequest() VoteRequest {
+	return VoteRequest{}
+}
+
+func (rn *RaftNode) UpdateVotesRecieved(voteResponse VoteResponse) {
+	//TODO
 }
 
 func NewRaftNode(returnExistingIfPresent bool) *RaftNode {
@@ -142,6 +105,8 @@ func NewRaftNode(returnExistingIfPresent bool) *RaftNode {
 func initializeRaftNode(rn *RaftNode) {
 	rn.CurrentRole = FOLLOWER
 	rn.CurrentTerm = 0
+	rn.Peers = []Peer{{Id: 2, Address: ""}, {Id: 3, Address: ""}}
+	rn.ElectionInProgress = false
 	rn.LeaderHeartbeatMonitor = &LeaderHeartbeatMonitor{
 		Monitor: Monitor{
 			Stopped:         false,

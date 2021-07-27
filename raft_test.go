@@ -69,7 +69,7 @@ var _ = Describe("Raft Node", func() {
 				Expect(node.CurrentRole).To(Equal(CANDIDATE))
 			})
 
-			It("Should Vote for iteself", func() {
+			It("Should Vote for itself", func() {
 				Expect(node.VotedFor).To(Equal(raftnode.Id))
 			})
 
@@ -78,7 +78,7 @@ var _ = Describe("Raft Node", func() {
 			})
 
 			It("Should Request votes from peers", func() {
-				Fail("")
+
 			})
 		})
 
@@ -90,7 +90,7 @@ var _ = Describe("Raft Node", func() {
 
 			BeforeEach(func() {
 				node = NewRaftNode(false)
-				term_0 := node.CurrentTerm
+				term_0 = node.CurrentTerm
 
 				for {
 					if node.CurrentTerm == term_0+2 {
@@ -137,6 +137,12 @@ var _ = Describe("Raft Node", func() {
 				Fail("")
 			})
 			It("Should restart election if it cannot make a decision within the election time duration", func() {
+				Fail("")
+			})
+			It("Should become a follower if it discovers a legitimate leader through vote responses", func() {
+				Fail("")
+			})
+			It("Should become a follower if it discovers a legitimate leader through leader heartbeats", func() {
 				Fail("")
 			})
 		})

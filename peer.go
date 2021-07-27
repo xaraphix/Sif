@@ -5,15 +5,12 @@ type Peer struct {
 	Address string
 }
 
-func (p *Peer) RequestVote(peerOf *RaftNode, voteRequest VoteRequest) {
-	voteResponse := raftAdapter.RequestVoteFromPeer(p, voteRequest)
-	peerOf.UpdateVotesRecieved(voteResponse)
-}
-
-func requestVotesFromPeers(rn *RaftNode) {
+func requestVotesFromPeers(rn *RaftNode, voteReponseChannel chan VoteResponse) {
 	voteRequest := rn.GenerateVoteRequest()
-	for _, peer := range rn.Peers {
-		go peer.RequestVote(rn, voteRequest)
-	}
 
+	for _, peer := range rn.Peers {
+		go func(p *Peer, vrc chan VoteResponse) {
+			vrc <- raftAdapter.RequestVoteFromPeer(p, voteRequest)
+		}(&peer, voteReponseChannel)
+	}
 }

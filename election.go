@@ -14,9 +14,10 @@ func startElection(rn *RaftNode) {
 	rn.CurrentRole = CANDIDATE
 	rn.VotedFor = raftnode.Id
 	rn.CurrentTerm = raftnode.CurrentTerm + 1
+	rn.VotesReceived = nil
 	rn.StartElectionMonitor()
-
 	rn.RequestVotes()
+	rn.ElectionInProgress = false
 	rn.Mu.Unlock()
 
 }
