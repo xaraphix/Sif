@@ -12,17 +12,34 @@ var _ = Describe("Raft Node", func() {
 	Context("RaftNode initialization", func() {
 		When("The Raft node boots up", func() {
 
-			It("Should check if it's booting up from a crash", func() {})
-			It("Should load up the logs", func() {})
-			It("Should check if it was a leader before crashing", func() {})
+			var node *RaftNode
+			BeforeEach(func() {
+				node = NewRaftNode(false)
+			})
+
+			It("Should check if it's booting up from a crash", func() {
+				Fail("")
+			})
+
+			It("Should load up the logs", func() {
+				Fail("")
+			})
+
+			It("Should check if it was a leader before crashing", func() {
+				Fail("")
+			})
+
 			It("Should become a follower if it wasn't a leader on crash", func() {
-				node := NewRaftNode(false)
+				Fail("")
+			})
+
+			It("Should become a follower if it is not booting up from a crash", func() {
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
 			})
 
 			It("Should start the leader heartbeat monitor", func() {
-				node := NewRaftNode(false)
 				Expect(node.CurrentRole).To(Equal(FOLLOWER))
+				Expect(node.ElectionMonitor.Stopped).To(Equal(true))
 				time.Sleep(node.LeaderHeartbeatMonitor.TimeoutDuration)
 				Expect(node.CurrentRole).To(Equal(CANDIDATE))
 			})
@@ -32,57 +49,74 @@ var _ = Describe("Raft Node", func() {
 
 	Context("RaftNode Timeouts", func() {
 		When("Raft Node's Leader Heartbeat Monitor times out", func() {
-			It(`Should become a candidate
-			  Vote for iteself
-			  Increment the current term
-			  request votes from peers`, func() {
-				node := NewRaftNode(false)
-				term_0 := node.CurrentTerm
-				node.LeaderHeartbeatMonitor.LastResetAt = time.Now()
+			var (
+				node   *RaftNode
+				term_0 int32
+			)
+
+			BeforeEach(func() {
+				node = NewRaftNode(false)
+				term_0 = node.CurrentTerm
 
 				for {
 					if node.CurrentTerm == term_0+1 {
 						break
 					}
 				}
-
-				node.LeaderHeartbeatMonitor.StopMonitor()
-				Expect(node.CurrentRole).To(Equal(CANDIDATE))
-				Expect(node.VotedFor).To(Equal(raftnode.Id))
-				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
-				time.Sleep(node.LeaderHeartbeatMonitor.TimeoutDuration * 2)
-				Expect(node.CurrentRole).To(Equal(CANDIDATE))
-				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
-
 			})
-			It("Should Request votes from peers", func() {})
+
+			It("Should become a candidate", func() {
+				Expect(node.CurrentRole).To(Equal(CANDIDATE))
+			})
+
+			It("Should Vote for iteself", func() {
+				Expect(node.VotedFor).To(Equal(raftnode.Id))
+			})
+
+			It("Should Increment the current term", func() {
+				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
+			})
+
+			It("Should Request votes from peers", func() {
+				Fail("")
+			})
 		})
 
 		When("Raft Node's Election times out", func() {
-			It(`Should Vote for itself
-								 Increment the current term
-			           Request votes from peers`, func() {
+			var (
+				node   *RaftNode
+				term_0 int32
+			)
 
-				node := NewRaftNode(false)
-				node.LeaderHeartbeatMonitor.Stopped = true
+			BeforeEach(func() {
+				node = NewRaftNode(false)
 				term_0 := node.CurrentTerm
-				node.StartElectionMonitor()
 
-				//leader heartbeat monitor + election monitor increases term by 2
-				// more refined unit test would be stop leader heartbeat monitor when raftNode is created
 				for {
 					if node.CurrentTerm == term_0+2 {
 						break
 					}
 				}
-
 				node.ElectionMonitor.StopMonitor()
+
+			})
+
+			It("Should become a candidate", func() {
 				Expect(node.CurrentRole).To(Equal(CANDIDATE))
+			})
+
+			It("Should Vote for iteself", func() {
 				Expect(node.VotedFor).To(Equal(raftnode.Id))
+			})
+
+			It("Should Increment the current term", func() {
+				//leader heartbeat monitor + election monitor increases term by 2
+				// more refined unit test would be stop leader heartbeat monitor when raftNode is created
 				Expect(node.CurrentTerm).To(Equal(term_0 + 2))
-				time.Sleep(node.ElectionMonitor.TimeoutDuration * 2)
-				Expect(node.CurrentRole).To(Equal(CANDIDATE))
-				Expect(node.CurrentTerm).To(Equal(term_0 + 2))
+			})
+
+			It("Should Request votes from peers", func() {
+				Fail("")
 			})
 		})
 

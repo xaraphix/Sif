@@ -4,6 +4,8 @@ import (
 	"math/rand"
 	"sync"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -70,18 +72,20 @@ func (m *Monitor) StopMonitor() {
 func (rn *RaftNode) StartLeaderHeartbeatMonitor() {
 
 	rn.LeaderHeartbeatMonitor.Stopped = false
+	rn.LeaderHeartbeatMonitor.LastResetAt = time.Now()
+
 	go func(r *RaftNode) {
 		for {
-			if time.Since(r.LeaderHeartbeatMonitor.LastResetAt) >= r.LeaderHeartbeatMonitor.TimeoutDuration {
+			if time.Since(r.LeaderHeartbeatMonitor.LastResetAt) >= r.LeaderHeartbeatMonitor.TimeoutDuration &&
+				rn.LeaderHeartbeatMonitor.Stopped == false {
 				rn.StartElection()
 			}
-
-			time.Sleep(r.LeaderHeartbeatMonitor.TimeoutDuration)
 
 			if r.LeaderHeartbeatMonitor.Stopped {
 				break
 			}
 
+			time.Sleep(r.LeaderHeartbeatMonitor.TimeoutDuration)
 		}
 	}(rn)
 }
@@ -89,18 +93,19 @@ func (rn *RaftNode) StartLeaderHeartbeatMonitor() {
 func (rn *RaftNode) StartElectionMonitor() {
 
 	rn.ElectionMonitor.Stopped = false
+	rn.ElectionMonitor.LastResetAt = time.Now()
 	go func(r *RaftNode) {
 		for {
-			if time.Since(r.ElectionMonitor.LastResetAt) >= r.ElectionMonitor.TimeoutDuration {
+			if time.Since(r.ElectionMonitor.LastResetAt) >= r.ElectionMonitor.TimeoutDuration &&
+				rn.ElectionMonitor.Stopped == false {
 				rn.StartElection()
 			}
-
-			time.Sleep(r.ElectionMonitor.TimeoutDuration)
 
 			if r.ElectionMonitor.Stopped {
 				break
 			}
 
+			time.Sleep(r.ElectionMonitor.TimeoutDuration)
 		}
 	}(rn)
 }
@@ -109,7 +114,12 @@ func (rn *RaftNode) StartElection() {
 	rn.Mu.Lock()
 	rn.CurrentRole = CANDIDATE
 	rn.VotedFor = raftnode.Id
+	logrus.WithFields(logrus.Fields{
+		"currentTerm":    rn.CurrentTerm,
+		"newCurrentTerm": rn.CurrentTerm + 1,
+	}).Info("Incrementing CurrentTerm")
 	rn.CurrentTerm = raftnode.CurrentTerm + 1
+	rn.StartElectionMonitor()
 	rn.Mu.Unlock()
 }
 
@@ -141,7 +151,7 @@ func initializeRaftNode(rn *RaftNode) {
 	}
 	rn.ElectionMonitor = &ElectionMonitor{
 		Monitor: Monitor{
-			Stopped:         false,
+			Stopped:         true,
 			LastResetAt:     time.Time{},
 			TimeoutDuration: time.Duration(rand.Intn(150)+150) * time.Millisecond,
 		},
