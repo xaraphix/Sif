@@ -6,6 +6,7 @@ package mocks
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 	raft "github.com/xaraphix/Sif/internal/raft"
@@ -34,6 +35,32 @@ func (m *MockRaftMonitor) EXPECT() *MockRaftMonitorMockRecorder {
 	return m.recorder
 }
 
+// GetLastResetAt mocks base method.
+func (m *MockRaftMonitor) GetLastResetAt() time.Time {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLastResetAt")
+	ret0, _ := ret[0].(time.Time)
+	return ret0
+}
+
+// GetLastResetAt indicates an expected call of GetLastResetAt.
+func (mr *MockRaftMonitorMockRecorder) GetLastResetAt() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastResetAt", reflect.TypeOf((*MockRaftMonitor)(nil).GetLastResetAt))
+}
+
+// Sleep mocks base method.
+func (m *MockRaftMonitor) Sleep() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Sleep")
+}
+
+// Sleep indicates an expected call of Sleep.
+func (mr *MockRaftMonitorMockRecorder) Sleep() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Sleep", reflect.TypeOf((*MockRaftMonitor)(nil).Sleep))
+}
+
 // Start mocks base method.
 func (m *MockRaftMonitor) Start(arg0 *raft.RaftNode) {
 	m.ctrl.T.Helper()
@@ -47,13 +74,13 @@ func (mr *MockRaftMonitorMockRecorder) Start(arg0 interface{}) *gomock.Call {
 }
 
 // Stop mocks base method.
-func (m *MockRaftMonitor) Stop(arg0 *raft.RaftNode) {
+func (m *MockRaftMonitor) Stop() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Stop", arg0)
+	m.ctrl.Call(m, "Stop")
 }
 
 // Stop indicates an expected call of Stop.
-func (mr *MockRaftMonitorMockRecorder) Stop(arg0 interface{}) *gomock.Call {
+func (mr *MockRaftMonitorMockRecorder) Stop() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockRaftMonitor)(nil).Stop), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Stop", reflect.TypeOf((*MockRaftMonitor)(nil).Stop))
 }

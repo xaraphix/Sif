@@ -1,0 +1,10 @@
+version: v0.1
+name: sif-instance-1
+id: 1
+sifdir: /tmp/
+peers:
+  - id: 2
+    address: 'sif-instance-2:port'
+  - id: 3
+    address: 'sif-instance-3:port'
+

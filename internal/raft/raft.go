@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-func init() {
-	//TODO check for crashes here
-}
-
 const (
 	FOLLOWER  = "follower"
 	CANDIDATE = "candidate"
@@ -42,8 +38,10 @@ type Node struct {
 
 type RaftNode struct {
 	Node
+	ElectionInProgress bool
+
+	Config                 RaftConfig
 	ElectionManager        RaftElection
-	ElectionInProgress     bool
 	LeaderHeartbeatMonitor RaftMonitor
 	ElectionMonitor        RaftMonitor
 	RPCAdapter             RaftRPCAdapter
@@ -54,16 +52,28 @@ type Heart struct {
 	DurationBetweenBeats time.Duration
 }
 
-type Peer struct {
-	Id      int32
-	Address string
-}
-
 type Monitor struct {
 	TimeoutDuration time.Duration
 	LastResetAt     time.Time
 	Stopped         bool
 	Started         bool
+}
+
+type Peer struct {
+	id      int32  `yaml: "id"`
+	address string `yaml: "address"`
+}
+
+//go:generate mockgen -destination=mocks/mock_raftconfig.go -package=mocks . RaftConfig
+type RaftConfig interface {
+	LoadConfig()
+	YamlFile() ([]byte, error)
+	DidNodeCrash() bool
+	InstanceName() string
+	InstanceId() int32
+	Peers() []Peer
+	InstanceDirPath() string
+	Version() string
 }
 
 //go:generate mockgen -destination=mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
@@ -89,6 +99,7 @@ type RaftRPCAdapter interface {
 }
 
 func NewRaftNode(
+	rc RaftConfig,
 	re RaftElection,
 	lhm *LeaderHeartbeatMonitor,
 	em *ElectionMonitor,
@@ -96,6 +107,7 @@ func NewRaftNode(
 	forceNew bool,
 ) *RaftNode {
 	rn := &RaftNode{
+		Config:                 rc,
 		ElectionManager:        re,
 		LeaderHeartbeatMonitor: lhm,
 		ElectionMonitor:        em,
@@ -123,9 +135,9 @@ func DestructRaftNode(rn *RaftNode) {
 }
 
 func initializeRaftNode(rn *RaftNode) {
-	rn.CurrentRole = FOLLOWER
-	rn.CurrentTerm = 0
-	rn.Peers = []Peer{{Id: 2, Address: ""}, {Id: 3, Address: ""}}
+	rn.CurrentRole = getCurrentRole(rn)
+	rn.CurrentTerm = getCurrentTerm(rn)
+	rn.Peers = rn.Config.Peers()
 	rn.VotesReceived = nil
 	rn.ElectionInProgress = false
 }
@@ -148,4 +160,20 @@ type VoteRequest struct {
 type VoteResponse struct {
 	PeerId      int32
 	VoteGranted bool
+}
+
+func getCurrentRole(rn *RaftNode) string {
+	//TODO
+	// check if node crashed
+	// 			check if it was a leader
+
+	return FOLLOWER
+}
+
+func getCurrentTerm(rn *RaftNode) int32 {
+	//TODO
+	// check if node crashed
+	// 			check if it was a leader
+
+	return 0
 }
