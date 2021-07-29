@@ -24,7 +24,7 @@ type Node struct {
 	CurrentRole   string
 	CurrentLeader int32
 	VotedFor      int32
-	VotesReceived []int32
+	VotesReceived []VoteResponse
 	CommitIndex   int32
 	CommitLength  int32
 	AckedLength   map[int32]int32

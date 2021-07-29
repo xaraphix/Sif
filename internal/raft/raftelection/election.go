@@ -45,7 +45,7 @@ func concludeElection(rn *raft.RaftNode, voteResponseChannel chan raft.VoteRespo
 	counter := 1
 
 	for response := range voteResponseChannel {
-		updateVotesRecieved(rn, response)
+		concludeElectionIfPossible(rn, response)
 		if counter == len(rn.Peers) {
 			break
 		}
@@ -64,7 +64,25 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteReque
 	return raft.VoteRequest{}
 }
 
-func updateVotesRecieved(rn *raft.RaftNode, v raft.VoteResponse) {
-	rn.VotesReceived = append(rn.VotesReceived, v.PeerId)
+func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse) {
+	rn.VotesReceived = append(rn.VotesReceived, v)
 	//TODO
+	majorityCount := 1 + (len(rn.Peers) / 2)
+	votesInFavor := 0
+
+	for _, vr := range rn.VotesReceived {
+		if vr.VoteGranted {
+			votesInFavor = votesInFavor + 1
+		}
+	}
+
+	// if majority has voted against, game over
+	if len(rn.VotesReceived)-votesInFavor >= majorityCount {
+		rn.CurrentRole = raft.FOLLOWER
+	}
+
+	// if majority has voted in favor, game won
+	if votesInFavor >= majorityCount {
+		rn.CurrentRole = raft.LEADER
+	}
 }
