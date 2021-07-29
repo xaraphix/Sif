@@ -57,6 +57,7 @@ type ElectionMonitor struct {
 func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 
 	l.LastResetAt = time.Now()
+	l.Stopped = false
 	go func(r *RaftNode) {
 		for {
 			if time.Since(l.LastResetAt) >= l.TimeoutDuration &&
@@ -78,7 +79,7 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 func (e *ElectionMonitor) Start(rn *RaftNode) {
 
 	e.LastResetAt = time.Now()
-
+	e.Stopped = false
 	go func(r *RaftNode) {
 		for {
 			if time.Since(e.LastResetAt) >= e.TimeoutDuration &&
@@ -96,3 +97,35 @@ func (e *ElectionMonitor) Start(rn *RaftNode) {
 	}(rn)
 
 }
+
+//func (e *ElectionMonitor) Stop() {
+//	e.Stopped = true
+//}
+//
+//func (e *ElectionMonitor) GetLastResetAt() time.Time {
+//	return e.LastResetAt
+//}
+//
+//func (e *ElectionMonitor) Sleep() {
+//	time.Sleep(e.TimeoutDuration)
+//}
+//
+//func (e *ElectionMonitor) IsAutoStartOn() bool {
+//	return e.AutoStart
+//}
+//
+//func (l *LeaderHeartbeatMonitor) Stop() {
+//	l.Stopped = true
+//}
+//
+//func (l *LeaderHeartbeatMonitor) GetLastResetAt() time.Time {
+//	return l.LastResetAt
+//}
+//
+//func (l *LeaderHeartbeatMonitor) Sleep() {
+//	time.Sleep(l.TimeoutDuration)
+//}
+//
+//func (l *LeaderHeartbeatMonitor) IsAutoStartOn() bool {
+//	return l.AutoStart
+//}

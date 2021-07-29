@@ -57,6 +57,7 @@ type Monitor struct {
 	LastResetAt     time.Time
 	Stopped         bool
 	Started         bool
+	AutoStart       bool
 }
 
 type Peer struct {
@@ -78,6 +79,7 @@ type RaftConfig interface {
 //go:generate mockgen -destination=mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
 type RaftMonitor interface {
 	Start(*RaftNode)
+	IsAutoStartOn() bool
 	Stop()
 	Sleep()
 	GetLastResetAt() time.Time
@@ -116,7 +118,9 @@ func NewRaftNode(
 	if forceNew {
 		raftnode = rn
 		initializeRaftNode(raftnode)
-		raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+		if raftnode.LeaderHeartbeatMonitor.IsAutoStartOn() {
+			raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+		}
 		return raftnode
 	} else {
 
@@ -142,16 +146,20 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.ElectionInProgress = false
 }
 
-func (m Monitor) Stop() {
+func (m *Monitor) Stop() {
 	m.Stopped = true
 }
 
-func (m Monitor) GetLastResetAt() time.Time {
+func (m *Monitor) GetLastResetAt() time.Time {
 	return m.LastResetAt
 }
 
-func (m Monitor) Sleep() {
+func (m *Monitor) Sleep() {
 	time.Sleep(m.TimeoutDuration)
+}
+
+func (m *Monitor) IsAutoStartOn() bool {
+	return m.AutoStart
 }
 
 type VoteRequest struct {

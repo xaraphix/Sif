@@ -143,13 +143,13 @@ var _ = Describe("Raft Node", func() {
 
 			It("If Majority Votes Against it within the election time duration, it should become a follower", func() {
 				node, term_0 = setupMajorityVotesAgainst()
+				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
+				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
 				for {
 					if len(node.VotesReceived) == len(node.Peers) {
 						break
 					}
 				}
-				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
-				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
 				time.Sleep(100 * time.Millisecond)
 				Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 
@@ -219,6 +219,7 @@ func setupRaftNodeBootsUp() *raft.RaftNode {
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	node.LeaderHeartbeatMonitor.Start(node)
 
@@ -254,6 +255,8 @@ func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
+
 	node = nil
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	term_0 = node.CurrentTerm
@@ -297,6 +300,7 @@ func setupElectionTimerTimout() (*raft.RaftNode, int32) {
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
 	node = nil
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	term_0 = node.CurrentTerm
@@ -332,15 +336,24 @@ func setupMajorityVotesAgainst() (*raft.RaftNode, int32) {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: true,
-		PeerId:      22,
-	}).AnyTimes()
+
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).Times(1)
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
+	}).Times(1)
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
 	node = nil
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	term_0 = node.CurrentTerm
@@ -384,6 +397,7 @@ func setupMajorityVotesInFavor() (*raft.RaftNode, int32) {
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
 	node = nil
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	term_0 = node.CurrentTerm
@@ -427,6 +441,7 @@ func setupRestartElectionOnBeingIndecisive() (*raft.RaftNode, int32) {
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
 	node = nil
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	term_0 = node.CurrentTerm
@@ -470,6 +485,7 @@ func setupGettingLeaderHeartbeatDuringElection() (*raft.RaftNode, int32) {
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
 	node = nil
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	term_0 = node.CurrentTerm
@@ -513,6 +529,7 @@ func setupFindingOtherLeaderThroughVoteResponses() (*raft.RaftNode, int32) {
 
 	electionMonitor.Stop()
 	leaderHeartbeatMonitor.Stop()
+	leaderHeartbeatMonitor.AutoStart = false
 	node = nil
 	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, electionMonitor, rpcAdapter, true)
 	term_0 = node.CurrentTerm
