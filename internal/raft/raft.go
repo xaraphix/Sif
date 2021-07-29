@@ -12,6 +12,7 @@ func init() {
 const (
 	FOLLOWER  = "follower"
 	CANDIDATE = "candidate"
+	LEADER    = "leader"
 )
 
 var (
@@ -92,18 +93,33 @@ func NewRaftNode(
 	lhm *LeaderHeartbeatMonitor,
 	em *ElectionMonitor,
 	ra RaftRPCAdapter,
+	forceNew bool,
 ) *RaftNode {
-	if raftnode == nil {
-		raftnode = &RaftNode{
-			ElectionManager:        re,
-			LeaderHeartbeatMonitor: lhm,
-			ElectionMonitor:        em,
-			RPCAdapter:             ra,
-		}
+	rn := &RaftNode{
+		ElectionManager:        re,
+		LeaderHeartbeatMonitor: lhm,
+		ElectionMonitor:        em,
+		RPCAdapter:             ra,
+	}
+
+	if forceNew {
+		raftnode = rn
 		initializeRaftNode(raftnode)
 		raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+		return raftnode
+	} else {
+
+		if raftnode == nil {
+			raftnode = rn
+			initializeRaftNode(raftnode)
+			raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+		}
+		return raftnode
 	}
-	return raftnode
+}
+
+func DestructRaftNode(rn *RaftNode) {
+	rn = nil
 }
 
 func initializeRaftNode(rn *RaftNode) {

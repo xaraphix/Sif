@@ -5,8 +5,7 @@ import (
 )
 
 var (
-	ElctnMgr            raft.RaftElection = &ElectionManager{}
-	voteResponseChannel chan raft.VoteResponse
+	ElctnMgr raft.RaftElection = &ElectionManager{}
 )
 
 type ElectionManager struct {
@@ -25,8 +24,7 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	rn.Mu.Unlock()
 }
 
-func requestVoteFromPeer(rn *raft.RaftNode, vr raft.VoteRequest) {
-	voteResponseChannel = make(chan raft.VoteResponse)
+func requestVoteFromPeer(rn *raft.RaftNode, vr raft.VoteRequest, voteResponseChannel chan raft.VoteResponse) {
 	for _, peer := range rn.Peers {
 		go func(p raft.Peer, vrc chan raft.VoteResponse) {
 			vrc <- rn.RPCAdapter.RequestVoteFromPeer(p, vr)
@@ -36,13 +34,14 @@ func requestVoteFromPeer(rn *raft.RaftNode, vr raft.VoteRequest) {
 }
 func (em *ElectionManager) RequestVotes(rn *raft.RaftNode) {
 
+	voteResponseChannel := make(chan raft.VoteResponse)
 	voteRequest := em.GenerateVoteRequest(rn)
-	requestVoteFromPeer(rn, voteRequest)
-	concludeElection(rn)
+	requestVoteFromPeer(rn, voteRequest, voteResponseChannel)
+	concludeElection(rn, voteResponseChannel)
 
 }
 
-func concludeElection(rn *raft.RaftNode) {
+func concludeElection(rn *raft.RaftNode, voteResponseChannel chan raft.VoteResponse) {
 	counter := 1
 
 	for response := range voteResponseChannel {

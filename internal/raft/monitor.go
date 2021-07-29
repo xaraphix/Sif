@@ -5,19 +5,45 @@ import (
 	"time"
 )
 
-var LdrHrtbtMontr *LeaderHeartbeatMonitor = &LeaderHeartbeatMonitor{
-	Monitor: &Monitor{Stopped: false,
-		LastResetAt:     time.Time{},
-		TimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
-	},
+var (
+	electionMonitor        *ElectionMonitor
+	leaderHeartbeatMonitor *LeaderHeartbeatMonitor
+)
+
+func NewLeaderHeartbeatMonitor(forceNew bool) *LeaderHeartbeatMonitor {
+	lhm := &LeaderHeartbeatMonitor{
+		Monitor: &Monitor{
+			Stopped:         false,
+			LastResetAt:     time.Time{},
+			TimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
+		},
+	}
+	if forceNew {
+		return lhm
+	} else {
+		if leaderHeartbeatMonitor == nil {
+			leaderHeartbeatMonitor = lhm
+		}
+		return leaderHeartbeatMonitor
+	}
 }
 
-var ElctnMontr *ElectionMonitor = &ElectionMonitor{
-	Monitor: &Monitor{
-		Stopped:         true,
-		LastResetAt:     time.Time{},
-		TimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
-	},
+func NewElectionMonitor(forceNew bool) *ElectionMonitor {
+	em := &ElectionMonitor{
+		Monitor: &Monitor{
+			Stopped:         true,
+			LastResetAt:     time.Time{},
+			TimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
+		},
+	}
+	if forceNew {
+		return em
+	} else {
+		if electionMonitor == nil {
+			electionMonitor = em
+		}
+		return electionMonitor
+	}
 }
 
 type LeaderHeartbeatMonitor struct {
