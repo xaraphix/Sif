@@ -91,9 +91,11 @@ func (mr *MockRaftConfigMockRecorder) InstanceName() *gomock.Call {
 }
 
 // LoadConfig mocks base method.
-func (m *MockRaftConfig) LoadConfig() {
+func (m *MockRaftConfig) LoadConfig() raft.RaftConfig {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "LoadConfig")
+	ret := m.ctrl.Call(m, "LoadConfig")
+	ret0, _ := ret[0].(raft.RaftConfig)
+	return ret0
 }
 
 // LoadConfig indicates an expected call of LoadConfig.
@@ -128,19 +130,4 @@ func (m *MockRaftConfig) Version() string {
 func (mr *MockRaftConfigMockRecorder) Version() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Version", reflect.TypeOf((*MockRaftConfig)(nil).Version))
-}
-
-// YamlFile mocks base method.
-func (m *MockRaftConfig) YamlFile() ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "YamlFile")
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// YamlFile indicates an expected call of YamlFile.
-func (mr *MockRaftConfigMockRecorder) YamlFile() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "YamlFile", reflect.TypeOf((*MockRaftConfig)(nil).YamlFile))
 }

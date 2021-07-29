@@ -60,14 +60,13 @@ type Monitor struct {
 }
 
 type Peer struct {
-	id      int32  `yaml: "id"`
-	address string `yaml: "address"`
+	Id      int32  `yaml:"id"`
+	Address string `yaml:"address"`
 }
 
 //go:generate mockgen -destination=mocks/mock_raftconfig.go -package=mocks . RaftConfig
 type RaftConfig interface {
-	LoadConfig()
-	YamlFile() ([]byte, error)
+	LoadConfig() RaftConfig
 	DidNodeCrash() bool
 	InstanceName() string
 	InstanceId() int32
@@ -135,6 +134,7 @@ func DestructRaftNode(rn *RaftNode) {
 }
 
 func initializeRaftNode(rn *RaftNode) {
+	rn.Config = rn.Config.LoadConfig()
 	rn.CurrentRole = getCurrentRole(rn)
 	rn.CurrentTerm = getCurrentTerm(rn)
 	rn.Peers = rn.Config.Peers()

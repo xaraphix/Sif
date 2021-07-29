@@ -20,22 +20,20 @@ var (
 
 func NewConfig() Config {
 	RaftCfg = Config{}
-	RaftCfg.LoadConfig()
-
 	return RaftCfg
 }
 
 type Config struct {
-	RaftInstanceName    string      `yaml: "name"`
-	RaftInstanceId      int32       `yaml: "id"`
-	RaftPeers           []raft.Peer `yaml: peers`
-	RaftInstanceDirPath string      `yaml: "sifdir"`
-	RaftVersion         string      `yaml: "version"`
+	RaftInstanceName    string      `yaml:"name"`
+	RaftInstanceId      int32       `yaml:"id"`
+	RaftPeers           []raft.Peer `yaml:"peers"`
+	RaftInstanceDirPath string      `yaml:"sifdir"`
+	RaftVersion         string      `yaml:"version"`
 
 	BootedFromCrash bool
 }
 
-func (c Config) LoadConfig() {
+func (c Config) LoadConfig() raft.RaftConfig {
 
 	c = parseConfigFile()
 
@@ -45,9 +43,11 @@ func (c Config) LoadConfig() {
 	c.RaftInstanceName = getOrDefault(c.RaftInstanceName, getDefaultName()).(string)
 	c.RaftVersion = RaftVersion
 	c.BootedFromCrash = c.DidNodeCrash()
+
+	return c
 }
 
-func (c Config) YamlFile() ([]byte, error) {
+func (c Config) yamlFile() ([]byte, error) {
 	filename, _ := filepath.Abs("./sifconfig.yml")
 	yamlFile, err := ioutil.ReadFile(filename)
 	return yamlFile, err
@@ -60,7 +60,7 @@ func getDefaultName() string {
 func parseConfigFile() Config {
 	cfg := Config{}
 
-	yamlFile, err := cfg.YamlFile()
+	yamlFile, err := cfg.yamlFile()
 	if err != nil {
 		panic(err)
 	}
