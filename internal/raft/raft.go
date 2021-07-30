@@ -39,6 +39,7 @@ type Node struct {
 type RaftNode struct {
 	Node
 	ElectionInProgress bool
+	IsHeartBeating     bool
 
 	Config                 RaftConfig
 	ElectionManager        RaftElection
@@ -84,6 +85,7 @@ type RaftRPCAdapter interface {
 type RaftHeart interface {
 	StopBeating(*RaftNode)
 	StartBeating(*RaftNode)
+	IsBeating(*RaftNode) bool
 }
 
 type Heart struct {

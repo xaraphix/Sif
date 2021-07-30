@@ -106,7 +106,7 @@ var _ = Describe("Raft Node", func() {
 
 			node := &raft.RaftNode{}
 			term_0 := int32(0)
-
+			var sentHeartbeats *map[int]bool
 			AfterEach(func() {
 				raft.DestructRaftNode(node)
 			})
@@ -141,9 +141,23 @@ var _ = Describe("Raft Node", func() {
 				Succeed()
 			})
 
-			FIt("should send heartbeats to all its peers On becoming a leader ", func() {
-				node, term_0 = setupMajorityVotesInFavor()
-				Fail("")
+			It("should send heartbeats to all its peers On becoming a leader ", func() {
+				config := loadTestRaftConfig()
+				node, term_0, sentHeartbeats = setupLeaderSendsHeartbeatsOnElectionConclusion()
+
+				loopStartedAt := time.Now()
+				for {
+					if node.IsHeartBeating == true {
+						break
+					} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+						Fail("Took too much time to be successful")
+						break
+					}
+				}
+
+				node.LeaderHeartbeatMonitor.Sleep()
+				Expect((*sentHeartbeats)[int(config.Peers()[0].Id)]).To(Equal(true))
+				Expect((*sentHeartbeats)[int(config.Peers()[1].Id)]).To(Equal(true))
 			})
 
 			It("Should restart election if it cannot make a decision within the election time duration", func() {
@@ -168,7 +182,7 @@ var _ = Describe("Raft Node", func() {
 	})
 })
 
-func setupRaftNode(rpcAdapter *mocks.MockRaftRPCAdapter, heart *mocks.MockRaftHeart) (*raft.RaftNode, int32) {
+func setupRaftNode(rpcAdapter *mocks.MockRaftRPCAdapter, heart raft.RaftHeart) (*raft.RaftNode, int32) {
 
 	var (
 		mockCtrl *gomock.Controller
@@ -233,7 +247,7 @@ func setupRaftNodeBootsUp() *raft.RaftNode {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	heart.EXPECT().StartBeating().Return().AnyTimes()
+	heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	node, _ := setupRaftNode(rpcAdapter, heart)
 
 	return node
@@ -254,7 +268,7 @@ func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	heart.EXPECT().StartBeating().Return().AnyTimes()
+	heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	node, term_0 := setupRaftNode(rpcAdapter, heart)
 	for {
 		if node.ElectionInProgress == true {
@@ -281,7 +295,7 @@ func setupMajorityVotesAgainst() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	heart.EXPECT().StartBeating().Return().AnyTimes()
+	heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	return setupRaftNode(rpcAdapter, heart)
 
 }
@@ -301,9 +315,41 @@ func setupMajorityVotesInFavor() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	heart.EXPECT().StartBeating().Return().AnyTimes()
+	heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	return setupRaftNode(rpcAdapter, heart)
 
+}
+
+func setupLeaderSendsHeartbeatsOnElectionConclusion() (*raft.RaftNode, int32, *map[int]bool) {
+	sentHeartbeats := &map[int]bool{
+		2: false,
+		3: false,
+	}
+
+	rpcAdapter := getMockRPCAdapter()
+	heart := raftelection.LdrHrt
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: true,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().SendHeartbeatToPeer(config.Peers()[0]).Do(func(interface{}) {
+		(*sentHeartbeats)[int(config.Peers()[0].Id)] = true
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().SendHeartbeatToPeer(config.Peers()[1]).Do(func(interface{}) {
+		(*sentHeartbeats)[int(config.Peers()[1].Id)] = true
+	}).AnyTimes()
+
+	node, term_0 := setupRaftNode(rpcAdapter, heart)
+	return node, term_0, sentHeartbeats
 }
 
 func setupRestartElectionOnBeingIndecisive() (*raft.RaftNode, int32) {
@@ -327,7 +373,7 @@ func setupRestartElectionOnBeingIndecisive() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	heart.EXPECT().StartBeating().Return().AnyTimes()
+	heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	return setupRaftNode(rpcAdapter, heart)
 }
 
@@ -346,7 +392,7 @@ func setupGettingLeaderHeartbeatDuringElection() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	heart.EXPECT().StartBeating().Return().AnyTimes()
+	heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	return setupRaftNode(rpcAdapter, heart)
 
 }
@@ -366,7 +412,7 @@ func setupFindingOtherLeaderThroughVoteResponses() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	heart.EXPECT().StartBeating().Return().AnyTimes()
+	heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	return setupRaftNode(rpcAdapter, heart)
 
 }
