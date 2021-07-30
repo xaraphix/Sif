@@ -162,10 +162,43 @@ var _ = Describe("Raft Node", func() {
 
 			It("Should restart election if it cannot make a decision within the election time duration", func() {
 				node, term_0 = setupRestartElectionOnBeingIndecisive()
-				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
-				time.Sleep(100 * time.Millisecond)
-				Expect(node.CurrentRole).To(Equal(raft.LEADER))
+
+				loopStartedAt := time.Now()
+				for {
+					if node.CurrentRole == raft.CANDIDATE &&
+						node.CurrentTerm == term_0+1 {
+						break
+					} else if time.Since(loopStartedAt) > time.Millisecond*600 {
+						Fail("Took too much time to be successful")
+						break
+					}
+				}
+
+				loopStartedAt = time.Now()
+				for {
+					if node.ElectionInProgress == false {
+						break
+					} else if time.Since(loopStartedAt) > time.Millisecond*900 {
+						Fail("Took too much time to be successful")
+						break
+					}
+				}
+
+				loopStartedAt = time.Now()
+				for {
+					if node.ElectionInProgress == true &&
+						node.CurrentTerm == term_0+2 &&
+						node.CurrentRole == raft.CANDIDATE {
+						break
+					} else if time.Since(loopStartedAt) > time.Millisecond*2200 {
+						Fail("Took too much time to be successful")
+						break
+					}
+				}
+
+				Succeed()
 			})
+
 			It("Should become a follower if it discovers a legitimate leader through vote responses", func() {
 				node, term_0 = setupFindingOtherLeaderThroughVoteResponses()
 				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
@@ -357,16 +390,15 @@ func setupRestartElectionOnBeingIndecisive() (*raft.RaftNode, int32) {
 	rpcAdapter := getMockRPCAdapter()
 	heart := getMockHeart()
 
-	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).DoAndReturn(
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Do(
 		func(p raft.Peer, vr raft.VoteRequest) raft.VoteResponse {
-			// checks whatever
-
 			time.Sleep(time.Second)
-			return raft.VoteResponse{
-				VoteGranted: false,
-				PeerId:      config.Peers()[1].Id,
-			}
-		}).AnyTimes()
+			return raft.VoteResponse{}
+		}).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
+	},
+	).AnyTimes()
 
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 		VoteGranted: false,

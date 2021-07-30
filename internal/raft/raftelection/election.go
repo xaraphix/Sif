@@ -35,12 +35,17 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 
 	rn.Mu.Unlock()
 }
+
 func (em *ElectionManager) restartElectionWhenItTimesOut(rn *raft.RaftNode, electionChannel chan raft.ElectionUpdates) {
 	time.Sleep(em.ElectionTimeoutDuration)
 	if rn.ElectionInProgress == true {
 		//kill the Current Election
 		electionChannel <- raft.ElectionUpdates{ElectionOvertimed: true}
-		em.StartElection(rn)
+		rn.Mu.Unlock()
+		rn.ElectionInProgress = false
+		rn.CurrentRole = raft.FOLLOWER
+		rn.VotesReceived = nil
+		go em.StartElection(rn)
 	}
 	close(electionChannel)
 }
@@ -77,7 +82,9 @@ func concludeElection(rn *raft.RaftNode, voteResponseChannel chan raft.VoteRespo
 			}
 			counter = counter + 1
 		} else {
+			rn.Mu.Unlock()
 			rn.VotesReceived = nil
+			rn.Mu.Lock()
 		}
 	}
 
