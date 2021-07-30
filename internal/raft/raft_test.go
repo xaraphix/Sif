@@ -2,7 +2,9 @@ package raft_test
 
 import (
 	"io/ioutil"
+	"log"
 	"path/filepath"
+	"runtime"
 	"time"
 
 	"github.com/golang/mock/gomock"
@@ -49,8 +51,13 @@ var _ = Describe("Raft Node", func() {
 			})
 
 			It("Should start the leader heartbeat monitor", func() {
-				node.LeaderHeartbeatMonitor.Sleep()
-				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
+				for {
+					if node.ElectionInProgress == true {
+						break
+					}
+				}
+
+				Succeed()
 			})
 
 		})
@@ -87,8 +94,8 @@ var _ = Describe("Raft Node", func() {
 						break
 					}
 				}
-				Expect(node.VotesReceived[0]).To(Equal(int32(22)))
 
+				Succeed()
 			})
 		})
 
@@ -125,7 +132,8 @@ var _ = Describe("Raft Node", func() {
 						break
 					}
 				}
-				Expect(node.VotesReceived[0]).To(Equal(int32(22)))
+
+				Succeed()
 			})
 		})
 
@@ -158,6 +166,12 @@ var _ = Describe("Raft Node", func() {
 			It("If Majority Votes In Favor within the election time duration, it should become a leader", func() {
 				node, term_0 = setupMajorityVotesInFavor()
 				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
+				Expect(node.CurrentTerm).To(Equal(term_0 + 1))
+				for {
+					if len(node.VotesReceived) == len(node.Peers) {
+						break
+					}
+				}
 				time.Sleep(100 * time.Millisecond)
 				Expect(node.CurrentRole).To(Equal(raft.LEADER))
 			})
@@ -210,9 +224,16 @@ func setupRaftNodeBootsUp() *raft.RaftNode {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: true,
-		PeerId:      22,
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
@@ -246,9 +267,16 @@ func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: true,
-		PeerId:      22,
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
@@ -291,9 +319,16 @@ func setupElectionTimerTimout() (*raft.RaftNode, int32) {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: true,
-		PeerId:      22,
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
@@ -342,12 +377,12 @@ func setupMajorityVotesAgainst() (*raft.RaftNode, int32) {
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 		VoteGranted: false,
 		PeerId:      config.Peers()[0].Id,
-	}).Times(1)
+	}).AnyTimes()
 
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 		VoteGranted: false,
 		PeerId:      config.Peers()[1].Id,
-	}).Times(1)
+	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
 
@@ -369,6 +404,7 @@ func setupMajorityVotesAgainst() (*raft.RaftNode, int32) {
 
 }
 func setupMajorityVotesInFavor() (*raft.RaftNode, int32) {
+
 	var (
 		mockCtrl *gomock.Controller
 
@@ -388,9 +424,17 @@ func setupMajorityVotesInFavor() (*raft.RaftNode, int32) {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
+
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 		VoteGranted: true,
-		PeerId:      22,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
@@ -432,9 +476,16 @@ func setupRestartElectionOnBeingIndecisive() (*raft.RaftNode, int32) {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: true,
-		PeerId:      22,
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
@@ -476,9 +527,16 @@ func setupGettingLeaderHeartbeatDuringElection() (*raft.RaftNode, int32) {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: true,
-		PeerId:      22,
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
@@ -520,9 +578,17 @@ func setupFindingOtherLeaderThroughVoteResponses() (*raft.RaftNode, int32) {
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	rpcAdapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: true,
-		PeerId:      22,
+
+	config := loadTestRaftConfig()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
 	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
@@ -550,10 +616,15 @@ func getConfig() raftconfig.Config {
 }
 
 func loadTestRaftConfig() raft.RaftConfig {
-
+	_, testFile, _, _ := runtime.Caller(0)
 	config := raftconfig.NewConfig()
 	cfg := &config
-	filename, _ := filepath.Abs("./mocks/sifconfig_test.yaml")
+	dir, err1 := filepath.Abs(filepath.Dir(testFile))
+
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+	filename, _ := filepath.Abs(dir + "/mocks/sifconfig_test.yaml")
 	yamlFile, _ := ioutil.ReadFile(filename)
 
 	err := yaml.Unmarshal(yamlFile, cfg)

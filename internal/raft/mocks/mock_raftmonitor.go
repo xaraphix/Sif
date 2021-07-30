@@ -49,6 +49,20 @@ func (mr *MockRaftMonitorMockRecorder) GetLastResetAt() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastResetAt", reflect.TypeOf((*MockRaftMonitor)(nil).GetLastResetAt))
 }
 
+// IsAutoStartOn mocks base method.
+func (m *MockRaftMonitor) IsAutoStartOn() bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "IsAutoStartOn")
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// IsAutoStartOn indicates an expected call of IsAutoStartOn.
+func (mr *MockRaftMonitorMockRecorder) IsAutoStartOn() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAutoStartOn", reflect.TypeOf((*MockRaftMonitor)(nil).IsAutoStartOn))
+}
+
 // Sleep mocks base method.
 func (m *MockRaftMonitor) Sleep() {
 	m.ctrl.T.Helper()

@@ -67,7 +67,7 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteReque
 func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse) {
 	rn.VotesReceived = append(rn.VotesReceived, v)
 	//TODO
-	majorityCount := 1 + (len(rn.Peers) / 2)
+	majorityCount := len(rn.Peers) / 2
 	votesInFavor := 0
 
 	for _, vr := range rn.VotesReceived {
@@ -78,11 +78,15 @@ func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse) {
 
 	// if majority has voted against, game over
 	if len(rn.VotesReceived)-votesInFavor >= majorityCount {
+		rn.Mu.Unlock()
 		rn.CurrentRole = raft.FOLLOWER
+		rn.Mu.Lock()
 	}
 
 	// if majority has voted in favor, game won
 	if votesInFavor >= majorityCount {
+		rn.Mu.Unlock()
 		rn.CurrentRole = raft.LEADER
+		rn.Mu.Lock()
 	}
 }
