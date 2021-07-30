@@ -8,6 +8,7 @@ import (
 	reflect "reflect"
 
 	gomock "github.com/golang/mock/gomock"
+	raft "github.com/xaraphix/Sif/internal/raft"
 )
 
 // MockRaftHeart is a mock of RaftHeart interface.
@@ -34,25 +35,25 @@ func (m *MockRaftHeart) EXPECT() *MockRaftHeartMockRecorder {
 }
 
 // StartBeating mocks base method.
-func (m *MockRaftHeart) StartBeating() {
+func (m *MockRaftHeart) StartBeating(arg0 *raft.RaftNode) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "StartBeating")
+	m.ctrl.Call(m, "StartBeating", arg0)
 }
 
 // StartBeating indicates an expected call of StartBeating.
-func (mr *MockRaftHeartMockRecorder) StartBeating() *gomock.Call {
+func (mr *MockRaftHeartMockRecorder) StartBeating(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartBeating", reflect.TypeOf((*MockRaftHeart)(nil).StartBeating))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartBeating", reflect.TypeOf((*MockRaftHeart)(nil).StartBeating), arg0)
 }
 
 // StopBeating mocks base method.
-func (m *MockRaftHeart) StopBeating() {
+func (m *MockRaftHeart) StopBeating(arg0 *raft.RaftNode) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "StopBeating")
+	m.ctrl.Call(m, "StopBeating", arg0)
 }
 
 // StopBeating indicates an expected call of StopBeating.
-func (mr *MockRaftHeartMockRecorder) StopBeating() *gomock.Call {
+func (mr *MockRaftHeartMockRecorder) StopBeating(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopBeating", reflect.TypeOf((*MockRaftHeart)(nil).StopBeating))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopBeating", reflect.TypeOf((*MockRaftHeart)(nil).StopBeating), arg0)
 }

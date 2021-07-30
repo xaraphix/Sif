@@ -49,13 +49,13 @@ func (mr *MockRaftRPCAdapterMockRecorder) RequestVoteFromPeer(arg0, arg1 interfa
 }
 
 // SendHeartbeatToPeer mocks base method.
-func (m *MockRaftRPCAdapter) SendHeartbeatToPeer() {
+func (m *MockRaftRPCAdapter) SendHeartbeatToPeer(arg0 raft.Peer) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SendHeartbeatToPeer")
+	m.ctrl.Call(m, "SendHeartbeatToPeer", arg0)
 }
 
 // SendHeartbeatToPeer indicates an expected call of SendHeartbeatToPeer.
-func (mr *MockRaftRPCAdapterMockRecorder) SendHeartbeatToPeer() *gomock.Call {
+func (mr *MockRaftRPCAdapterMockRecorder) SendHeartbeatToPeer(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHeartbeatToPeer", reflect.TypeOf((*MockRaftRPCAdapter)(nil).SendHeartbeatToPeer))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHeartbeatToPeer", reflect.TypeOf((*MockRaftRPCAdapter)(nil).SendHeartbeatToPeer), arg0)
 }
