@@ -49,20 +49,6 @@ func (mr *MockRaftMonitorMockRecorder) GetLastResetAt() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastResetAt", reflect.TypeOf((*MockRaftMonitor)(nil).GetLastResetAt))
 }
 
-// IsAutoStartOn mocks base method.
-func (m *MockRaftMonitor) IsAutoStartOn() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsAutoStartOn")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsAutoStartOn indicates an expected call of IsAutoStartOn.
-func (mr *MockRaftMonitorMockRecorder) IsAutoStartOn() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsAutoStartOn", reflect.TypeOf((*MockRaftMonitor)(nil).IsAutoStartOn))
-}
-
 // Sleep mocks base method.
 func (m *MockRaftMonitor) Sleep() {
 	m.ctrl.T.Helper()
@@ -76,15 +62,15 @@ func (mr *MockRaftMonitorMockRecorder) Sleep() *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockRaftMonitor) Start(arg0 *raft.RaftNode) {
+func (m *MockRaftMonitor) Start(arg0 *raft.RaftNode, arg1 chan raft.ElectionUpdates) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Start", arg0)
+	m.ctrl.Call(m, "Start", arg0, arg1)
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockRaftMonitorMockRecorder) Start(arg0 interface{}) *gomock.Call {
+func (mr *MockRaftMonitorMockRecorder) Start(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockRaftMonitor)(nil).Start), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockRaftMonitor)(nil).Start), arg0, arg1)
 }
 
 // Stop mocks base method.

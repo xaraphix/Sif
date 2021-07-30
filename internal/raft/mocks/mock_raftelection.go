@@ -49,15 +49,15 @@ func (mr *MockRaftElectionMockRecorder) GenerateVoteRequest(arg0 interface{}) *g
 }
 
 // RequestVotes mocks base method.
-func (m *MockRaftElection) RequestVotes(arg0 *raft.RaftNode) {
+func (m *MockRaftElection) RequestVotes(arg0 *raft.RaftNode, arg1 chan raft.ElectionUpdates) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RequestVotes", arg0)
+	m.ctrl.Call(m, "RequestVotes", arg0, arg1)
 }
 
 // RequestVotes indicates an expected call of RequestVotes.
-func (mr *MockRaftElectionMockRecorder) RequestVotes(arg0 interface{}) *gomock.Call {
+func (mr *MockRaftElectionMockRecorder) RequestVotes(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestVotes", reflect.TypeOf((*MockRaftElection)(nil).RequestVotes), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestVotes", reflect.TypeOf((*MockRaftElection)(nil).RequestVotes), arg0, arg1)
 }
 
 // StartElection mocks base method.

@@ -44,27 +44,7 @@ type RaftNode struct {
 	ElectionManager        RaftElection
 	LeaderHeartbeatMonitor RaftMonitor
 	RPCAdapter             RaftRPCAdapter
-	Heart                  Heart
-}
-
-type Heart struct {
-	DurationBetweenBeats time.Duration
-}
-
-type Monitor struct {
-	TimeoutDuration time.Duration
-	LastResetAt     time.Time
-	Stopped         bool
-	Started         bool
-}
-
-type ElectionUpdates struct {
-	ElectionOvertimed bool
-}
-
-type Peer struct {
-	Id      int32  `yaml:"id"`
-	Address string `yaml:"address"`
+	Heart                  RaftHeart
 }
 
 //go:generate mockgen -destination=mocks/mock_raftconfig.go -package=mocks . RaftConfig
@@ -100,11 +80,38 @@ type RaftRPCAdapter interface {
 	SendHeartbeatToPeer()
 }
 
+//go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
+type RaftHeart interface {
+	StopBeating()
+	StartBeating()
+}
+
+type Heart struct {
+	DurationBetweenBeats time.Duration
+}
+
+type Monitor struct {
+	TimeoutDuration time.Duration
+	LastResetAt     time.Time
+	Stopped         bool
+	Started         bool
+}
+
+type ElectionUpdates struct {
+	ElectionOvertimed bool
+}
+
+type Peer struct {
+	Id      int32  `yaml:"id"`
+	Address string `yaml:"address"`
+}
+
 func NewRaftNode(
 	rc RaftConfig,
 	re RaftElection,
 	lhm *LeaderHeartbeatMonitor,
 	ra RaftRPCAdapter,
+	h RaftHeart,
 	forceNew bool,
 ) *RaftNode {
 	rn := &RaftNode{
@@ -112,6 +119,7 @@ func NewRaftNode(
 		ElectionManager:        re,
 		LeaderHeartbeatMonitor: lhm,
 		RPCAdapter:             ra,
+		Heart:                  h,
 	}
 
 	if forceNew {

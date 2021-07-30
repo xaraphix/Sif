@@ -37,7 +37,9 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 }
 
 func ifLeaderStartHeartbeatTransmitter(rn *raft.RaftNode) {
-
+	if rn.CurrentRole == raft.LEADER {
+		rn.Heart.StartBeating()
+	}
 }
 
 func (em *ElectionManager) restartElectionWhenItTimesOut(rn *raft.RaftNode, electionChannel chan raft.ElectionUpdates) {
