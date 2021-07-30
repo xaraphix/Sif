@@ -31,7 +31,13 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	rn.ElectionManager.RequestVotes(rn, electionChannel)
 	rn.ElectionInProgress = false
 
+	ifLeaderStartHeartbeatTransmitter(rn)
+
 	rn.Mu.Unlock()
+}
+
+func ifLeaderStartHeartbeatTransmitter(rn *raft.RaftNode) {
+
 }
 
 func (em *ElectionManager) restartElectionWhenItTimesOut(rn *raft.RaftNode, electionChannel chan raft.ElectionUpdates) {

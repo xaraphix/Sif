@@ -176,44 +176,8 @@ var _ = Describe("Raft Node", func() {
 	})
 })
 
-func setupRaftNodeBootsUp() *raft.RaftNode {
+func setupRaftNode(rpcAdapter *mocks.MockRaftRPCAdapter) (*raft.RaftNode, int32) {
 
-	var (
-		mockCtrl *gomock.Controller
-
-		node                   *raft.RaftNode
-		electionManager        raft.RaftElection
-		leaderHeartbeatMonitor *raft.LeaderHeartbeatMonitor
-		rpcAdapter             *mocks.MockRaftRPCAdapter
-		mockConfigFile         *mocks.MockRaftConfig
-	)
-
-	mockCtrl = gomock.NewController(GinkgoT())
-	electionManager = raftelection.ElctnMgr
-	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
-	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
-
-	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	config := loadTestRaftConfig()
-
-	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: false,
-		PeerId:      config.Peers()[0].Id,
-	}).AnyTimes()
-
-	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
-		VoteGranted: false,
-		PeerId:      config.Peers()[1].Id,
-	}).AnyTimes()
-
-	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
-
-	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
-
-	return node
-}
-
-func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 	var (
 		mockCtrl *gomock.Controller
 
@@ -221,7 +185,6 @@ func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 		term_0                 int32
 		electionManager        raft.RaftElection
 		leaderHeartbeatMonitor *raft.LeaderHeartbeatMonitor
-		rpcAdapter             *mocks.MockRaftRPCAdapter
 		mockConfigFile         *mocks.MockRaftConfig
 	)
 
@@ -230,9 +193,31 @@ func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
 	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
 
-	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-	config := loadTestRaftConfig()
+	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
 
+	node = nil
+	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
+	term_0 = node.CurrentTerm
+
+	return node, term_0
+
+}
+
+func getMockRPCAdapter() *mocks.MockRaftRPCAdapter {
+
+	var (
+		mockCtrl   *gomock.Controller
+		rpcAdapter *mocks.MockRaftRPCAdapter
+	)
+
+	mockCtrl = gomock.NewController(GinkgoT())
+	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
+	return rpcAdapter
+}
+
+func setupRaftNodeBootsUp() *raft.RaftNode {
+	config := loadTestRaftConfig()
+	rpcAdapter := getMockRPCAdapter()
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 		VoteGranted: false,
 		PeerId:      config.Peers()[0].Id,
@@ -243,11 +228,25 @@ func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
+	node, _ := setupRaftNode(rpcAdapter)
 
-	node = nil
-	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
-	term_0 = node.CurrentTerm
+	return node
+}
+
+func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
+	config := loadTestRaftConfig()
+	rpcAdapter := getMockRPCAdapter()
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[0].Id,
+	}).AnyTimes()
+
+	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		VoteGranted: false,
+		PeerId:      config.Peers()[1].Id,
+	}).AnyTimes()
+
+	node, term_0 := setupRaftNode(rpcAdapter)
 	for {
 		if node.ElectionInProgress == true {
 			node.LeaderHeartbeatMonitor.Stop()
@@ -257,25 +256,9 @@ func setupLeaderHeartbeatTimeout() (*raft.RaftNode, int32) {
 
 	return node, term_0
 }
+
 func setupMajorityVotesAgainst() (*raft.RaftNode, int32) {
-	var (
-		mockCtrl *gomock.Controller
-
-		node                   *raft.RaftNode
-		term_0                 int32
-		electionManager        raft.RaftElection
-		leaderHeartbeatMonitor *raft.LeaderHeartbeatMonitor
-		rpcAdapter             *mocks.MockRaftRPCAdapter
-		mockConfigFile         *mocks.MockRaftConfig
-	)
-
-	mockCtrl = gomock.NewController(GinkgoT())
-	electionManager = raftelection.ElctnMgr
-	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
-	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
-
-	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-
+	rpcAdapter := getMockRPCAdapter()
 	config := loadTestRaftConfig()
 
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
@@ -288,35 +271,12 @@ func setupMajorityVotesAgainst() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
-
-	node = nil
-	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
-	term_0 = node.CurrentTerm
-
-	return node, term_0
+	return setupRaftNode(rpcAdapter)
 
 }
+
 func setupMajorityVotesInFavor() (*raft.RaftNode, int32) {
-
-	var (
-		mockCtrl *gomock.Controller
-
-		node                   *raft.RaftNode
-		term_0                 int32
-		electionManager        raft.RaftElection
-		leaderHeartbeatMonitor *raft.LeaderHeartbeatMonitor
-		rpcAdapter             *mocks.MockRaftRPCAdapter
-		mockConfigFile         *mocks.MockRaftConfig
-	)
-
-	mockCtrl = gomock.NewController(GinkgoT())
-	electionManager = raftelection.ElctnMgr
-	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
-	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
-
-	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-
+	rpcAdapter := getMockRPCAdapter()
 	config := loadTestRaftConfig()
 
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
@@ -329,39 +289,19 @@ func setupMajorityVotesInFavor() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
-
-	node = nil
-	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
-	term_0 = node.CurrentTerm
-
-	return node, term_0
+	return setupRaftNode(rpcAdapter)
 
 }
+
 func setupRestartElectionOnBeingIndecisive() (*raft.RaftNode, int32) {
-	var (
-		mockCtrl *gomock.Controller
-
-		node                   *raft.RaftNode
-		term_0                 int32
-		electionManager        raft.RaftElection
-		leaderHeartbeatMonitor *raft.LeaderHeartbeatMonitor
-		rpcAdapter             *mocks.MockRaftRPCAdapter
-		mockConfigFile         *mocks.MockRaftConfig
-	)
-
-	mockCtrl = gomock.NewController(GinkgoT())
-	electionManager = raftelection.ElctnMgr
-	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
-	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
-
-	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
 	config := loadTestRaftConfig()
+	rpcAdapter := getMockRPCAdapter()
 
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).DoAndReturn(
 		func(p raft.Peer, vr raft.VoteRequest) raft.VoteResponse {
 			// checks whatever
 
+			time.Sleep(time.Second)
 			return raft.VoteResponse{
 				VoteGranted: false,
 				PeerId:      config.Peers()[1].Id,
@@ -373,32 +313,11 @@ func setupRestartElectionOnBeingIndecisive() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
-
-	node = nil
-	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
-	term_0 = node.CurrentTerm
-
-	return node, term_0
+	return setupRaftNode(rpcAdapter)
 }
+
 func setupGettingLeaderHeartbeatDuringElection() (*raft.RaftNode, int32) {
-	var (
-		mockCtrl *gomock.Controller
-
-		node                   *raft.RaftNode
-		term_0                 int32
-		electionManager        raft.RaftElection
-		leaderHeartbeatMonitor *raft.LeaderHeartbeatMonitor
-		rpcAdapter             *mocks.MockRaftRPCAdapter
-		mockConfigFile         *mocks.MockRaftConfig
-	)
-
-	mockCtrl = gomock.NewController(GinkgoT())
-	electionManager = raftelection.ElctnMgr
-	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
-	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
-
-	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
+	rpcAdapter := getMockRPCAdapter()
 	config := loadTestRaftConfig()
 
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
@@ -411,33 +330,12 @@ func setupGettingLeaderHeartbeatDuringElection() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
-
-	node = nil
-	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
-	term_0 = node.CurrentTerm
-	return node, term_0
+	return setupRaftNode(rpcAdapter)
 
 }
+
 func setupFindingOtherLeaderThroughVoteResponses() (*raft.RaftNode, int32) {
-	var (
-		mockCtrl *gomock.Controller
-
-		node                   *raft.RaftNode
-		term_0                 int32
-		electionManager        raft.RaftElection
-		leaderHeartbeatMonitor *raft.LeaderHeartbeatMonitor
-		rpcAdapter             *mocks.MockRaftRPCAdapter
-		mockConfigFile         *mocks.MockRaftConfig
-	)
-
-	mockCtrl = gomock.NewController(GinkgoT())
-	electionManager = raftelection.ElctnMgr
-	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
-	mockConfigFile = mocks.NewMockRaftConfig(mockCtrl)
-
-	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
-
+	rpcAdapter := getMockRPCAdapter()
 	config := loadTestRaftConfig()
 
 	rpcAdapter.EXPECT().RequestVoteFromPeer(config.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
@@ -450,13 +348,7 @@ func setupFindingOtherLeaderThroughVoteResponses() (*raft.RaftNode, int32) {
 		PeerId:      config.Peers()[1].Id,
 	}).AnyTimes()
 
-	mockConfigFile.EXPECT().LoadConfig().Return(loadTestRaftConfig()).AnyTimes()
-
-	node = nil
-	node = raft.NewRaftNode(mockConfigFile, electionManager, leaderHeartbeatMonitor, rpcAdapter, true)
-	term_0 = node.CurrentTerm
-
-	return node, term_0
+	return setupRaftNode(rpcAdapter)
 
 }
 
