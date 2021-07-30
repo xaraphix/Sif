@@ -1,27 +1,54 @@
 package raftelection
 
 import (
+	"math/rand"
+	"time"
+
 	"github.com/xaraphix/Sif/internal/raft"
 )
 
 var (
-	ElctnMgr raft.RaftElection = &ElectionManager{}
+	ElctnMgr raft.RaftElection = &ElectionManager{
+		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
+	}
 )
 
 type ElectionManager struct {
+	ElectionTimeoutDuration time.Duration
 }
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
+	electionChannel := make(chan raft.ElectionUpdates)
+
 	rn.Mu.Lock()
 	rn.ElectionInProgress = true
 	rn.CurrentRole = raft.CANDIDATE
 	rn.VotedFor = rn.Id
 	rn.CurrentTerm = rn.CurrentTerm + 1
 	rn.VotesReceived = nil
-	rn.ElectionMonitor.Start(rn)
-	rn.ElectionManager.RequestVotes(rn)
+
+	go em.restartElectionWhenItTimesOut(rn, electionChannel)
+	rn.ElectionManager.RequestVotes(rn, electionChannel)
 	rn.ElectionInProgress = false
+
 	rn.Mu.Unlock()
+}
+
+func (em *ElectionManager) restartElectionWhenItTimesOut(rn *raft.RaftNode, electionChannel chan raft.ElectionUpdates) {
+	time.Sleep(em.ElectionTimeoutDuration)
+	if rn.ElectionInProgress == true {
+		//kill the Current Election
+		electionChannel <- raft.ElectionUpdates{ElectionOvertimed: true}
+		em.StartElection(rn)
+	}
+	close(electionChannel)
+}
+
+func (em *ElectionManager) RequestVotes(rn *raft.RaftNode, electionChannel chan raft.ElectionUpdates) {
+	voteResponseChannel := make(chan raft.VoteResponse)
+	voteRequest := em.GenerateVoteRequest(rn)
+	requestVoteFromPeer(rn, voteRequest, voteResponseChannel)
+	concludeElection(rn, voteResponseChannel, electionChannel)
 }
 
 func requestVoteFromPeer(rn *raft.RaftNode, vr raft.VoteRequest, voteResponseChannel chan raft.VoteResponse) {
@@ -30,26 +57,27 @@ func requestVoteFromPeer(rn *raft.RaftNode, vr raft.VoteRequest, voteResponseCha
 			vrc <- rn.RPCAdapter.RequestVoteFromPeer(p, vr)
 		}(peer, voteResponseChannel)
 	}
-
-}
-func (em *ElectionManager) RequestVotes(rn *raft.RaftNode) {
-
-	voteResponseChannel := make(chan raft.VoteResponse)
-	voteRequest := em.GenerateVoteRequest(rn)
-	requestVoteFromPeer(rn, voteRequest, voteResponseChannel)
-	concludeElection(rn, voteResponseChannel)
-
 }
 
-func concludeElection(rn *raft.RaftNode, voteResponseChannel chan raft.VoteResponse) {
+func concludeElection(rn *raft.RaftNode, voteResponseChannel chan raft.VoteResponse, electionChannel chan raft.ElectionUpdates) {
 	counter := 1
+	electionUpdates := &raft.ElectionUpdates{ElectionOvertimed: false}
+
+	go func(ec chan raft.ElectionUpdates) {
+		updates := <-ec
+		electionUpdates.ElectionOvertimed = updates.ElectionOvertimed
+	}(electionChannel)
 
 	for response := range voteResponseChannel {
-		concludeElectionIfPossible(rn, response)
-		if counter == len(rn.Peers) {
-			break
+		if electionUpdates.ElectionOvertimed == false {
+			concludeElectionIfPossible(rn, response, electionUpdates)
+			if counter == len(rn.Peers) {
+				break
+			}
+			counter = counter + 1
+		} else {
+			rn.VotesReceived = nil
 		}
-		counter = counter + 1
 	}
 
 	close(voteResponseChannel)
@@ -64,9 +92,8 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteReque
 	return raft.VoteRequest{}
 }
 
-func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse) {
+func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse, electionUpdates *raft.ElectionUpdates) {
 	rn.VotesReceived = append(rn.VotesReceived, v)
-	//TODO
 	majorityCount := len(rn.Peers) / 2
 	votesInFavor := 0
 
@@ -77,14 +104,16 @@ func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse) {
 	}
 
 	// if majority has voted against, game over
-	if len(rn.VotesReceived)-votesInFavor >= majorityCount {
+	if len(rn.VotesReceived)-votesInFavor > majorityCount &&
+		electionUpdates.ElectionOvertimed == false {
 		rn.Mu.Unlock()
 		rn.CurrentRole = raft.FOLLOWER
 		rn.Mu.Lock()
 	}
 
 	// if majority has voted in favor, game won
-	if votesInFavor >= majorityCount {
+	if votesInFavor >= majorityCount &&
+		electionUpdates.ElectionOvertimed == false {
 		rn.Mu.Unlock()
 		rn.CurrentRole = raft.LEADER
 		rn.Mu.Lock()

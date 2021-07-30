@@ -43,7 +43,6 @@ type RaftNode struct {
 	Config                 RaftConfig
 	ElectionManager        RaftElection
 	LeaderHeartbeatMonitor RaftMonitor
-	ElectionMonitor        RaftMonitor
 	RPCAdapter             RaftRPCAdapter
 	Heart                  Heart
 }
@@ -57,7 +56,10 @@ type Monitor struct {
 	LastResetAt     time.Time
 	Stopped         bool
 	Started         bool
-	AutoStart       bool
+}
+
+type ElectionUpdates struct {
+	ElectionOvertimed bool
 }
 
 type Peer struct {
@@ -78,8 +80,7 @@ type RaftConfig interface {
 
 //go:generate mockgen -destination=mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
 type RaftMonitor interface {
-	Start(*RaftNode)
-	IsAutoStartOn() bool
+	Start(raftNode *RaftNode, electionChannel chan ElectionUpdates)
 	Stop()
 	Sleep()
 	GetLastResetAt() time.Time
@@ -88,7 +89,7 @@ type RaftMonitor interface {
 //go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
 type RaftElection interface {
 	StartElection(*RaftNode)
-	RequestVotes(*RaftNode)
+	RequestVotes(raftnode *RaftNode, electionChannel chan ElectionUpdates)
 	StopElection(*RaftNode)
 	GenerateVoteRequest(*RaftNode) VoteRequest
 }
@@ -103,7 +104,6 @@ func NewRaftNode(
 	rc RaftConfig,
 	re RaftElection,
 	lhm *LeaderHeartbeatMonitor,
-	em *ElectionMonitor,
 	ra RaftRPCAdapter,
 	forceNew bool,
 ) *RaftNode {
@@ -111,23 +111,20 @@ func NewRaftNode(
 		Config:                 rc,
 		ElectionManager:        re,
 		LeaderHeartbeatMonitor: lhm,
-		ElectionMonitor:        em,
 		RPCAdapter:             ra,
 	}
 
 	if forceNew {
 		raftnode = rn
 		initializeRaftNode(raftnode)
-		if raftnode.LeaderHeartbeatMonitor.IsAutoStartOn() {
-			raftnode.LeaderHeartbeatMonitor.Start(raftnode)
-		}
+		raftnode.LeaderHeartbeatMonitor.Start(raftnode, nil)
 		return raftnode
 	} else {
 
 		if raftnode == nil {
 			raftnode = rn
 			initializeRaftNode(raftnode)
-			raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+			raftnode.LeaderHeartbeatMonitor.Start(raftnode, nil)
 		}
 		return raftnode
 	}
@@ -156,10 +153,6 @@ func (m *Monitor) GetLastResetAt() time.Time {
 
 func (m *Monitor) Sleep() {
 	time.Sleep(m.TimeoutDuration)
-}
-
-func (m *Monitor) IsAutoStartOn() bool {
-	return m.AutoStart
 }
 
 type VoteRequest struct {
