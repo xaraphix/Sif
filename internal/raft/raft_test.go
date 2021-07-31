@@ -17,11 +17,13 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-var _ = Describe("Raft Node", func() {
+var _ = Describe("Sif Raft Consensus", func() {
 
 	Context("RaftNode initialization", func() {
+
 		node := &raft.RaftNode{}
-		When("The Raft node boots up", func() {
+
+		When("The Raft node initializes", func() {
 
 			BeforeEach(func() {
 				node = setupRaftNodeBootsUp()
@@ -91,157 +93,194 @@ var _ = Describe("Raft Node", func() {
 				Fail("Not Yet Implemented")
 			})
 		})
-
 	})
 
-	Context("RaftNode LeaderHeartbeatMonitor Timeouts", func() {
-		When("Raft Node's Leader Heartbeat Monitor times out", func() {
+	Context("Starting Raft Node Election", func() {
 
-			node := &raft.RaftNode{}
-			term_0 := int32(0)
+		Context("RaftNode LeaderHeartbeatMonitor Timeouts", func() {
+			When("Raft Node doesn't receive leader heartbeat for the leader heartbeat duration", func() {
 
-			BeforeEach(func() {
-				node, term_0 = setupLeaderHeartbeatTimeout()
-			})
+				node := &raft.RaftNode{}
+				term_0 := int32(0)
 
-			AfterEach(func() {
-				raft.DestructRaftNode(node)
-			})
+				BeforeEach(func() {
+					node, term_0 = setupLeaderHeartbeatTimeout()
+				})
 
-			It("Should become a candidate", func() {
-				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
-			})
+				AfterEach(func() {
+					raft.DestructRaftNode(node)
+				})
 
-			It("Should Vote for itself", func() {
-				Expect(node.VotedFor).To(Equal(node.Id))
-			})
+				It("Should become a candidate", func() {
+					Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
+				})
 
-			It("Should Increment the current term", func() {
-				Expect(node.CurrentTerm).To(BeNumerically("==", term_0+1))
-			})
+				It("Should Vote for itself", func() {
+					Expect(node.VotedFor).To(Equal(node.Id))
+				})
 
-			It("Should Request votes from peers", func() {
-				for {
-					if len(node.VotesReceived) == len(node.Peers) {
-						break
+				It("Should Increment the current term", func() {
+					Expect(node.CurrentTerm).To(BeNumerically("==", term_0+1))
+				})
+
+				It("Should Request votes from peers", func() {
+					for {
+						if len(node.VotesReceived) == len(node.Peers) {
+							break
+						}
 					}
-				}
 
-				Succeed()
+					Succeed()
+				})
 			})
 		})
 
-	})
+		Context("Candidate starts an election", func() {
 
-	Describe("Raft Node Election", func() {
-		When("Raft Node Initiates an election", func() {
+			Context("Raft Node Election Overtimes", func() {
+				When("Candidate is not able to reach to a conclusion within the election allowed time", func() {
 
-			node := &raft.RaftNode{}
-			term_0 := int32(0)
-			var sentHeartbeats *map[int]bool
-			AfterEach(func() {
-				raft.DestructRaftNode(node)
+					node := &raft.RaftNode{}
+					term_0 := int32(0)
+					AfterEach(func() {
+						raft.DestructRaftNode(node)
+					})
+
+					It("Should restart election", func() {
+						node, term_0 = setupRestartElectionOnBeingIndecisive()
+
+						loopStartedAt := time.Now()
+
+						for {
+							if node.CurrentRole == raft.CANDIDATE &&
+								node.CurrentTerm == term_0+1 {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
+
+						loopStartedAt = time.Now()
+						for {
+							if node.ElectionInProgress == false {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*900 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
+
+						loopStartedAt = time.Now()
+						for {
+							if node.ElectionInProgress == true &&
+								node.CurrentTerm == term_0+2 &&
+								node.CurrentRole == raft.CANDIDATE {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*2200 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
+
+						Succeed()
+					})
+
+				})
 			})
 
-			It("should become a follower If Majority Votes Against it within the election time duration", func() {
-				node, term_0 = setupMajorityVotesAgainst()
-				loopStartedAt := time.Now()
-				for {
-					if node.CurrentRole == raft.FOLLOWER && node.CurrentTerm >= term_0+1 {
-						break
-					} else if time.Since(loopStartedAt) > time.Millisecond*300 {
-						Fail("Took too much time to be successful")
-						break
-					}
-				}
+			Context("Candidate falls back to being a follower", func() {
+				node := &raft.RaftNode{}
+				term_0 := int32(0)
 
-				Succeed()
-			})
+				Context("Candidate discovers legitimate leader", func() {
+					When("discovers a legitimate leader through vote responses", func() {
+						AfterEach(func() {
+							raft.DestructRaftNode(node)
+						})
+						It("Should become a follower", func() {
+							node, term_0 = setupFindingOtherLeaderThroughVoteResponses()
+							Fail("")
+						})
 
-			It("should become a leader If Majority Votes In Favor within the election time duration ", func() {
-				node, term_0 = setupMajorityVotesInFavor()
-				loopStartedAt := time.Now()
-				for {
-					if node.CurrentRole == raft.LEADER {
-						break
-					} else if time.Since(loopStartedAt) > time.Millisecond*300 {
-						Fail("Took too much time to be successful")
-						break
-					}
+						When("discovers a legitimate leader through leader heartbeats", func() {
+							It("Should become a follower", func() {
+								node, term_0 = setupGettingLeaderHeartbeatDuringElection()
+								Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
+								time.Sleep(100 * time.Millisecond)
+								Expect(node.CurrentRole).To(Equal(raft.LEADER))
+							})
 
-				}
-				Succeed()
-			})
+						})
 
-			It("should send heartbeats to all its peers On becoming a leader ", func() {
-				config := loadTestRaftConfig()
-				node, term_0, sentHeartbeats = setupLeaderSendsHeartbeatsOnElectionConclusion()
+					})
 
-				loopStartedAt := time.Now()
-				for {
-					if node.IsHeartBeating == true {
-						break
-					} else if time.Since(loopStartedAt) > time.Millisecond*300 {
-						Fail("Took too much time to be successful")
-						break
-					}
-				}
+					When("Candidate receives majority votes against", func() {
+						AfterEach(func() {
+							raft.DestructRaftNode(node)
+						})
+						It("should become a follower", func() {
+							node, term_0 = setupMajorityVotesAgainst()
+							loopStartedAt := time.Now()
+							for {
+								if node.CurrentRole == raft.FOLLOWER && node.CurrentTerm >= term_0+1 {
+									break
+								} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+									Fail("Took too much time to be successful")
+									break
+								}
+							}
 
-				node.LeaderHeartbeatMonitor.Sleep()
-				Expect((*sentHeartbeats)[int(config.Peers()[0].Id)]).To(Equal(true))
-				Expect((*sentHeartbeats)[int(config.Peers()[1].Id)]).To(Equal(true))
-			})
+							Succeed()
+						})
 
-			It("Should restart election if it cannot make a decision within the election time duration", func() {
-				node, term_0 = setupRestartElectionOnBeingIndecisive()
+					})
+				})
 
-				loopStartedAt := time.Now()
+				Context("Candidate becomes the leader", func() {
+					When("Candidate receives majority votes in favor", func() {
 
-				for {
-					if node.CurrentRole == raft.CANDIDATE &&
-						node.CurrentTerm == term_0+1 {
-						break
-					} else if time.Since(loopStartedAt) > time.Millisecond*600 {
-						Fail("Took too much time to be successful")
-						break
-					}
-				}
+						node := &raft.RaftNode{}
+						var sentHeartbeats *map[int]bool
+						AfterEach(func() {
+							raft.DestructRaftNode(node)
+						})
 
-				loopStartedAt = time.Now()
-				for {
-					if node.ElectionInProgress == false {
-						break
-					} else if time.Since(loopStartedAt) > time.Millisecond*900 {
-						Fail("Took too much time to be successful")
-						break
-					}
-				}
+						It("should become a leader", func() {
+							node, _ = setupMajorityVotesInFavor()
+							loopStartedAt := time.Now()
+							for {
+								if node.CurrentRole == raft.LEADER {
+									break
+								} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+									Fail("Took too much time to be successful")
+									break
+								}
 
-				loopStartedAt = time.Now()
-				for {
-					if node.ElectionInProgress == true &&
-						node.CurrentTerm == term_0+2 &&
-						node.CurrentRole == raft.CANDIDATE {
-						break
-					} else if time.Since(loopStartedAt) > time.Millisecond*2200 {
-						Fail("Took too much time to be successful")
-						break
-					}
-				}
+							}
+							Succeed()
+						})
 
-				Succeed()
-			})
+						It("should send heartbeats to all its peers On becoming a leader ", func() {
+							config := loadTestRaftConfig()
+							node, _, sentHeartbeats = setupLeaderSendsHeartbeatsOnElectionConclusion()
 
-			It("Should become a follower if it discovers a legitimate leader through vote responses", func() {
-				node, term_0 = setupFindingOtherLeaderThroughVoteResponses()
-				Fail("")
-			})
+							loopStartedAt := time.Now()
+							for {
+								if node.IsHeartBeating == true {
+									break
+								} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+									Fail("Took too much time to be successful")
+									break
+								}
+							}
 
-			It("Should become a follower if it discovers a legitimate leader through leader heartbeats", func() {
-				node, term_0 = setupGettingLeaderHeartbeatDuringElection()
-				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
-				time.Sleep(100 * time.Millisecond)
-				Expect(node.CurrentRole).To(Equal(raft.LEADER))
+							node.LeaderHeartbeatMonitor.Sleep()
+							Expect((*sentHeartbeats)[int(config.Peers()[0].Id)]).To(Equal(true))
+							Expect((*sentHeartbeats)[int(config.Peers()[1].Id)]).To(Equal(true))
+						})
+					})
+				})
 			})
 
 		})
