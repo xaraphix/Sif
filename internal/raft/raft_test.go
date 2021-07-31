@@ -38,15 +38,7 @@ var _ = Describe("Raft Node", func() {
 				Fail("")
 			})
 
-			It("Should check if it was a leader before crashing", func() {
-				Fail("")
-			})
-
-			It("Should become a follower if it wasn't a leader on crash", func() {
-				Fail("")
-			})
-
-			It("Should become a follower if it is not booting up from a crash", func() {
+			It("Should become a follower on booting up", func() {
 				Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 			})
 
@@ -65,6 +57,7 @@ var _ = Describe("Raft Node", func() {
 
 	Context("RaftNode LeaderHeartbeatMonitor Timeouts", func() {
 		When("Raft Node's Leader Heartbeat Monitor times out", func() {
+
 			node := &raft.RaftNode{}
 			term_0 := int32(0)
 
@@ -164,6 +157,7 @@ var _ = Describe("Raft Node", func() {
 				node, term_0 = setupRestartElectionOnBeingIndecisive()
 
 				loopStartedAt := time.Now()
+
 				for {
 					if node.CurrentRole == raft.CANDIDATE &&
 						node.CurrentTerm == term_0+1 {
@@ -201,16 +195,16 @@ var _ = Describe("Raft Node", func() {
 
 			It("Should become a follower if it discovers a legitimate leader through vote responses", func() {
 				node, term_0 = setupFindingOtherLeaderThroughVoteResponses()
-				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
-				time.Sleep(100 * time.Millisecond)
-				Expect(node.CurrentRole).To(Equal(raft.LEADER))
+				Fail("")
 			})
+
 			It("Should become a follower if it discovers a legitimate leader through leader heartbeats", func() {
 				node, term_0 = setupGettingLeaderHeartbeatDuringElection()
 				Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
 				time.Sleep(100 * time.Millisecond)
 				Expect(node.CurrentRole).To(Equal(raft.LEADER))
 			})
+
 		})
 	})
 })
