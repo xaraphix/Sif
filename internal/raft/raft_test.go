@@ -20,8 +20,9 @@ import (
 var _ = Describe("Raft Node", func() {
 
 	Context("RaftNode initialization", func() {
+		node := &raft.RaftNode{}
 		When("The Raft node boots up", func() {
-			node := &raft.RaftNode{}
+
 			BeforeEach(func() {
 				node = setupRaftNodeBootsUp()
 			})
@@ -30,15 +31,7 @@ var _ = Describe("Raft Node", func() {
 				raft.DestructRaftNode(node)
 			})
 
-			It("Should check if it's booting up from a crash", func() {
-				Fail("")
-			})
-
-			It("Should load up the logs", func() {
-				Fail("")
-			})
-
-			It("Should become a follower on booting up", func() {
+			It("Should become a follower", func() {
 				Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 			})
 
@@ -52,7 +45,53 @@ var _ = Describe("Raft Node", func() {
 				Succeed()
 			})
 
+			It("Should check if it's booting up from a crash", func() {
+				Fail("")
+			})
+
+			It("should reset currentTerm", func() {
+				Fail("Not Yet Implemented")
+			})
+
+			It("should reset logs", func() {
+				Fail("Not Yet Implemented")
+			})
+
+			It("should reset VotedFor", func() {
+				Fail("Not Yet Implemented")
+			})
+
+			It("should reset CommitLength", func() {
+				Fail("Not Yet Implemented")
+			})
 		})
+
+		When("On booting up from a crash", func() {
+			BeforeEach(func() {
+				node = setupRaftNodeBootsUp()
+			})
+
+			AfterEach(func() {
+				raft.DestructRaftNode(node)
+			})
+
+			It("should load up currentTerm from persistent storage", func() {
+				Fail("Not Yet Implemented")
+			})
+
+			It("should load up logs from persistent storage", func() {
+				Fail("Not Yet Implemented")
+			})
+
+			It("should load up VotedFor from persistent storage", func() {
+				Fail("Not Yet Implemented")
+			})
+
+			It("should load up CommitLength from persistent storage", func() {
+				Fail("Not Yet Implemented")
+			})
+		})
+
 	})
 
 	Context("RaftNode LeaderHeartbeatMonitor Timeouts", func() {
