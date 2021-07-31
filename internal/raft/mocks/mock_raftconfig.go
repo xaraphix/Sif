@@ -48,6 +48,18 @@ func (mr *MockRaftConfigMockRecorder) DidNodeCrash() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DidNodeCrash", reflect.TypeOf((*MockRaftConfig)(nil).DidNodeCrash))
 }
 
+// InitializeConfig mocks base method.
+func (m *MockRaftConfig) InitializeConfig() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "InitializeConfig")
+}
+
+// InitializeConfig indicates an expected call of InitializeConfig.
+func (mr *MockRaftConfigMockRecorder) InitializeConfig() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitializeConfig", reflect.TypeOf((*MockRaftConfig)(nil).InitializeConfig))
+}
+
 // InstanceDirPath mocks base method.
 func (m *MockRaftConfig) InstanceDirPath() string {
 	m.ctrl.T.Helper()
@@ -88,20 +100,6 @@ func (m *MockRaftConfig) InstanceName() string {
 func (mr *MockRaftConfigMockRecorder) InstanceName() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstanceName", reflect.TypeOf((*MockRaftConfig)(nil).InstanceName))
-}
-
-// LoadConfig mocks base method.
-func (m *MockRaftConfig) LoadConfig() raft.RaftConfig {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "LoadConfig")
-	ret0, _ := ret[0].(raft.RaftConfig)
-	return ret0
-}
-
-// LoadConfig indicates an expected call of LoadConfig.
-func (mr *MockRaftConfigMockRecorder) LoadConfig() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadConfig", reflect.TypeOf((*MockRaftConfig)(nil).LoadConfig))
 }
 
 // Peers mocks base method.

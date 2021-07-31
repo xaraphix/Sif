@@ -38,6 +38,7 @@ type Node struct {
 
 type RaftNode struct {
 	Node
+
 	ElectionInProgress bool
 	IsHeartBeating     bool
 
@@ -50,7 +51,7 @@ type RaftNode struct {
 
 //go:generate mockgen -destination=mocks/mock_raftconfig.go -package=mocks . RaftConfig
 type RaftConfig interface {
-	LoadConfig() RaftConfig
+	InitializeConfig()
 	DidNodeCrash() bool
 	InstanceName() string
 	InstanceId() int32
@@ -145,7 +146,7 @@ func DestructRaftNode(rn *RaftNode) {
 }
 
 func initializeRaftNode(rn *RaftNode) {
-	rn.Config = rn.Config.LoadConfig()
+	rn.Config.InitializeConfig()
 	rn.CurrentRole = getCurrentRole(rn)
 	rn.CurrentTerm = getCurrentTerm(rn)
 	rn.Peers = rn.Config.Peers()

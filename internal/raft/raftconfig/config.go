@@ -18,9 +18,9 @@ var (
 	RaftVersion         string = "v0.1"
 )
 
-func NewConfig() Config {
-	RaftCfg = Config{}
-	return RaftCfg
+//go:generate mockgen -destination=../mocks/mock_configfile.go -package=mocks . File
+type File interface {
+	Load(filepath string) ([]byte, error)
 }
 
 type Config struct {
@@ -31,23 +31,58 @@ type Config struct {
 	RaftVersion         string      `yaml:"version"`
 
 	BootedFromCrash bool
+
+	configFile File
 }
 
-func (c Config) LoadConfig() raft.RaftConfig {
+type ConfigFileIO struct {
+	
+}
 
-	c = parseConfigFile()
+func (cf *ConfigFileIO) Load(path string) ([]byte, error) {
+	filename, _ := filepath.Abs(path)
+	return ioutil.ReadFile(filename)
+}
 
-	c.RaftPeers = getOrDefault(c.Peers, nil).([]raft.Peer)
-	c.RaftInstanceDirPath = getOrDefault(c.RaftInstanceDirPath, RaftInstanceDirPath).(string)
-	c.RaftInstanceId = getOrDefault(c.RaftInstanceId, 0).(int32)
-	c.RaftInstanceName = getOrDefault(c.RaftInstanceName, getDefaultName()).(string)
+func NewConfig(cf File) raft.RaftConfig {
+	if cf == nil {
+		cf = &ConfigFileIO{}
+	}
+
+	RaftCfg = Config{
+		configFile: cf,
+	}
+	return &RaftCfg
+}
+
+func (c *Config) LoadConfigFromFile() raft.RaftConfig {
+	cfg := &Config{}
+
+	yamlFile, err := c.configFile.Load("./sifconfig.yml")
+	if err != nil {
+		panic(err)
+	}
+
+	err = yaml.Unmarshal(yamlFile, cfg)
+	if err != nil {
+		panic(err)
+	}
+
+	return cfg
+}
+
+func (c *Config) InitializeConfig() {
+	cfg := c.LoadConfigFromFile()
+
+	c.RaftPeers = getOrDefault(cfg.Peers(), nil).([]raft.Peer)
+	c.RaftInstanceDirPath = getOrDefault(cfg.InstanceDirPath(), RaftInstanceDirPath).(string)
+	c.RaftInstanceId = getOrDefault(cfg.InstanceId(), 0).(int32)
+	c.RaftInstanceName = getOrDefault(cfg.InstanceName(), getDefaultName()).(string)
 	c.RaftVersion = RaftVersion
 	c.BootedFromCrash = c.DidNodeCrash()
-
-	return c
 }
 
-func (c Config) yamlFile() ([]byte, error) {
+func yamlFile() ([]byte, error) {
 	filename, _ := filepath.Abs("./sifconfig.yml")
 	yamlFile, err := ioutil.ReadFile(filename)
 	return yamlFile, err
@@ -57,27 +92,9 @@ func getDefaultName() string {
 	return "Sif-" + strconv.Itoa(rand.Int())
 }
 
-func parseConfigFile() Config {
-	cfg := Config{}
+func (c *Config) DidNodeCrash() bool {
 
-	yamlFile, err := cfg.yamlFile()
-	if err != nil {
-		panic(err)
-	}
-
-	err = yaml.Unmarshal(yamlFile, &cfg)
-	if err != nil {
-		panic(err)
-	}
-
-	return cfg
-}
-
-func (c Config) DidNodeCrash() bool {
-
-	filename, _ := filepath.Abs(c.RaftInstanceDirPath + ".siflock")
-	_, err := ioutil.ReadFile(filename)
-
+  _, err := c.configFile.Load("./.siflock")
 	if err != nil {
 		return false
 	}
@@ -85,23 +102,23 @@ func (c Config) DidNodeCrash() bool {
 	return true
 }
 
-func (c Config) InstanceDirPath() string {
+func (c *Config) InstanceDirPath() string {
 	return c.RaftInstanceDirPath
 }
 
-func (c Config) InstanceId() int32 {
+func (c *Config) InstanceId() int32 {
 	return c.RaftInstanceId
 }
 
-func (c Config) InstanceName() string {
+func (c *Config) InstanceName() string {
 	return c.RaftInstanceName
 }
 
-func (c Config) Peers() []raft.Peer {
+func (c *Config) Peers() []raft.Peer {
 	return c.RaftPeers
 }
 
-func (c Config) Version() string {
+func (c *Config) Version() string {
 	return c.RaftVersion
 }
 func getOrDefault(prop interface{}, defaultVal interface{}) interface{} {
