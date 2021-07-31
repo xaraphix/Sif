@@ -278,12 +278,136 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			When("Candidate receives vote request from another candidate", func() {
-				XSpecify("Don't know what to do right now", func ()  {
-											Fail("Not Yet Implemented")
+				XSpecify("Don't know what to do right now", func() {
+					Fail("Not Yet Implemented")
 				})
 			})
 		})
 	})
+
+	Context("Broadcasting Messages", func() {
+		When("A Leader receives a broadcast request", func() {
+
+			XIt("Should Append the entry to its log", func() {
+
+			})
+
+			XIt("Should update the Acknowledged log length for itself", func() {
+
+			})
+
+			XIt("Should Replicate the log to its followers after appending to its own logs", func() {
+
+			})
+		})
+
+		When("A Raft node is a leader", func() {
+			XIt("Should send heart beats to its followers", func() {
+
+			})
+		})
+
+		When("A Follower receives a broadcast request", func() {
+			XIt("Should forward the request to the leader node", func() {
+
+			})
+		})
+	})
+
+	Context("Log Replication", func() {
+		When("Leader is replicating log to followers", func() {
+			Specify(`The log request should have leaderId, 
+			currentTerm, 
+			index of the last sent log entry,
+			term of the previous log entry,
+			commitLength and
+			suffix of log entries`, func() {
+
+			})
+		})
+
+		When("Follower receives a log replication request", func() {
+			When("the received log is ok", func() {
+
+				XIt("Should update its currentTerm to to new term", func() {
+
+				})
+
+				XIt("Should continue being the follower and cancel the election it started (if any)", func() {
+
+				})
+
+				XIt("Should update its acknowledged length of the log", func() {
+
+				})
+
+				XIt("Should append the entry to its log", func() {
+
+				})
+
+				XIt("Should send the log response back to the leader with the acknowledged new length", func() {
+
+				})
+
+			})
+
+			When("The received log or term is not ok", func() {
+
+				XIt(`Should send its currentTerm
+			acknowledged length as 0
+			acknowledgment as false to the leader`, func() {
+
+				})
+			})
+
+		})
+
+	})
+
+	Context("A node updates its log based on the log received from leader", func() {
+		//TODO
+	})
+
+	Context("Leader Receives log acknowledgments", func() {
+		When("The term in the log acknowledgment is more than leader's currentTerm", func() {})
+		When("The term in the log acknowledgment is ok and log replication has been acknowledged by the follower", func() {
+
+			When("log replication is acknowledged by the follower", func() {
+
+				XIt(`Should update its acknowledged and 
+					sentLength for the follower`, func() {
+
+				})
+
+				XIt("Should commit the log entries to persistent storage", func() {
+
+				})
+			})
+
+			When("log replication is not acknowledged by the follower", func() {
+
+				XIt("Should update the sent length for the follower to one less than the previously attempted sent length value of the log", func() {
+
+				})
+				XIt("Should send a log replication request to the follower with log length = last request log length - 1", func() {
+
+				})
+			})
+
+		})
+
+	})
+
+	Context("Commiting log entries to persistent storage", func() {
+		//TODO
+		When("The commit is successful it should send the log message to the client of Sif", func() {
+
+			XIt("Don't know yet what to do", func() {
+				Fail("Not Yet Implemented")
+			})
+		})
+	})
+
 })
 
 func setupRaftNode(rpcAdapter *mocks.MockRaftRPCAdapter, heart raft.RaftHeart) (*raft.RaftNode, int32) {
