@@ -29,7 +29,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		When("The Raft node initializes", func() {
 			BeforeEach(func() {
-				setupVars = setupRaftNodeInitialization(GinkgoT())
+				setupVars = setupRaftNodeInitialization()
 				node = setupVars.node
 
 			})
@@ -75,7 +75,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		When("On booting up from a crash", func() {
 			BeforeEach(func() {
-				setupVars := setupRaftNodeBootsUpFromCrash(GinkgoT())
+				setupVars := setupRaftNodeBootsUpFromCrash()
 				node = setupVars.node
 			})
 
@@ -110,7 +110,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			When("Raft Node doesn't receive leader heartbeat for the leader heartbeat duration", func() {
 
 				BeforeEach(func() {
-					setupVars = setupLeaderHeartbeatTimeout(GinkgoT())
+					setupVars = setupLeaderHeartbeatTimeout()
 					node = setupVars.node
 					term_0 = setupVars.term_0
 				})
@@ -156,7 +156,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				When("Candidate is not able to reach to a conclusion within the election allowed time", func() {
 
 					BeforeEach(func() {
-						setupVars = setupRaftNodeBootsUpFromCrash(GinkgoT())
+						setupVars = setupRaftNodeBootsUpFromCrash()
 						node = setupVars.node
 					})
 
@@ -169,7 +169,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					})
 
 					It("Should restart election", func() {
-						setupVars := setupRestartElectionOnBeingIndecisive(GinkgoT())
+						setupVars := setupRestartElectionOnBeingIndecisive()
 						node = setupVars.node
 						term_0 = setupVars.term_0
 						loopStartedAt := time.Now()
@@ -219,7 +219,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				When("Majority votes in favor", func() {
 
 					BeforeEach(func() {
-						setupVars = setupRaftNodeInitialization(GinkgoT())
+						setupVars = setupRaftNodeInitialization()
 						node = setupVars.node
 					})
 
@@ -232,7 +232,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					})
 
 					It("should become a leader", func() {
-						setupVars := setupMajorityVotesInFavor(GinkgoT())
+						setupVars := setupMajorityVotesInFavor()
 						node = setupVars.node
 						loopStartedAt := time.Now()
 						for {
@@ -252,7 +252,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 					It("should replicate logs to all its peers", func() {
 
-						setupVars = setupLeaderSendsHeartbeatsOnElectionConclusion(GinkgoT())
+						setupVars = setupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.node
 						sentHeartbeats = setupVars.sentHeartbeats
 						testConfig := loadTestRaftConfig()
@@ -446,7 +446,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 })
 
-func setupRaftNode(g GinkgoTInterface, preNodeSetupCB func(
+func setupRaftNode(preNodeSetupCB func(
 	fileMgr *mocks.MockRaftFile,
 	election *mocks.MockRaftElection,
 	adapter *mocks.MockRaftRPCAdapter,
@@ -465,10 +465,10 @@ func setupRaftNode(g GinkgoTInterface, preNodeSetupCB func(
 		heart      raft.RaftHeart
 	)
 
-	mockRPCAdapter, rpcCtrl := getMockRPCAdapter(g)
-	mockHeart, heartCtrl := getMockHeart(g)
-	mockElection, electionCtrl := getMockElection(g)
-	mockFile, fileCtrl := getMockFile(g)
+	mockRPCAdapter, rpcCtrl := getMockRPCAdapter()
+	mockHeart, heartCtrl := getMockHeart()
+	mockElection, electionCtrl := getMockElection()
+	mockFile, fileCtrl := getMockFile()
 
 	ctrls := Controllers{
 		rpcCtrl:      rpcCtrl,
@@ -511,62 +511,62 @@ func setupRaftNode(g GinkgoTInterface, preNodeSetupCB func(
 	}
 }
 
-func getMockRPCAdapter(g GinkgoTInterface) (*mocks.MockRaftRPCAdapter, *gomock.Controller) {
+func getMockRPCAdapter() (*mocks.MockRaftRPCAdapter, *gomock.Controller) {
 
 	var (
 		mockCtrl   *gomock.Controller
 		rpcAdapter *mocks.MockRaftRPCAdapter
 	)
 
-	mockCtrl = gomock.NewController(g)
+	mockCtrl = gomock.NewController(GinkgoT())
 	defer mockCtrl.Finish()
 	rpcAdapter = mocks.NewMockRaftRPCAdapter(mockCtrl)
 	return rpcAdapter, mockCtrl
 }
 
-func getMockHeart(g GinkgoTInterface) (*mocks.MockRaftHeart, *gomock.Controller) {
+func getMockHeart() (*mocks.MockRaftHeart, *gomock.Controller) {
 
 	var (
 		mockCtrl  *gomock.Controller
 		mockHeart *mocks.MockRaftHeart
 	)
 
-	mockCtrl = gomock.NewController(g)
+	mockCtrl = gomock.NewController(GinkgoT())
 	mockHeart = mocks.NewMockRaftHeart(mockCtrl)
 	return mockHeart, mockCtrl
 }
 
-func getMockConfig(g GinkgoTInterface) (*mocks.MockRaftConfig, *gomock.Controller) {
+func getMockConfig() (*mocks.MockRaftConfig, *gomock.Controller) {
 
 	var (
 		mockCtrl   *gomock.Controller
 		mockConfig *mocks.MockRaftConfig
 	)
 
-	mockCtrl = gomock.NewController(g)
+	mockCtrl = gomock.NewController(GinkgoT())
 	mockConfig = mocks.NewMockRaftConfig(mockCtrl)
 	return mockConfig, mockCtrl
 }
 
-func getMockFile(g GinkgoTInterface) (*mocks.MockRaftFile, *gomock.Controller) {
+func getMockFile() (*mocks.MockRaftFile, *gomock.Controller) {
 
 	var (
 		mockCtrl *gomock.Controller
 		mockFile *mocks.MockRaftFile
 	)
 
-	mockCtrl = gomock.NewController(g)
+	mockCtrl = gomock.NewController(GinkgoT())
 	mockFile = mocks.NewMockRaftFile(mockCtrl)
 	return mockFile, mockCtrl
 }
 
-func getMockElection(g GinkgoTInterface) (*mocks.MockRaftElection, *gomock.Controller) {
+func getMockElection() (*mocks.MockRaftElection, *gomock.Controller) {
 	var (
 		mockCtrl     *gomock.Controller
 		mockElection *mocks.MockRaftElection
 	)
 
-	mockCtrl = gomock.NewController(g)
+	mockCtrl = gomock.NewController(GinkgoT())
 	mockElection = mocks.NewMockRaftElection(mockCtrl)
 	return mockElection, mockCtrl
 }
@@ -594,7 +594,7 @@ type MockSetupVars struct {
 	ctrls          Controllers
 }
 
-func setupRaftNodeBootsUpFromCrash(g GinkgoTInterface) MockSetupVars {
+func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
@@ -624,10 +624,10 @@ func setupRaftNodeBootsUpFromCrash(g GinkgoTInterface) MockSetupVars {
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	return setupRaftNode(g, preNodeSetupCB, options)
+	return setupRaftNode(preNodeSetupCB, options)
 }
 
-func setupRaftNodeInitialization(g GinkgoTInterface) MockSetupVars {
+func setupRaftNodeInitialization() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
@@ -657,10 +657,10 @@ func setupRaftNodeInitialization(g GinkgoTInterface) MockSetupVars {
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	return setupRaftNode(g, preNodeSetupCB, options)
+	return setupRaftNode(preNodeSetupCB, options)
 }
 
-func setupLeaderHeartbeatTimeout(g GinkgoTInterface) MockSetupVars {
+func setupLeaderHeartbeatTimeout() MockSetupVars {
 	options := SetupOptions{
 		mockFile:       true,
 		mockHeart:      false,
@@ -691,7 +691,7 @@ func setupLeaderHeartbeatTimeout(g GinkgoTInterface) MockSetupVars {
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	setupVars := setupRaftNode(g, preNodeSetupCB, options)
+	setupVars := setupRaftNode(preNodeSetupCB, options)
 	for {
 		if setupVars.node.ElectionInProgress == true {
 			setupVars.node.LeaderHeartbeatMonitor.Stop()
@@ -702,7 +702,7 @@ func setupLeaderHeartbeatTimeout(g GinkgoTInterface) MockSetupVars {
 	return setupVars
 }
 
-func setupMajorityVotesAgainst(g GinkgoTInterface) MockSetupVars {
+func setupMajorityVotesAgainst() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
@@ -733,10 +733,10 @@ func setupMajorityVotesAgainst(g GinkgoTInterface) MockSetupVars {
 
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
-	return setupRaftNode(g, preNodeSetupCB, options)
+	return setupRaftNode(preNodeSetupCB, options)
 }
 
-func setupMajorityVotesInFavor(g GinkgoTInterface) MockSetupVars {
+func setupMajorityVotesInFavor() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
@@ -773,10 +773,10 @@ func setupMajorityVotesInFavor(g GinkgoTInterface) MockSetupVars {
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	return setupRaftNode(g, preNodeSetupCB, options)
+	return setupRaftNode(preNodeSetupCB, options)
 }
 
-func setupLeaderSendsHeartbeatsOnElectionConclusion(g GinkgoTInterface) MockSetupVars {
+func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 	sentHeartbeats := &map[int]bool{
 		2: false,
 		3: false,
@@ -820,7 +820,7 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion(g GinkgoTInterface) MockSetu
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	setupVars := setupRaftNode(g, preNodeSetupCB, options)
+	setupVars := setupRaftNode(preNodeSetupCB, options)
 	return MockSetupVars{
 		node:           setupVars.node,
 		term_0:         setupVars.term_0,
@@ -829,7 +829,7 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion(g GinkgoTInterface) MockSetu
 	}
 }
 
-func setupRestartElectionOnBeingIndecisive(g GinkgoTInterface) MockSetupVars {
+func setupRestartElectionOnBeingIndecisive() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
@@ -866,10 +866,10 @@ func setupRestartElectionOnBeingIndecisive(g GinkgoTInterface) MockSetupVars {
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	return setupRaftNode(g, preNodeSetupCB, options)
+	return setupRaftNode(preNodeSetupCB, options)
 }
 
-func setupGettingLeaderHeartbeatDuringElection(g GinkgoTInterface) MockSetupVars {
+func setupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
@@ -899,10 +899,10 @@ func setupGettingLeaderHeartbeatDuringElection(g GinkgoTInterface) MockSetupVars
 
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
-	return setupRaftNode(g, preNodeSetupCB, options)
+	return setupRaftNode(preNodeSetupCB, options)
 }
 
-func setupFindingOtherLeaderThroughVoteResponses(g GinkgoTInterface) MockSetupVars {
+func setupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
@@ -933,7 +933,7 @@ func setupFindingOtherLeaderThroughVoteResponses(g GinkgoTInterface) MockSetupVa
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	return setupRaftNode(g, preNodeSetupCB, options)
+	return setupRaftNode(preNodeSetupCB, options)
 }
 
 func getConfig() raftconfig.Config {

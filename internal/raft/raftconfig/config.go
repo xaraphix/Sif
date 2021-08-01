@@ -50,7 +50,7 @@ func parseConfig(c *Config, rn *raft.RaftNode) {
 }
 
 func (c *Config) LoadConfig(rn *raft.RaftNode) {
-	parseConfig(c, rn)	
+	parseConfig(c, rn)
 }
 
 func yamlFile() ([]byte, error) {
@@ -64,7 +64,7 @@ func getDefaultName() string {
 }
 
 func (c *Config) DidNodeCrash(rn *raft.RaftNode) bool {
-  _, err := rn.FileMgr.LoadFile(LockFile)
+	_, err := rn.FileMgr.LoadFile(LockFile)
 	if err != nil {
 		return false
 	}
