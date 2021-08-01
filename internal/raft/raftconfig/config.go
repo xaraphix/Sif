@@ -12,16 +12,11 @@ import (
 
 var (
 	LogsFile            string
-	LockFile            string
+	LockFile            string = "./.siflock"
 	RaftInstanceDirPath string = "/var/lib/sif/"
 	RaftCfg             Config
 	RaftVersion         string = "v0.1"
 )
-
-//go:generate mockgen -destination=../mocks/mock_configfile.go -package=mocks . File
-type File interface {
-	Load(filepath string) ([]byte, error)
-}
 
 type Config struct {
 	RaftInstanceName    string      `yaml:"name"`
@@ -31,55 +26,31 @@ type Config struct {
 	RaftVersion         string      `yaml:"version"`
 
 	BootedFromCrash bool
-
-	configFile File
 }
 
-type ConfigFileIO struct {
-	
-}
-
-func (cf *ConfigFileIO) Load(path string) ([]byte, error) {
-	filename, _ := filepath.Abs(path)
-	return ioutil.ReadFile(filename)
-}
-
-func NewConfig(cf File) raft.RaftConfig {
-	if cf == nil {
-		cf = &ConfigFileIO{}
-	}
-
-	RaftCfg = Config{
-		configFile: cf,
-	}
+func NewConfig() *Config {
+	RaftCfg = Config{}
 	return &RaftCfg
 }
 
-func (c *Config) LoadConfigFromFile() raft.RaftConfig {
+func parseConfig(c *Config, rn *raft.RaftNode) {
+	cfgFile, err := rn.FileMgr.LoadFile("./sifconfig.yml")
 	cfg := &Config{}
-
-	yamlFile, err := c.configFile.Load("./sifconfig.yml")
+	err = yaml.Unmarshal(cfgFile, cfg)
 	if err != nil {
 		panic(err)
 	}
-
-	err = yaml.Unmarshal(yamlFile, cfg)
-	if err != nil {
-		panic(err)
-	}
-
-	return cfg
-}
-
-func (c *Config) InitializeConfig() {
-	cfg := c.LoadConfigFromFile()
 
 	c.RaftPeers = getOrDefault(cfg.Peers(), nil).([]raft.Peer)
 	c.RaftInstanceDirPath = getOrDefault(cfg.InstanceDirPath(), RaftInstanceDirPath).(string)
 	c.RaftInstanceId = getOrDefault(cfg.InstanceId(), 0).(int32)
 	c.RaftInstanceName = getOrDefault(cfg.InstanceName(), getDefaultName()).(string)
 	c.RaftVersion = RaftVersion
-	c.BootedFromCrash = c.DidNodeCrash()
+	c.BootedFromCrash = c.DidNodeCrash(rn)
+}
+
+func (c *Config) LoadConfig(rn *raft.RaftNode) {
+	parseConfig(c, rn)	
 }
 
 func yamlFile() ([]byte, error) {
@@ -92,9 +63,8 @@ func getDefaultName() string {
 	return "Sif-" + strconv.Itoa(rand.Int())
 }
 
-func (c *Config) DidNodeCrash() bool {
-
-  _, err := c.configFile.Load("./.siflock")
+func (c *Config) DidNodeCrash(rn *raft.RaftNode) bool {
+  _, err := rn.FileMgr.LoadFile(LockFile)
 	if err != nil {
 		return false
 	}

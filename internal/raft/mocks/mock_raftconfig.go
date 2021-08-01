@@ -35,29 +35,17 @@ func (m *MockRaftConfig) EXPECT() *MockRaftConfigMockRecorder {
 }
 
 // DidNodeCrash mocks base method.
-func (m *MockRaftConfig) DidNodeCrash() bool {
+func (m *MockRaftConfig) DidNodeCrash(arg0 *raft.RaftNode) bool {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "DidNodeCrash")
+	ret := m.ctrl.Call(m, "DidNodeCrash", arg0)
 	ret0, _ := ret[0].(bool)
 	return ret0
 }
 
 // DidNodeCrash indicates an expected call of DidNodeCrash.
-func (mr *MockRaftConfigMockRecorder) DidNodeCrash() *gomock.Call {
+func (mr *MockRaftConfigMockRecorder) DidNodeCrash(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DidNodeCrash", reflect.TypeOf((*MockRaftConfig)(nil).DidNodeCrash))
-}
-
-// InitializeConfig mocks base method.
-func (m *MockRaftConfig) InitializeConfig() {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "InitializeConfig")
-}
-
-// InitializeConfig indicates an expected call of InitializeConfig.
-func (mr *MockRaftConfigMockRecorder) InitializeConfig() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InitializeConfig", reflect.TypeOf((*MockRaftConfig)(nil).InitializeConfig))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DidNodeCrash", reflect.TypeOf((*MockRaftConfig)(nil).DidNodeCrash), arg0)
 }
 
 // InstanceDirPath mocks base method.
@@ -100,6 +88,18 @@ func (m *MockRaftConfig) InstanceName() string {
 func (mr *MockRaftConfigMockRecorder) InstanceName() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "InstanceName", reflect.TypeOf((*MockRaftConfig)(nil).InstanceName))
+}
+
+// LoadConfig mocks base method.
+func (m *MockRaftConfig) LoadConfig(arg0 *raft.RaftNode) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "LoadConfig", arg0)
+}
+
+// LoadConfig indicates an expected call of LoadConfig.
+func (mr *MockRaftConfigMockRecorder) LoadConfig(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadConfig", reflect.TypeOf((*MockRaftConfig)(nil).LoadConfig), arg0)
 }
 
 // Peers mocks base method.

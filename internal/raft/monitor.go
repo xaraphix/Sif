@@ -40,7 +40,7 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode, electionUpdates chan Electi
 			if time.Since(l.LastResetAt) >= l.TimeoutDuration &&
 				l.Stopped == false &&
 				rn.ElectionInProgress == false {
-				rn.ElectionManager.StartElection(rn)
+				rn.ElectionMgr.StartElection(rn)
 			}
 
 			if l.Stopped {

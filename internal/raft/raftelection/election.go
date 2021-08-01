@@ -28,7 +28,7 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	rn.VotesReceived = nil
 
 	go em.restartElectionWhenItTimesOut(rn, electionChannel)
-	rn.ElectionManager.RequestVotes(rn, electionChannel)
+	rn.ElectionMgr.RequestVotes(rn, electionChannel)
 	rn.ElectionInProgress = false
 
 	ifLeaderStartHeartbeatTransmitter(rn)

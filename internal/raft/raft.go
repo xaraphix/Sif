@@ -42,17 +42,24 @@ type RaftNode struct {
 	ElectionInProgress bool
 	IsHeartBeating     bool
 
+	FileMgr                RaftFile
 	Config                 RaftConfig
-	ElectionManager        RaftElection
+	ElectionMgr            RaftElection
 	LeaderHeartbeatMonitor RaftMonitor
 	RPCAdapter             RaftRPCAdapter
 	Heart                  RaftHeart
 }
 
+//go:generate mockgen -destination=mocks/mock_raftfile.go -package=mocks . RaftFile
+type RaftFile interface {
+	LoadFile(filepath string) ([]byte, error)
+	SaveFile(filepath string) error
+}
+
 //go:generate mockgen -destination=mocks/mock_raftconfig.go -package=mocks . RaftConfig
 type RaftConfig interface {
-	InitializeConfig()
-	DidNodeCrash() bool
+	LoadConfig(*RaftNode)
+	DidNodeCrash(*RaftNode) bool
 	InstanceName() string
 	InstanceId() int32
 	Peers() []Peer
@@ -110,6 +117,7 @@ type Peer struct {
 }
 
 func NewRaftNode(
+	fm RaftFile,
 	rc RaftConfig,
 	re RaftElection,
 	lhm *LeaderHeartbeatMonitor,
@@ -118,8 +126,9 @@ func NewRaftNode(
 	forceNew bool,
 ) *RaftNode {
 	rn := &RaftNode{
+		FileMgr:                fm,
 		Config:                 rc,
-		ElectionManager:        re,
+		ElectionMgr:            re,
 		LeaderHeartbeatMonitor: lhm,
 		RPCAdapter:             ra,
 		Heart:                  h,
@@ -146,7 +155,7 @@ func DestructRaftNode(rn *RaftNode) {
 }
 
 func initializeRaftNode(rn *RaftNode) {
-	rn.Config.InitializeConfig()
+	rn.Config.LoadConfig(rn)
 	rn.CurrentRole = getCurrentRole(rn)
 	rn.CurrentTerm = getCurrentTerm(rn)
 	rn.Peers = rn.Config.Peers()
