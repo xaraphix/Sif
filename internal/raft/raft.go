@@ -34,6 +34,7 @@ type Node struct {
 	MatchIndex    int32
 	PrevLogIndex  int32
 	Peers         []Peer
+	Logs          []Log
 }
 
 type RaftNode struct {
@@ -47,6 +48,7 @@ type RaftNode struct {
 	ElectionMgr            RaftElection
 	LeaderHeartbeatMonitor RaftMonitor
 	RPCAdapter             RaftRPCAdapter
+	LogMgr                 RaftLog
 	Heart                  RaftHeart
 }
 
@@ -96,6 +98,17 @@ type RaftHeart interface {
 	IsBeating(*RaftNode) bool
 }
 
+//go:generate mockgen -destination=mocks/mock_raftlog.go -package=mocks . RaftLog
+type RaftLog interface {
+	GetLogs() []Log
+	GetLog(idx int32) Log
+}
+
+type Log struct {
+	term    int32
+	message map[interface{}]interface{}
+}
+
 type Heart struct {
 	DurationBetweenBeats time.Duration
 }
@@ -122,6 +135,7 @@ func NewRaftNode(
 	re RaftElection,
 	lhm *LeaderHeartbeatMonitor,
 	ra RaftRPCAdapter,
+	l RaftLog,
 	h RaftHeart,
 	forceNew bool,
 ) *RaftNode {
@@ -131,6 +145,7 @@ func NewRaftNode(
 		ElectionMgr:            re,
 		LeaderHeartbeatMonitor: lhm,
 		RPCAdapter:             ra,
+		LogMgr:                 l,
 		Heart:                  h,
 	}
 

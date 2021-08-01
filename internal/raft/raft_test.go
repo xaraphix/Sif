@@ -56,20 +56,20 @@ var _ = Describe("Sif Raft Consensus", func() {
 				Succeed()
 			})
 
-			XIt("should reset currentTerm", func() {
-				Fail("Not Yet Implemented")
+			It("should reset currentTerm", func() {
+				Expect(node.CurrentTerm).To(Equal(int32(0)))
 			})
 
-			XIt("should reset logs", func() {
-				Fail("Not Yet Implemented")
+			It("should reset logs", func() {
+				Expect(len(node.Logs)).To(Equal(0))
 			})
 
-			XIt("should reset VotedFor", func() {
-				Fail("Not Yet Implemented")
+			It("should reset VotedFor", func() {
+				Expect(node.VotedFor).To(Equal(int32(0)))
 			})
 
-			XIt("should reset CommitLength", func() {
-				Fail("Not Yet Implemented")
+			It("should reset CommitLength", func() {
+				Expect(node.CommitLength).To(Equal(int32(0)))
 			})
 		})
 
@@ -448,6 +448,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 func setupRaftNode(preNodeSetupCB func(
 	fileMgr *mocks.MockRaftFile,
+	logMgr *mocks.MockRaftLog,
 	election *mocks.MockRaftElection,
 	adapter *mocks.MockRaftRPCAdapter,
 	heart *mocks.MockRaftHeart,
@@ -461,6 +462,7 @@ func setupRaftNode(preNodeSetupCB func(
 		election   raft.RaftElection
 		config     raft.RaftConfig
 		fileMgr    raft.RaftFile
+		logMgr     raft.RaftLog
 		rpcAdapter raft.RaftRPCAdapter
 		heart      raft.RaftHeart
 	)
@@ -469,9 +471,11 @@ func setupRaftNode(preNodeSetupCB func(
 	mockHeart, heartCtrl := getMockHeart()
 	mockElection, electionCtrl := getMockElection()
 	mockFile, fileCtrl := getMockFile()
+	mockLog, logCtrl := getMockLog()
 
 	ctrls := Controllers{
 		rpcCtrl:      rpcCtrl,
+		logCtrl:      logCtrl,
 		heartCtrl:    heartCtrl,
 		fileCtrl:     fileCtrl,
 		electionCtrl: electionCtrl,
@@ -481,6 +485,10 @@ func setupRaftNode(preNodeSetupCB func(
 	heart = raftelection.LdrHrt
 
 	if options.mockFile {
+		fileMgr = mockFile
+	}
+
+	if options.mockLog {
 		fileMgr = mockFile
 	}
 
@@ -498,10 +506,10 @@ func setupRaftNode(preNodeSetupCB func(
 
 	config = raftconfig.NewConfig()
 	leaderHeartbeatMonitor = raft.NewLeaderHeartbeatMonitor(true)
-	preNodeSetupCB(mockFile, mockElection, mockRPCAdapter, mockHeart)
+	preNodeSetupCB(mockFile, mockLog, mockElection, mockRPCAdapter, mockHeart)
 
 	node = nil
-	node = raft.NewRaftNode(fileMgr, config, election, leaderHeartbeatMonitor, rpcAdapter, heart, true)
+	node = raft.NewRaftNode(fileMgr, config, election, leaderHeartbeatMonitor, rpcAdapter, logMgr, heart, true)
 	term_0 = node.CurrentTerm
 
 	return MockSetupVars{
@@ -560,6 +568,18 @@ func getMockFile() (*mocks.MockRaftFile, *gomock.Controller) {
 	return mockFile, mockCtrl
 }
 
+func getMockLog() (*mocks.MockRaftLog, *gomock.Controller) {
+
+	var (
+		mockCtrl *gomock.Controller
+		mockLog  *mocks.MockRaftLog
+	)
+
+	mockCtrl = gomock.NewController(GinkgoT())
+	mockLog = mocks.NewMockRaftLog(mockCtrl)
+	return mockLog, mockCtrl
+}
+
 func getMockElection() (*mocks.MockRaftElection, *gomock.Controller) {
 	var (
 		mockCtrl     *gomock.Controller
@@ -573,6 +593,7 @@ func getMockElection() (*mocks.MockRaftElection, *gomock.Controller) {
 
 type SetupOptions struct {
 	mockHeart      bool
+	mockLog        bool
 	mockElection   bool
 	mockFile       bool
 	mockConfig     bool
@@ -581,6 +602,7 @@ type SetupOptions struct {
 
 type Controllers struct {
 	rpcCtrl      *gomock.Controller
+	logCtrl      *gomock.Controller
 	configCtrl   *gomock.Controller
 	fileCtrl     *gomock.Controller
 	heartCtrl    *gomock.Controller
@@ -604,6 +626,7 @@ func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -637,6 +660,7 @@ func setupRaftNodeInitialization() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -670,6 +694,7 @@ func setupLeaderHeartbeatTimeout() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -712,6 +737,7 @@ func setupMajorityVotesAgainst() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -746,6 +772,7 @@ func setupMajorityVotesInFavor() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -791,6 +818,7 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -839,6 +867,7 @@ func setupRestartElectionOnBeingIndecisive() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -879,6 +908,7 @@ func setupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
@@ -912,6 +942,7 @@ func setupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
 		election *mocks.MockRaftElection,
 		adapter *mocks.MockRaftRPCAdapter,
 		heart *mocks.MockRaftHeart,
