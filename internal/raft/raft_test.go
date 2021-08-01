@@ -1,6 +1,7 @@
 package raft_test
 
 import (
+	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -25,10 +26,13 @@ var _ = Describe("Sif Raft Consensus", func() {
 	Context("RaftNode initialization", func() {
 
 		node := &raft.RaftNode{}
+		var persistentState *raftconfig.RaftPersistentState
+
 		var setupVars MockSetupVars
 
 		When("The Raft node initializes", func() {
 			BeforeEach(func() {
+				persistentState = loadTestRaftPersistentState()
 				setupVars = setupRaftNodeInitialization()
 				node = setupVars.node
 
@@ -75,28 +79,34 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		When("On booting up from a crash", func() {
 			BeforeEach(func() {
-				setupVars := setupRaftNodeBootsUpFromCrash()
+				persistentState = loadTestRaftPersistentState()
+				setupVars = setupRaftNodeBootsUpFromCrash()
 				node = setupVars.node
 			})
 
 			AfterEach(func() {
+				setupVars.ctrls.fileCtrl.Finish()
+				setupVars.ctrls.electionCtrl.Finish()
+				setupVars.ctrls.heartCtrl.Finish()
+				setupVars.ctrls.rpcCtrl.Finish()
 				raft.DestructRaftNode(node)
 			})
 
-			XIt("should load up currentTerm from persistent storage", func() {
-				Fail("Not Yet Implemented")
+			It("should load up currentTerm from persistent storage", func() {
+				Expect(node.CurrentTerm).To(Equal(persistentState.RaftCurrentTerm))
 			})
 
-			XIt("should load up logs from persistent storage", func() {
-				Fail("Not Yet Implemented")
+			It("should load up logs from persistent storage", func() {
+				Expect(len(node.Logs)).To(Equal(len(*persistentState.RaftLogs)))
+				Expect(len(node.Logs)).To(BeNumerically(">", 0))
 			})
 
-			XIt("should load up VotedFor from persistent storage", func() {
-				Fail("Not Yet Implemented")
+			It("should load up VotedFor from persistent storage", func() {
+				Expect(node.VotedFor).To(Equal(persistentState.RaftVotedFor))
 			})
 
-			XIt("should load up CommitLength from persistent storage", func() {
-				Fail("Not Yet Implemented")
+			It("should load up CommitLength from persistent storage", func() {
+				Expect(node.CommitLength).To(Equal(persistentState.RaftCommitLength))
 			})
 		})
 	})
@@ -620,6 +630,7 @@ func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
+		mockLog:        false,
 		mockFile:       true,
 		mockRPCAdapter: true,
 	}
@@ -632,8 +643,11 @@ func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 		heart *mocks.MockRaftHeart,
 	) {
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, nil)
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
+
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
 			PeerId:      testConfig.Peers()[0].Id,
@@ -666,8 +680,10 @@ func setupRaftNodeInitialization() MockSetupVars {
 		heart *mocks.MockRaftHeart,
 	) {
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
 			PeerId:      testConfig.Peers()[0].Id,
@@ -700,8 +716,10 @@ func setupLeaderHeartbeatTimeout() MockSetupVars {
 		heart *mocks.MockRaftHeart,
 	) {
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
 			PeerId:      testConfig.Peers()[0].Id,
@@ -744,8 +762,10 @@ func setupMajorityVotesAgainst() MockSetupVars {
 	) {
 
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
@@ -779,8 +799,10 @@ func setupMajorityVotesInFavor() MockSetupVars {
 	) {
 
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: true,
 			PeerId:      testConfig.Peers()[0].Id,
@@ -825,8 +847,10 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 	) {
 
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: true,
 			PeerId:      testConfig.Peers()[0].Id,
@@ -874,8 +898,10 @@ func setupRestartElectionOnBeingIndecisive() MockSetupVars {
 	) {
 
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Do(
 			func(p raft.Peer, vr raft.VoteRequest) raft.VoteResponse {
@@ -915,8 +941,10 @@ func setupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 	) {
 
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
 			PeerId:      testConfig.Peers()[0].Id,
@@ -948,8 +976,10 @@ func setupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 		heart *mocks.MockRaftHeart,
 	) {
 		testConfig := loadTestRaftConfig()
+		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
-		fileMgr.EXPECT().LoadFile("./.siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
@@ -979,6 +1009,27 @@ func loadTestRaftConfigFile() ([]byte, error) {
 	}
 	filename, _ := filepath.Abs(dir + "/mocks/sifconfig_test.yaml")
 	return ioutil.ReadFile(filename)
+}
+
+func loadTestRaftPersistentStorageFile() ([]byte, error) {
+	_, testFile, _, _ := runtime.Caller(0)
+	dir, err1 := filepath.Abs(filepath.Dir(testFile))
+	if err1 != nil {
+		log.Fatal(err1)
+	}
+	filename, _ := filepath.Abs(dir + "/mocks/raft_state.json")
+	return ioutil.ReadFile(filename)
+}
+
+func loadTestRaftPersistentState() *raftconfig.RaftPersistentState {
+	psFile, _ := loadTestRaftPersistentStorageFile()
+	cfg := &raftconfig.RaftPersistentState{}
+
+	err := json.Unmarshal(psFile, cfg)
+	if err != nil {
+		panic(err)
+	}
+	return cfg
 }
 
 func loadTestRaftConfig() *raftconfig.Config {

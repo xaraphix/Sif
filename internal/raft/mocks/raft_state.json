@@ -1,0 +1,14 @@
+{
+  "currentTerm": 91919,
+  "commitLength": 111111,
+  "VotedFor": 2,
+  "logs": [
+    {
+      "term": 0,
+      "message": {
+        "x": 1,
+        "y": 2
+      }
+    }
+  ]
+}

@@ -67,6 +67,11 @@ type RaftConfig interface {
 	Peers() []Peer
 	InstanceDirPath() string
 	Version() string
+	LogFilePath() string
+	Logs() *[]Log
+	CurrentTerm() int32
+	CommitLength() int32
+	VotedFor() int32
 }
 
 //go:generate mockgen -destination=mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
@@ -105,8 +110,8 @@ type RaftLog interface {
 }
 
 type Log struct {
-	term    int32
-	message map[interface{}]interface{}
+	Term    int32                  `json:"term"`
+	Message map[string]interface{} `json:"message"`
 }
 
 type Heart struct {
@@ -173,6 +178,9 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.Config.LoadConfig(rn)
 	rn.CurrentRole = getCurrentRole(rn)
 	rn.CurrentTerm = getCurrentTerm(rn)
+	rn.Logs = *getLogs(rn)
+	rn.VotedFor = getVotedFor(rn)
+	rn.CommitLength = getCommitLength(rn)
 	rn.Peers = rn.Config.Peers()
 	rn.VotesReceived = nil
 	rn.ElectionInProgress = false
@@ -199,17 +207,37 @@ type VoteResponse struct {
 }
 
 func getCurrentRole(rn *RaftNode) string {
-	//TODO
-	// check if node crashed
-	// 			check if it was a leader
-
 	return FOLLOWER
 }
 
 func getCurrentTerm(rn *RaftNode) int32 {
-	//TODO
-	// check if node crashed
-	// 			check if it was a leader
+	if rn.Config.DidNodeCrash(rn) {
+		return rn.Config.CurrentTerm()
+	} else {
+		return 0
+	}
+}
 
-	return 0
+func getLogs(rn *RaftNode) *[]Log {
+	if rn.Config.DidNodeCrash(rn) {
+		return rn.Config.Logs()
+	} else {
+		return &[]Log{}
+	}
+}
+
+func getVotedFor(rn *RaftNode) int32 {
+	if rn.Config.DidNodeCrash(rn) {
+		return rn.Config.VotedFor()
+	} else {
+		return 0
+	}
+}
+
+func getCommitLength(rn *RaftNode) int32 {
+	if rn.Config.DidNodeCrash(rn) {
+		return rn.Config.CommitLength()
+	} else {
+		return 0
+	}
 }
