@@ -33,7 +33,7 @@ func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
 func startBeating(rn *raft.RaftNode) {
 	rn.IsHeartBeating = true
 	for {
-		if rn.IsHeartBeating == false {
+		if rn.IsHeartBeating == false && rn.CurrentRole == raft.LEADER {
 			break
 		} else {
 			go func(n *raft.RaftNode) {
