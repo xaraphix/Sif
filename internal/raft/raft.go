@@ -85,7 +85,7 @@ type RaftMonitor interface {
 //go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
 type RaftElection interface {
 	StartElection(*RaftNode)
-	RequestVotes(raftnode *RaftNode, electionChannel chan ElectionUpdates)
+	RequestVotes(raftnode *RaftNode, electionOvertimeChannel <-chan ElectionUpdates)
 	StopElection(*RaftNode)
 	GenerateVoteRequest(*RaftNode) VoteRequest
 }
@@ -124,12 +124,12 @@ type Monitor struct {
 	Stopped         bool
 	Started         bool
 }
- 
+
 type VoteRequest struct {
-	NodeId int32
+	NodeId      int32
 	CurrentTerm int32
-	LogLength int32
-	LastTerm int32
+	LogLength   int32
+	LastTerm    int32
 }
 
 type VoteResponse struct {
@@ -140,6 +140,7 @@ type VoteResponse struct {
 
 type ElectionUpdates struct {
 	ElectionOvertimed bool
+	ElectionStopped   bool
 }
 
 type Peer struct {
