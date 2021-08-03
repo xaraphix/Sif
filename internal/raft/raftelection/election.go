@@ -100,8 +100,28 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteReque
 	return raft.VoteRequest{}
 }
 
+
 func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse, electionUpdates *raft.ElectionUpdates) {
-	rn.VotesReceived = append(rn.VotesReceived, v)
+	if voteResponseConsidersElectionValid(rn, v) {
+		concludeFromVoteIfPossible(rn, v, electionUpdates)
+	} else {
+		becomeAFollowerAccordingToPeersTerm(rn, v)
+	}
+}
+
+
+func voteResponseConsidersElectionValid(rn *raft.RaftNode, v raft.VoteResponse) bool {
+	if rn.CurrentRole == raft.CANDIDATE &&
+	rn.CurrentTerm == v.CurrentTerm &&
+	v.VoteGranted {
+		return true
+	} else {
+		return false
+	}
+}
+
+
+func concludeFromVoteIfPossible(rn *raft.RaftNode, v raft.VoteResponse, electionUpdates *raft.ElectionUpdates){
 	majorityCount := len(rn.Peers) / 2
 	votesInFavor := 0
 
@@ -114,16 +134,33 @@ func concludeElectionIfPossible(rn *raft.RaftNode, v raft.VoteResponse, election
 	// if majority has voted against, game over
 	if len(rn.VotesReceived)-votesInFavor > majorityCount &&
 		electionUpdates.ElectionOvertimed == false {
-		rn.Mu.Unlock()
-		rn.CurrentRole = raft.FOLLOWER
-		rn.Mu.Lock()
+			becomeAFollower(rn)
 	}
 
 	// if majority has voted in favor, game won
 	if votesInFavor >= majorityCount &&
 		electionUpdates.ElectionOvertimed == false {
+			becomeTheLeader(rn)
+	}
+}
+
+func becomeAFollower(rn *raft.RaftNode) {
+		rn.Mu.Unlock()
+		rn.CurrentRole = raft.FOLLOWER
+		rn.Mu.Lock()
+}
+
+func becomeTheLeader(rn *raft.RaftNode) {
 		rn.Mu.Unlock()
 		rn.CurrentRole = raft.LEADER
 		rn.Mu.Lock()
-	}
+}
+
+func becomeAFollowerAccordingToPeersTerm(rn *raft.RaftNode, v raft.VoteResponse) {
+	rn.Mu.Unlock()
+	rn.CurrentTerm = v.CurrentTerm
+	rn.CurrentRole = raft.FOLLOWER
+	rn.VotedFor = 0
+	rn.Mu.Lock()
+	//cancel the election
 }

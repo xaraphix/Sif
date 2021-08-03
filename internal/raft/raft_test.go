@@ -287,6 +287,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 					FIt("Should become a follower", func() {
 						setupVars = setupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.node
+
+						//make sure that election starts
+						//make sure that votes are recieved
+
 						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 					})
 
