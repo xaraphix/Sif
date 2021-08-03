@@ -19,12 +19,37 @@ type LeaderHeart struct {
 }
 
 func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
-	rn.IsHeartBeating = true
+
+	go startBeating(rn)
 	go func(n *raft.RaftNode) {
 		for _, peer := range rn.Peers {
-			rn.RPCAdapter.SendHeartbeatToPeer(peer)
+			rn.SentLength[peer.Id] = int32(len(rn.Logs))
+			rn.AckedLength[peer.Id] = 0
+			rn.LogMgr.ReplicateLog(rn, peer)
 		}
 	}(rn)
+}
+
+func startBeating(rn *raft.RaftNode) {
+	rn.IsHeartBeating = true
+	for {
+		if rn.IsHeartBeating == false {
+			break
+		} else {
+			go func(n *raft.RaftNode) {
+				for _, peer := range rn.Peers {
+					rn.LogMgr.ReplicateLog(rn, peer)
+				}
+			}(rn)
+
+			rn.Heart.Sleep(rn)
+		}
+	}
+
+}
+
+func (l *LeaderHeart) Sleep(rn *raft.RaftNode) {
+	time.Sleep(l.DurationBetweenBeats)
 }
 
 func (l *LeaderHeart) StopBeating(rn *raft.RaftNode) {

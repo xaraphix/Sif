@@ -93,13 +93,14 @@ type RaftElection interface {
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
 	RequestVoteFromPeer(peer Peer, voteRequest VoteRequest) VoteResponse
-	SendHeartbeatToPeer(peer Peer)
+	ReplicateLog(raftNode *RaftNode, peer Peer)
 }
 
 //go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
 type RaftHeart interface {
 	StopBeating(*RaftNode)
 	StartBeating(*RaftNode)
+	Sleep(*RaftNode)
 	IsBeating(*RaftNode) bool
 }
 
@@ -107,6 +108,7 @@ type RaftHeart interface {
 type RaftLog interface {
 	GetLogs() []Log
 	GetLog(idx int32) Log
+	ReplicateLog(raftNode *RaftNode, peer Peer)
 }
 
 type Log struct {
@@ -134,7 +136,7 @@ type VoteRequest struct {
 
 type VoteResponse struct {
 	PeerId      int32
-	CurrentTerm int32
+	Term int32
 	VoteGranted bool
 }
 
