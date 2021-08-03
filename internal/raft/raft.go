@@ -124,6 +124,19 @@ type Monitor struct {
 	Stopped         bool
 	Started         bool
 }
+ 
+type VoteRequest struct {
+	NodeId int32
+	CurrentTerm int32
+	LogLength int32
+	LastTerm int32
+}
+
+type VoteResponse struct {
+	PeerId      int32
+	CurrentTerm int32
+	VoteGranted bool
+}
 
 type ElectionUpdates struct {
 	ElectionOvertimed bool
@@ -197,15 +210,6 @@ func (m *Monitor) GetLastResetAt() time.Time {
 func (m *Monitor) Sleep() {
 	time.Sleep(m.TimeoutDuration)
 }
-
-type VoteRequest struct {
-}
-
-type VoteResponse struct {
-	PeerId      int32
-	VoteGranted bool
-}
-
 func getCurrentRole(rn *RaftNode) string {
 	return FOLLOWER
 }
