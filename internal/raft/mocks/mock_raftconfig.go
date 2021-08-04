@@ -34,6 +34,34 @@ func (m *MockRaftConfig) EXPECT() *MockRaftConfigMockRecorder {
 	return m.recorder
 }
 
+// CommitLength mocks base method.
+func (m *MockRaftConfig) CommitLength() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CommitLength")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// CommitLength indicates an expected call of CommitLength.
+func (mr *MockRaftConfigMockRecorder) CommitLength() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CommitLength", reflect.TypeOf((*MockRaftConfig)(nil).CommitLength))
+}
+
+// CurrentTerm mocks base method.
+func (m *MockRaftConfig) CurrentTerm() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "CurrentTerm")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// CurrentTerm indicates an expected call of CurrentTerm.
+func (mr *MockRaftConfigMockRecorder) CurrentTerm() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CurrentTerm", reflect.TypeOf((*MockRaftConfig)(nil).CurrentTerm))
+}
+
 // DidNodeCrash mocks base method.
 func (m *MockRaftConfig) DidNodeCrash(arg0 *raft.RaftNode) bool {
 	m.ctrl.T.Helper()
@@ -102,6 +130,34 @@ func (mr *MockRaftConfigMockRecorder) LoadConfig(arg0 interface{}) *gomock.Call 
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LoadConfig", reflect.TypeOf((*MockRaftConfig)(nil).LoadConfig), arg0)
 }
 
+// LogFilePath mocks base method.
+func (m *MockRaftConfig) LogFilePath() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "LogFilePath")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// LogFilePath indicates an expected call of LogFilePath.
+func (mr *MockRaftConfigMockRecorder) LogFilePath() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "LogFilePath", reflect.TypeOf((*MockRaftConfig)(nil).LogFilePath))
+}
+
+// Logs mocks base method.
+func (m *MockRaftConfig) Logs() *[]raft.Log {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Logs")
+	ret0, _ := ret[0].(*[]raft.Log)
+	return ret0
+}
+
+// Logs indicates an expected call of Logs.
+func (mr *MockRaftConfigMockRecorder) Logs() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Logs", reflect.TypeOf((*MockRaftConfig)(nil).Logs))
+}
+
 // Peers mocks base method.
 func (m *MockRaftConfig) Peers() []raft.Peer {
 	m.ctrl.T.Helper()
@@ -128,4 +184,18 @@ func (m *MockRaftConfig) Version() string {
 func (mr *MockRaftConfigMockRecorder) Version() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Version", reflect.TypeOf((*MockRaftConfig)(nil).Version))
+}
+
+// VotedFor mocks base method.
+func (m *MockRaftConfig) VotedFor() int32 {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "VotedFor")
+	ret0, _ := ret[0].(int32)
+	return ret0
+}
+
+// VotedFor indicates an expected call of VotedFor.
+func (mr *MockRaftConfigMockRecorder) VotedFor() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "VotedFor", reflect.TypeOf((*MockRaftConfig)(nil).VotedFor))
 }

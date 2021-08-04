@@ -121,3 +121,43 @@ func becomeAFollowerAccordingToPeersTerm(
 	rn.ElectionInProgress = false
 	rn.Mu.Lock()
 }
+
+func getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest raft.VoteRequest) raft.VoteResponse {
+	voteResponse := raft.VoteResponse{}
+	logOk := isCandidateLogOK(rn, voteRequest)
+	termOK := isCandidateTermOK(rn, voteRequest)
+
+	if logOk && termOK {
+		rn.CurrentTerm = voteRequest.CurrentTerm
+		rn.CurrentRole = raft.FOLLOWER
+		rn.VotedFor = voteRequest.NodeId
+		voteResponse.PeerId = rn.Id
+		voteResponse.Term = rn.CurrentTerm
+		voteResponse.VoteGranted = true
+	} else {
+		voteResponse.PeerId = rn.Id
+		voteResponse.Term = rn.CurrentTerm
+		voteResponse.VoteGranted = false
+	}
+
+	return voteResponse
+}
+
+func isCandidateLogOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
+
+	myLogTerm := rn.LogMgr.GetLog(int32(len(rn.Logs) - 1)).Term
+	logOk := vr.LastTerm > myLogTerm ||
+		(vr.LastTerm == myLogTerm && vr.LogLength >= int32(len(rn.Logs)))
+	return logOk
+}
+
+func isCandidateTermOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
+	termOk := vr.CurrentTerm > rn.CurrentTerm ||
+		(vr.CurrentTerm == rn.CurrentTerm && hasCandidateBeenVotedPreviously(rn, vr))
+
+	return termOk
+}
+
+func hasCandidateBeenVotedPreviously(rn *raft.RaftNode, voteRequest raft.VoteRequest) bool {
+	return false
+}

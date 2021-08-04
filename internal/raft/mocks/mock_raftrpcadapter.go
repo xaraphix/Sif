@@ -34,6 +34,18 @@ func (m *MockRaftRPCAdapter) EXPECT() *MockRaftRPCAdapterMockRecorder {
 	return m.recorder
 }
 
+// ReplicateLog mocks base method.
+func (m *MockRaftRPCAdapter) ReplicateLog(arg0 *raft.RaftNode, arg1 raft.Peer) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ReplicateLog", arg0, arg1)
+}
+
+// ReplicateLog indicates an expected call of ReplicateLog.
+func (mr *MockRaftRPCAdapterMockRecorder) ReplicateLog(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplicateLog", reflect.TypeOf((*MockRaftRPCAdapter)(nil).ReplicateLog), arg0, arg1)
+}
+
 // RequestVoteFromPeer mocks base method.
 func (m *MockRaftRPCAdapter) RequestVoteFromPeer(arg0 raft.Peer, arg1 raft.VoteRequest) raft.VoteResponse {
 	m.ctrl.T.Helper()
@@ -46,16 +58,4 @@ func (m *MockRaftRPCAdapter) RequestVoteFromPeer(arg0 raft.Peer, arg1 raft.VoteR
 func (mr *MockRaftRPCAdapterMockRecorder) RequestVoteFromPeer(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestVoteFromPeer", reflect.TypeOf((*MockRaftRPCAdapter)(nil).RequestVoteFromPeer), arg0, arg1)
-}
-
-// SendHeartbeatToPeer mocks base method.
-func (m *MockRaftRPCAdapter) SendHeartbeatToPeer(arg0 raft.Peer) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "SendHeartbeatToPeer", arg0)
-}
-
-// SendHeartbeatToPeer indicates an expected call of SendHeartbeatToPeer.
-func (mr *MockRaftRPCAdapterMockRecorder) SendHeartbeatToPeer(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SendHeartbeatToPeer", reflect.TypeOf((*MockRaftRPCAdapter)(nil).SendHeartbeatToPeer), arg0)
 }

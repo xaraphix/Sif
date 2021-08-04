@@ -36,9 +36,24 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	rn.Mu.Unlock()
 }
 
+func (em *ElectionManager) RequestVotes(
+	rn *raft.RaftNode,
+	electionChannel <-chan raft.ElectionUpdates) {
+
+	voteResponseChannel := make(chan raft.VoteResponse)
+	voteRequest := em.GenerateVoteRequest(rn)
+	requestVoteFromPeer(rn, voteRequest, voteResponseChannel)
+	concludeElection(rn, voteResponseChannel, electionChannel)
+}
+
+
+func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr raft.VoteRequest) raft.VoteResponse {
+ return	getVoteResponseForVoteRequest(rn, vr)
+}
+
 func (em *ElectionManager) restartElectionWhenItTimesOut(
 	rn *raft.RaftNode,
-	electionChannel chan<- raft.ElectionUpdates)	{
+	electionChannel chan<- raft.ElectionUpdates) {
 	eu := raft.ElectionUpdates{
 		ElectionStopped: false,
 	}
@@ -56,16 +71,6 @@ func (em *ElectionManager) restartElectionWhenItTimesOut(
 	close(electionChannel)
 }
 
-func (em *ElectionManager) RequestVotes(
-	rn *raft.RaftNode,
-	electionChannel <-chan raft.ElectionUpdates,){
-
-	voteResponseChannel := make(chan raft.VoteResponse)
-	voteRequest := em.GenerateVoteRequest(rn)
-	requestVoteFromPeer(rn, voteRequest, voteResponseChannel)
-	concludeElection(rn, voteResponseChannel, electionChannel)
-}
-
 func requestVoteFromPeer(
 	rn *raft.RaftNode,
 	vr raft.VoteRequest,
@@ -77,3 +82,4 @@ func requestVoteFromPeer(
 		}(peer, voteResponseChannel)
 	}
 }
+

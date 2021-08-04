@@ -61,3 +61,15 @@ func (mr *MockRaftLogMockRecorder) GetLogs() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLogs", reflect.TypeOf((*MockRaftLog)(nil).GetLogs))
 }
+
+// ReplicateLog mocks base method.
+func (m *MockRaftLog) ReplicateLog(arg0 *raft.RaftNode, arg1 raft.Peer) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "ReplicateLog", arg0, arg1)
+}
+
+// ReplicateLog indicates an expected call of ReplicateLog.
+func (mr *MockRaftLogMockRecorder) ReplicateLog(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplicateLog", reflect.TypeOf((*MockRaftLog)(nil).ReplicateLog), arg0, arg1)
+}

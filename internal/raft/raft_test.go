@@ -826,10 +826,10 @@ func setupMajorityVotesInFavor() MockSetupVars {
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().SendHeartbeatToPeer(testConfig.Peers()[0]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(gomock.Any(), testConfig.Peers()[0]).Do(func(interface{}) {
 		}).AnyTimes()
 
-		adapter.EXPECT().SendHeartbeatToPeer(testConfig.Peers()[1]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(gomock.Any(),testConfig.Peers()[1]).Do(func(interface{}) {
 		}).AnyTimes()
 
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
@@ -874,11 +874,11 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().SendHeartbeatToPeer(testConfig.Peers()[0]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(gomock.Any(),testConfig.Peers()[0]).Do(func(interface{}) {
 			(*sentHeartbeats)[int(testConfig.Peers()[0].Id)] = true
 		}).AnyTimes()
 
-		adapter.EXPECT().SendHeartbeatToPeer(testConfig.Peers()[1]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(gomock.Any(),testConfig.Peers()[1]).Do(func(interface{}) {
 			(*sentHeartbeats)[int(testConfig.Peers()[1].Id)] = true
 		}).AnyTimes()
 

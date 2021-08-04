@@ -48,8 +48,22 @@ func (mr *MockRaftElectionMockRecorder) GenerateVoteRequest(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateVoteRequest", reflect.TypeOf((*MockRaftElection)(nil).GenerateVoteRequest), arg0)
 }
 
+// GetResponseForVoteRequest mocks base method.
+func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 raft.VoteRequest) raft.VoteResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResponseForVoteRequest", arg0, arg1)
+	ret0, _ := ret[0].(raft.VoteResponse)
+	return ret0
+}
+
+// GetResponseForVoteRequest indicates an expected call of GetResponseForVoteRequest.
+func (mr *MockRaftElectionMockRecorder) GetResponseForVoteRequest(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResponseForVoteRequest", reflect.TypeOf((*MockRaftElection)(nil).GetResponseForVoteRequest), arg0, arg1)
+}
+
 // RequestVotes mocks base method.
-func (m *MockRaftElection) RequestVotes(arg0 *raft.RaftNode, arg1 chan raft.ElectionUpdates) {
+func (m *MockRaftElection) RequestVotes(arg0 *raft.RaftNode, arg1 <-chan raft.ElectionUpdates) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "RequestVotes", arg0, arg1)
 }
