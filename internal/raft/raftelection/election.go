@@ -47,10 +47,10 @@ func (em *ElectionManager) restartElectionWhenItTimesOut(
 	if rn.ElectionInProgress == true && eu.ElectionStopped == false {
 		//kill the Current Election
 		electionChannel <- raft.ElectionUpdates{ElectionOvertimed: true}
-		rn.Mu.Unlock()
 		rn.ElectionInProgress = false
 		rn.CurrentRole = raft.FOLLOWER
 		rn.VotesReceived = nil
+		rn.Mu.Unlock()
 		go em.StartElection(rn)
 	}
 	close(electionChannel)

@@ -2,11 +2,10 @@ package raftelection
 
 import "github.com/xaraphix/Sif/internal/raft"
 
-
 func concludeElection(
 	rn *raft.RaftNode,
 	voteResponseChannel chan raft.VoteResponse,
-	electionOvertimeChannel <-chan raft.ElectionUpdates){
+	electionOvertimeChannel <-chan raft.ElectionUpdates) {
 
 	counter := 1
 	electionUpdates := &raft.ElectionUpdates{ElectionOvertimed: false}
@@ -39,7 +38,12 @@ func (em *ElectionManager) StopElection(rn *raft.RaftNode) {
 }
 
 func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteRequest {
-	return raft.VoteRequest{}
+	return raft.VoteRequest{
+		NodeId:      rn.Id,
+		CurrentTerm: rn.CurrentTerm,
+		LogLength:   int32(len(rn.Logs)),
+		LastTerm:    rn.LogMgr.GetLog(int32(len(rn.Logs) - 1)).Term,
+	}
 }
 
 func concludeElectionIfPossible(
@@ -101,6 +105,7 @@ func becomeAFollower(rn *raft.RaftNode) {
 func becomeTheLeader(rn *raft.RaftNode) {
 	rn.Mu.Unlock()
 	rn.CurrentRole = raft.LEADER
+	rn.ElectionInProgress = false
 	rn.Mu.Lock()
 }
 
@@ -116,4 +121,3 @@ func becomeAFollowerAccordingToPeersTerm(
 	rn.ElectionInProgress = false
 	rn.Mu.Lock()
 }
-

@@ -1044,12 +1044,12 @@ func setupCandidateReceivesVoteResponseWithHigherTerm() MockSetupVars {
 		sentVoteRequests[testConfig.Peers()[0].Id] = voteRequest
 		sentVoteRequests[testConfig.Peers()[1].Id] = voteRequest
 		receivedVoteResponses[testConfig.Peers()[0].Id] = raft.VoteResponse{
-			CurrentTerm: 2,
+			Term: 2,
 			PeerId: testConfig.Peers()[0].Id,
 			VoteGranted: false,
 		}
 		receivedVoteResponses[testConfig.Peers()[0].Id] = raft.VoteResponse{
-			CurrentTerm: 0,
+			Term: 0,
 			PeerId: testConfig.Peers()[0].Id,
 			VoteGranted: true,
 		}

@@ -86,6 +86,7 @@ type RaftMonitor interface {
 type RaftElection interface {
 	StartElection(*RaftNode)
 	RequestVotes(raftnode *RaftNode, electionOvertimeChannel <-chan ElectionUpdates)
+	GetResponseForVoteRequest(raftnode *RaftNode) VoteResponse
 	StopElection(*RaftNode)
 	GenerateVoteRequest(*RaftNode) VoteRequest
 }
