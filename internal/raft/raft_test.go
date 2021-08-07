@@ -17,6 +17,7 @@ import (
 	"github.com/xaraphix/Sif/internal/raft/raftconfig"
 	"github.com/xaraphix/Sif/internal/raft/raftelection"
 	"github.com/xaraphix/Sif/internal/raft/raftfile"
+	"github.com/xaraphix/Sif/internal/raft/raftlog"
 	"gopkg.in/yaml.v2"
 )
 
@@ -256,11 +257,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 						}
 						Succeed()
 					})
+
 					XIt("Should cancel the election timer", func() {
 						Fail("Not Yet Implemented")
 					})
 
-					It("should replicate logs to all its peers", func() {
+					FIt("should replicate logs to all its peers", func() {
 
 						setupVars = setupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.node
@@ -284,7 +286,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				When("The candidate receives a vote response with a higher term than its current term", func() {
-					FIt("Should become a follower", func() {
+					It("Should become a follower", func() {
 						setupVars = setupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.node
 
@@ -294,7 +296,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 					})
 
-					It("Should Make its current term equal to the one in the voteResponse", func() {
+					XIt("Should Make its current term equal to the one in the voteResponse", func() {
 						setupVars = setupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.node
 						Expect(node.CurrentTerm).To(Equal(setupVars))
@@ -310,14 +312,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 			Context("Peers receiving vote requests", func() {
 				When("The candidate's log and term are both ok", func() {
 					XIt("Should vote yes", func() {
-
 						Fail("Not Yet Implemented")
 					})
 				})
 
 				When("The candidate's log and term are not ok", func() {
 					XIt("Should vote no", func() {
-
 						Fail("Not Yet Implemented")
 					})
 				})
@@ -504,12 +504,9 @@ func setupRaftNode(preNodeSetupCB func(
 
 	election = raftelection.ElctnMgr
 	heart = raftelection.LdrHrt
+	logMgr = &raftlog.LogMgr{}
 
 	if options.mockFile {
-		fileMgr = mockFile
-	}
-
-	if options.mockLog {
 		fileMgr = mockFile
 	}
 
@@ -643,7 +640,7 @@ func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
-		mockLog:        false,
+		mockLog:        true,
 		mockFile:       true,
 		mockRPCAdapter: true,
 	}
@@ -663,11 +660,13 @@ func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -682,6 +681,7 @@ func setupRaftNodeInitialization() MockSetupVars {
 		mockHeart:      false,
 		mockElection:   false,
 		mockFile:       true,
+		mockLog:        true,
 		mockRPCAdapter: true,
 	}
 
@@ -694,16 +694,19 @@ func setupRaftNodeInitialization() MockSetupVars {
 	) {
 		testConfig := loadTestRaftConfig()
 		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
+
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -717,6 +720,7 @@ func setupLeaderHeartbeatTimeout() MockSetupVars {
 	options := SetupOptions{
 		mockFile:       true,
 		mockHeart:      false,
+		mockLog:        true,
 		mockElection:   false,
 		mockRPCAdapter: true,
 	}
@@ -735,11 +739,13 @@ func setupLeaderHeartbeatTimeout() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -763,6 +769,7 @@ func setupMajorityVotesAgainst() MockSetupVars {
 		mockHeart:      false,
 		mockElection:   false,
 		mockFile:       true,
+		mockLog:        true,
 		mockRPCAdapter: true,
 	}
 
@@ -782,11 +789,13 @@ func setupMajorityVotesAgainst() MockSetupVars {
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -800,6 +809,7 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		mockHeart:      false,
 		mockElection:   false,
 		mockFile:       true,
+		mockLog:        true,
 		mockRPCAdapter: true,
 	}
 
@@ -818,11 +828,13 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: true,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -848,6 +860,7 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 		mockHeart:      false,
 		mockElection:   false,
 		mockFile:       true,
+		mockLog:        true,
 		mockRPCAdapter: true,
 	}
 
@@ -866,11 +879,13 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: true,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -899,6 +914,7 @@ func setupRestartElectionOnBeingIndecisive() MockSetupVars {
 		mockHeart:      false,
 		mockElection:   false,
 		mockFile:       true,
+		mockLog:        true,
 		mockRPCAdapter: true,
 	}
 
@@ -922,12 +938,14 @@ func setupRestartElectionOnBeingIndecisive() MockSetupVars {
 				return raft.VoteResponse{}
 			}).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		},
 		).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -941,6 +959,7 @@ func setupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
+		mockLog:        true,
 		mockFile:       true,
 		mockRPCAdapter: true,
 	}
@@ -960,11 +979,13 @@ func setupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -978,6 +999,7 @@ func setupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 		mockHeart:      false,
 		mockElection:   false,
 		mockFile:       true,
+		mockLog:        true,
 		mockRPCAdapter: true,
 	}
 
@@ -996,11 +1018,13 @@ func setupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
 			VoteGranted: false,
+			Term: 1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
@@ -1014,6 +1038,7 @@ func setupCandidateReceivesVoteResponseWithHigherTerm() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
+		mockLog:        true,
 		mockFile:       true,
 		mockRPCAdapter: true,
 	}

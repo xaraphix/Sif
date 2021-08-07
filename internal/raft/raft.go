@@ -108,7 +108,7 @@ type RaftHeart interface {
 //go:generate mockgen -destination=mocks/mock_raftlog.go -package=mocks . RaftLog
 type RaftLog interface {
 	GetLogs() []Log
-	GetLog(idx int32) Log
+	GetLog(rn *RaftNode, idx int32) Log
 	ReplicateLog(raftNode *RaftNode, peer Peer)
 }
 
@@ -199,6 +199,8 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.VotedFor = getVotedFor(rn)
 	rn.CommitLength = getCommitLength(rn)
 	rn.Peers = rn.Config.Peers()
+	rn.SentLength = map[int32]int32{}
+	rn.AckedLength = map[int32]int32{}
 	rn.VotesReceived = nil
 	rn.ElectionInProgress = false
 }

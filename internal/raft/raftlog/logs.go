@@ -10,7 +10,7 @@ func (l *LogMgr) GetLogs() []raft.Log {
 	return nil
 }
 
-func (l *LogMgr) GetLog(idx int32) raft.Log {
+func (l *LogMgr) GetLog(rn *raft.RaftNode, idx int32) raft.Log {
 	return raft.Log{}
 }
 

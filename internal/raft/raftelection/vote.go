@@ -42,7 +42,7 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteReque
 		NodeId:      rn.Id,
 		CurrentTerm: rn.CurrentTerm,
 		LogLength:   int32(len(rn.Logs)),
-		LastTerm:    rn.LogMgr.GetLog(int32(len(rn.Logs) - 1)).Term,
+		LastTerm:    rn.LogMgr.GetLog(rn, int32(len(rn.Logs) - 1)).Term,
 	}
 }
 
@@ -52,6 +52,7 @@ func concludeElectionIfPossible(
 	electionUpdates *raft.ElectionUpdates) {
 
 	if voteResponseConsidersElectionValid(rn, v) {
+		rn.VotesReceived = append(rn.VotesReceived, v)
 		concludeFromVoteIfPossible(rn, v, electionUpdates)
 	} else if v.Term > rn.CurrentTerm {
 		becomeAFollowerAccordingToPeersTerm(rn, v, electionUpdates)
@@ -60,8 +61,7 @@ func concludeElectionIfPossible(
 
 func voteResponseConsidersElectionValid(rn *raft.RaftNode, v raft.VoteResponse) bool {
 	if rn.CurrentRole == raft.CANDIDATE &&
-		rn.CurrentTerm == v.Term &&
-		v.VoteGranted {
+		rn.CurrentTerm == v.Term {
 		return true
 	} else {
 		return false
@@ -145,7 +145,7 @@ func getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest raft.VoteReque
 
 func isCandidateLogOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
 
-	myLogTerm := rn.LogMgr.GetLog(int32(len(rn.Logs) - 1)).Term
+	myLogTerm := rn.LogMgr.GetLog(rn, int32(len(rn.Logs) - 1)).Term
 	logOk := vr.LastTerm > myLogTerm ||
 		(vr.LastTerm == myLogTerm && vr.LogLength >= int32(len(rn.Logs)))
 	return logOk

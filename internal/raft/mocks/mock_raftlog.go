@@ -35,17 +35,17 @@ func (m *MockRaftLog) EXPECT() *MockRaftLogMockRecorder {
 }
 
 // GetLog mocks base method.
-func (m *MockRaftLog) GetLog(arg0 int32) raft.Log {
+func (m *MockRaftLog) GetLog(arg0 *raft.RaftNode, arg1 int32) raft.Log {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetLog", arg0)
+	ret := m.ctrl.Call(m, "GetLog", arg0, arg1)
 	ret0, _ := ret[0].(raft.Log)
 	return ret0
 }
 
 // GetLog indicates an expected call of GetLog.
-func (mr *MockRaftLogMockRecorder) GetLog(arg0 interface{}) *gomock.Call {
+func (mr *MockRaftLogMockRecorder) GetLog(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLog", reflect.TypeOf((*MockRaftLog)(nil).GetLog), arg0)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLog", reflect.TypeOf((*MockRaftLog)(nil).GetLog), arg0, arg1)
 }
 
 // GetLogs mocks base method.
