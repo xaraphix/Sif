@@ -84,8 +84,10 @@ type RaftMonitor interface {
 
 //go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
 type RaftElection interface {
+	HasElectionTimerStarted() bool
+	HasElectionTimerStopped() bool
 	StartElection(*RaftNode)
-	RequestVotes(raftnode *RaftNode, electionOvertimeChannel <-chan ElectionUpdates)
+	RequestVotes(raftnode *RaftNode, electionOvertimeChannel chan ElectionUpdates)
 	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest VoteRequest) VoteResponse
 	StopElection(*RaftNode)
 	GenerateVoteRequest(*RaftNode) VoteRequest
@@ -94,7 +96,7 @@ type RaftElection interface {
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
 	RequestVoteFromPeer(peer Peer, voteRequest VoteRequest) VoteResponse
-	ReplicateLog(raftNode *RaftNode, peer Peer)
+	ReplicateLog(peer Peer, replicateLogsRequest ReplicateLogRequest)
 }
 
 //go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
@@ -137,18 +139,29 @@ type VoteRequest struct {
 
 type VoteResponse struct {
 	PeerId      int32
-	Term int32
+	Term        int32
 	VoteGranted bool
 }
 
 type ElectionUpdates struct {
-	ElectionOvertimed bool
-	ElectionStopped   bool
+	ElectionOvertimed    bool
+	ElectionStopped      bool
+	ElectionStarted      bool
+	ElectionTimerStarted bool
 }
 
 type Peer struct {
 	Id      int32  `yaml:"id"`
 	Address string `yaml:"address"`
+}
+
+type ReplicateLogRequest struct {
+	LeaderId     int32
+	CurrentTerm  int32
+	SentLength   int32
+	PrevLogTerm  int32
+	CommitLength int32
+	Entries      *[]Log
 }
 
 func NewRaftNode(

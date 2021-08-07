@@ -25,7 +25,6 @@ var FileMgr raftfile.RaftFileMgr = raftfile.RaftFileMgr{}
 var _ = Describe("Sif Raft Consensus", func() {
 
 	Context("RaftNode initialization", func() {
-
 		node := &raft.RaftNode{}
 		var persistentState *raftconfig.RaftPersistentState
 
@@ -119,7 +118,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 			var setupVars MockSetupVars
 
 			When("Raft Node doesn't receive leader heartbeat for the leader heartbeat duration", func() {
-
 				BeforeEach(func() {
 					setupVars = setupLeaderHeartbeatTimeout()
 					node = setupVars.node
@@ -159,7 +157,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 		})
 
 		Context("Candidate starts an election", func() {
-
 			Context("Raft Node Election Overtimes", func() {
 				node := &raft.RaftNode{}
 				term_0 := int32(0)
@@ -258,11 +255,32 @@ var _ = Describe("Sif Raft Consensus", func() {
 						Succeed()
 					})
 
-					XIt("Should cancel the election timer", func() {
-						Fail("Not Yet Implemented")
+					It("Should cancel the election timer", func() {
+						setupVars = setupLeaderSendsHeartbeatsOnElectionConclusion()
+						node = setupVars.node
+						sentHeartbeats = setupVars.sentHeartbeats
+
+						loopStartedAt := time.Now()
+						for {
+							if setupVars.node.ElectionMgr.HasElectionTimerStarted() == true {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
+
+						for {
+							if setupVars.node.ElectionMgr.HasElectionTimerStopped() == true {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
 					})
 
-					FIt("should replicate logs to all its peers", func() {
+					It("should replicate logs to all its peers", func() {
 
 						setupVars = setupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.node
@@ -271,9 +289,18 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 						loopStartedAt := time.Now()
 						for {
-							if setupVars.node.IsHeartBeating == true {
+							if setupVars.node.ElectionMgr.HasElectionTimerStarted() == true {
 								break
 							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
+
+						for {
+							if setupVars.node.ElectionMgr.HasElectionTimerStopped() == true {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
 								Fail("Took too much time to be successful")
 								break
 							}
@@ -838,10 +865,10 @@ func setupMajorityVotesInFavor() MockSetupVars {
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().ReplicateLog(gomock.Any(), testConfig.Peers()[0]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(interface{}, interface{}) {
 		}).AnyTimes()
 
-		adapter.EXPECT().ReplicateLog(gomock.Any(),testConfig.Peers()[1]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(testConfig.Peers()[1], gomock.Any()).Do(func(interface{}, interface{}) {
 		}).AnyTimes()
 
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
@@ -889,11 +916,11 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().ReplicateLog(gomock.Any(),testConfig.Peers()[0]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(interface{}, interface{}) {
 			(*sentHeartbeats)[int(testConfig.Peers()[0].Id)] = true
 		}).AnyTimes()
 
-		adapter.EXPECT().ReplicateLog(gomock.Any(),testConfig.Peers()[1]).Do(func(interface{}) {
+		adapter.EXPECT().ReplicateLog(gomock.Any(), gomock.Any()).Do(func(interface{}, interface{}) {
 			(*sentHeartbeats)[int(testConfig.Peers()[1].Id)] = true
 		}).AnyTimes()
 

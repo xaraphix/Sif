@@ -35,7 +35,7 @@ func (m *MockRaftRPCAdapter) EXPECT() *MockRaftRPCAdapterMockRecorder {
 }
 
 // ReplicateLog mocks base method.
-func (m *MockRaftRPCAdapter) ReplicateLog(arg0 *raft.RaftNode, arg1 raft.Peer) {
+func (m *MockRaftRPCAdapter) ReplicateLog(arg0 raft.Peer, arg1 raft.ReplicateLogRequest) {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "ReplicateLog", arg0, arg1)
 }

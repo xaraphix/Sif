@@ -20,7 +20,6 @@ type LeaderHeart struct {
 
 func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
 
-	go startBeating(rn)
 	go func(n *raft.RaftNode) {
 		for _, peer := range rn.Peers {
 			rn.SentLength[peer.Id] = int32(len(rn.Logs))
@@ -28,6 +27,7 @@ func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
 			rn.LogMgr.ReplicateLog(rn, peer)
 		}
 	}(rn)
+	go startBeating(rn)
 }
 
 func startBeating(rn *raft.RaftNode) {
@@ -45,7 +45,6 @@ func startBeating(rn *raft.RaftNode) {
 			rn.Heart.Sleep(rn)
 		}
 	}
-
 }
 
 func (l *LeaderHeart) Sleep(rn *raft.RaftNode) {

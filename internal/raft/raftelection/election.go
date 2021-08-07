@@ -10,11 +10,21 @@ import (
 var (
 	ElctnMgr raft.RaftElection = &ElectionManager{
 		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
+		ElectionTimerOff: true,
 	}
 )
 
 type ElectionManager struct {
 	ElectionTimeoutDuration time.Duration
+	ElectionTimerOff bool
+}
+
+func (el *ElectionManager) HasElectionTimerStarted() bool {
+	return !el.ElectionTimerOff
+}
+
+func (el *ElectionManager) HasElectionTimerStopped() bool {
+	return el.ElectionTimerOff
 }
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
@@ -27,7 +37,6 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	rn.CurrentTerm = rn.CurrentTerm + 1
 	rn.VotesReceived = nil
 
-	go em.restartElectionWhenItTimesOut(rn, electionChannel)
 	rn.ElectionMgr.RequestVotes(rn, electionChannel)
 	rn.ElectionInProgress = false
 
@@ -38,12 +47,21 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 
 func (em *ElectionManager) RequestVotes(
 	rn *raft.RaftNode,
-	electionChannel <-chan raft.ElectionUpdates) {
+	electionChannel chan raft.ElectionUpdates) {
 
 	voteResponseChannel := make(chan raft.VoteResponse)
 	voteRequest := em.GenerateVoteRequest(rn)
 	requestVoteFromPeer(rn, voteRequest, voteResponseChannel)
+	go em.setupElectionTimer(rn, electionChannel)
+	startTimer(electionChannel)
 	concludeElection(rn, voteResponseChannel, electionChannel)
+}
+
+func startTimer(ec chan raft.ElectionUpdates) {
+	eu := <- ec
+	if !eu.ElectionTimerStarted {
+		panic("Election Timer not started") 
+	}
 }
 
 
@@ -51,10 +69,17 @@ func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr raft.
  return	getVoteResponseForVoteRequest(rn, vr)
 }
 
-func (em *ElectionManager) restartElectionWhenItTimesOut(
+func (em *ElectionManager) setupElectionTimer(
 	rn *raft.RaftNode,
-	electionChannel chan<- raft.ElectionUpdates) {
+	electionChannel chan raft.ElectionUpdates) {
 	eu := raft.ElectionUpdates{
+		ElectionTimerStarted: true,
+	}
+
+	electionChannel <- eu
+	em.ElectionTimerOff = false
+
+	eu = raft.ElectionUpdates{
 		ElectionStopped: false,
 	}
 
@@ -68,6 +93,8 @@ func (em *ElectionManager) restartElectionWhenItTimesOut(
 		rn.Mu.Unlock()
 		go em.StartElection(rn)
 	}
+
+	em.ElectionTimerOff = true
 	close(electionChannel)
 }
 

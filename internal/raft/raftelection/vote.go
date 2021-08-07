@@ -99,6 +99,7 @@ func becomeAFollower(rn *raft.RaftNode) {
 	rn.Mu.Unlock()
 	rn.CurrentRole = raft.FOLLOWER
 	rn.ElectionInProgress = false
+	rn.IsHeartBeating = false 
 	rn.Mu.Lock()
 }
 
@@ -119,6 +120,7 @@ func becomeAFollowerAccordingToPeersTerm(
 	rn.CurrentRole = raft.FOLLOWER
 	rn.VotedFor = 0
 	rn.ElectionInProgress = false
+	rn.IsHeartBeating = false
 	rn.Mu.Lock()
 }
 
