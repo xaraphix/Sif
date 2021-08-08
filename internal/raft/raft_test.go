@@ -256,7 +256,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 							if setupVars.node.ElectionMgr.HasElectionTimerStarted() == true &&
 							setupVars.node.ElectionInProgress {
 								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+							} else if time.Since(loopStartedAt) > time.Millisecond*500 {
 								Fail("Took too much time to be successful")
 								break
 							}
@@ -272,6 +272,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 							}
 						}
 
+						loopStartedAt = time.Now()
 						for {
 							if setupVars.node.ElectionMgr.HasElectionTimerStopped() == true {
 								break

@@ -2,98 +2,12 @@ package raftelection
 
 import "github.com/xaraphix/Sif/internal/raft"
 
-func concludeElection(
-	rn *raft.RaftNode,
-	voteResponseChannel chan raft.VoteResponse,
-	electionOvertimeChannel chan raft.ElectionUpdates) {
-
-	counter := 1
-	electionUpdates := &raft.ElectionUpdates{ElectionOvertimed: false}
-
-	go func(ec <-chan raft.ElectionUpdates) {
-		updates := <-ec
-		electionUpdates.ElectionOvertimed = updates.ElectionOvertimed
-	}(electionOvertimeChannel)
-
-	for response := range voteResponseChannel {
-		if electionUpdates.ElectionOvertimed == false && 
-		rn.ElectionInProgress == true && rn.CurrentRole == raft.CANDIDATE {
-			concludeElectionIfPossible(rn, response, electionUpdates)
-			if counter == len(rn.Peers) {
-				break
-			}
-			counter = counter + 1
-		} else {
-			rn.VotesReceived = nil
-		}
-	}
-
-	eu := raft.ElectionUpdates {
-		ElectionCompleted: true,
-	}
-	electionOvertimeChannel <- eu 
-	close(voteResponseChannel)
-}
-
-func (em *ElectionManager) StopElection(rn *raft.RaftNode) {
-	rn.ElectionInProgress = false
-}
-
 func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteRequest {
 	return raft.VoteRequest{
 		NodeId:      rn.Id,
 		CurrentTerm: rn.CurrentTerm,
 		LogLength:   int32(len(rn.Logs)),
 		LastTerm:    rn.LogMgr.GetLog(rn, int32(len(rn.Logs) - 1)).Term,
-	}
-}
-
-func concludeElectionIfPossible(
-	rn *raft.RaftNode,
-	v raft.VoteResponse,
-	electionUpdates *raft.ElectionUpdates) {
-
-	if voteResponseConsidersElectionValid(rn, v) {
-		rn.VotesReceived = append(rn.VotesReceived, v)
-		concludeFromVoteIfPossible(rn, v, electionUpdates)
-	} else if v.Term > rn.CurrentTerm {
-		becomeAFollowerAccordingToPeersTerm(rn, v, electionUpdates)
-	}
-}
-
-func voteResponseConsidersElectionValid(rn *raft.RaftNode, v raft.VoteResponse) bool {
-	if rn.CurrentRole == raft.CANDIDATE &&
-		rn.CurrentTerm == v.Term {
-		return true
-	} else {
-		return false
-	}
-}
-
-func concludeFromVoteIfPossible(
-	rn *raft.RaftNode,
-	v raft.VoteResponse,
-	electionUpdates *raft.ElectionUpdates) {
-
-	majorityCount := len(rn.Peers) / 2
-	votesInFavor := 0
-
-	for _, vr := range rn.VotesReceived {
-		if vr.VoteGranted {
-			votesInFavor = votesInFavor + 1
-		}
-	}
-
-	// if majority has voted against, game over
-	if len(rn.VotesReceived)-votesInFavor > majorityCount &&
-		electionUpdates.ElectionOvertimed == false {
-		// becomeAFollower(rn)
-	}
-
-	// if majority has voted in favor, game won
-	if votesInFavor >= majorityCount &&
-		electionUpdates.ElectionOvertimed == false {
-		// becomeTheLeader(rn)
 	}
 }
 
@@ -149,3 +63,84 @@ func isCandidateTermOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
 func hasCandidateBeenVotedPreviously(rn *raft.RaftNode, voteRequest raft.VoteRequest) bool {
 	return false
 }
+
+
+func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
+
+	em.followerAccordingToPeer = make(chan raft.VoteResponse)
+	em.leader = make(chan bool)
+	em.follower = make(chan bool)
+
+	go func() {
+		for {
+			select {
+			case <-em.conclusionDone:
+				break
+			default:
+				votes := []raft.VoteResponse{}
+				for vr := range em.votesResponse {
+					if em.VotesReceived == nil {
+						em.VotesReceived = []raft.VoteResponse{}
+					}
+
+					em.VotesReceived = append(em.VotesReceived, vr)
+					em.concludeFromReceivedVote(rn, votes, vr)
+				}
+			}
+		}
+	}()
+}
+
+func (em *ElectionManager) concludeFromReceivedVote(rn *raft.RaftNode, votes []raft.VoteResponse, vr raft.VoteResponse) {
+	votes = append(votes, vr)
+	valid := isElectionValid(rn, vr)
+	if !valid && isPeerTermHigher(rn, vr) {
+		em.followerAccordingToPeer <- vr
+	} else if becomeLeader, becomeFollower := whatDoesTheMajorityWant(len(rn.Peers), votes, vr); true {
+		if becomeLeader {
+			em.leader <- true
+		} else if becomeFollower {
+			em.follower <- true
+		}
+	}
+
+}
+
+func isPeerTermHigher(rn *raft.RaftNode, vr raft.VoteResponse) bool {
+	return rn.CurrentTerm < vr.Term
+}
+
+func isElectionValid(rn *raft.RaftNode, vr raft.VoteResponse) bool {
+	if rn.CurrentRole == raft.CANDIDATE &&
+		rn.CurrentTerm == vr.Term {
+		return true
+	} else {
+		return false
+	}
+}
+
+func whatDoesTheMajorityWant(numOfPeers int, votesReceived []raft.VoteResponse, vr raft.VoteResponse) (bool, bool) {
+
+	majorityCount := numOfPeers / 2
+	votesInFavor := 0
+	leader, follower := false, false
+	for _, vr := range votesReceived {
+		if vr.VoteGranted {
+			votesInFavor = votesInFavor + 1
+		}
+	}
+
+	// if majority has voted against, game over
+	if len(votesReceived)-votesInFavor > majorityCount {
+		follower = true
+	}
+
+	// if majority has voted in favor, game won
+	if votesInFavor >= majorityCount {
+		leader = true
+	}
+
+	return leader, follower
+}
+
+

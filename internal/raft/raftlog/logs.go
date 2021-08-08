@@ -1,7 +1,6 @@
 package raftlog
 
 import (
-	"github.com/sirupsen/logrus"
 	"github.com/xaraphix/Sif/internal/raft"
 )
 
@@ -35,6 +34,5 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 		Entries: &entries,
 	}
 	
-	logrus.Info("===================== SEnding HEART BEAT")
 	rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
 }

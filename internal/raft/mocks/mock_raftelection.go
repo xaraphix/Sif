@@ -129,15 +129,3 @@ func (mr *MockRaftElectionMockRecorder) StartElection(arg0 interface{}) *gomock.
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartElection", reflect.TypeOf((*MockRaftElection)(nil).StartElection), arg0)
 }
-
-// StopElection mocks base method.
-func (m *MockRaftElection) StopElection(arg0 *raft.RaftNode) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "StopElection", arg0)
-}
-
-// StopElection indicates an expected call of StopElection.
-func (mr *MockRaftElectionMockRecorder) StopElection(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopElection", reflect.TypeOf((*MockRaftElection)(nil).StopElection), arg0)
-}

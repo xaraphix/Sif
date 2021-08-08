@@ -89,7 +89,6 @@ type RaftElection interface {
 	HasElectionTimerStopped() bool
 	StartElection(*RaftNode)
 	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest VoteRequest) VoteResponse
-	StopElection(*RaftNode)
 	GenerateVoteRequest(*RaftNode) VoteRequest
 	GetLeaderHeartChannel() chan Peer
 }
