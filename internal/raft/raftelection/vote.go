@@ -7,7 +7,7 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteReque
 		NodeId:      rn.Id,
 		CurrentTerm: rn.CurrentTerm,
 		LogLength:   int32(len(rn.Logs)),
-		LastTerm:    rn.LogMgr.GetLog(rn, int32(len(rn.Logs) - 1)).Term,
+		LastTerm:    rn.LogMgr.GetLog(rn, int32(len(rn.Logs)-1)).Term,
 	}
 }
 
@@ -47,7 +47,7 @@ func getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest raft.VoteReque
 
 func isCandidateLogOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
 
-	myLogTerm := rn.LogMgr.GetLog(rn, int32(len(rn.Logs) - 1)).Term
+	myLogTerm := rn.LogMgr.GetLog(rn, int32(len(rn.Logs)-1)).Term
 	logOk := vr.LastTerm > myLogTerm ||
 		(vr.LastTerm == myLogTerm && vr.LogLength >= int32(len(rn.Logs)))
 	return logOk
@@ -63,7 +63,6 @@ func isCandidateTermOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
 func hasCandidateBeenVotedPreviously(rn *raft.RaftNode, voteRequest raft.VoteRequest) bool {
 	return false
 }
-
 
 func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
 
@@ -142,5 +141,3 @@ func whatDoesTheMajorityWant(numOfPeers int, votesReceived []raft.VoteResponse, 
 
 	return leader, follower
 }
-
-

@@ -39,9 +39,9 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 		for {
 			if time.Since(l.LastResetAt) >= l.TimeoutDuration &&
 				l.Stopped == false &&
-				rn.ElectionInProgress == false && 
+				rn.ElectionInProgress == false &&
 				rn.CurrentRole != LEADER {
-					l.Stopped = true
+				l.Stopped = true
 				rn.ElectionMgr.StartElection(rn)
 			}
 

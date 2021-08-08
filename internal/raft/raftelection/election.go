@@ -11,7 +11,7 @@ var (
 	ElctnMgr raft.RaftElection = &ElectionManager{
 		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
 		ElectionTimerOff:        true,
-		VotesReceived: []raft.VoteResponse{},
+		VotesReceived:           []raft.VoteResponse{},
 	}
 	leaderHeartbeatChannel chan raft.Peer
 )
@@ -59,15 +59,18 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	em.startElectionTimer(rn)
 	em.concludeFromReceivedVotes(rn)
 	restartElection := em.handleElection(rn)
-
-	if restartElection {
-	   em.StartElection(rn)
-	 } else {
-		 rn.ElectionInProgress = false
-		 em.ElectionTimerOff = true
-	 }
+	em.wrapUpElection(rn, restartElection)
 }
 
+func (em *ElectionManager) wrapUpElection(rn *raft.RaftNode, restartElection bool) {
+	if restartElection {
+		em.StartElection(rn)
+	} else {
+		rn.ElectionInProgress = false
+		em.ElectionTimerOff = true
+	}
+
+}
 func (em *ElectionManager) initChannels() {
 	em.electionTimerDone = make(chan bool)
 	em.votesResponse = make(chan raft.VoteResponse)
@@ -142,10 +145,6 @@ func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v r
 	rn.CurrentRole = raft.FOLLOWER
 	rn.VotedFor = 0
 	rn.IsHeartBeating = false
-}
-
-func (em *ElectionManager) restartElection() {
-	
 }
 
 func (em *ElectionManager) startElectionTimer(rn *raft.RaftNode) {
