@@ -62,15 +62,15 @@ func (mr *MockRaftMonitorMockRecorder) Sleep() *gomock.Call {
 }
 
 // Start mocks base method.
-func (m *MockRaftMonitor) Start(arg0 *raft.RaftNode, arg1 chan raft.ElectionUpdates) {
+func (m *MockRaftMonitor) Start(arg0 *raft.RaftNode) {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "Start", arg0, arg1)
+	m.ctrl.Call(m, "Start", arg0)
 }
 
 // Start indicates an expected call of Start.
-func (mr *MockRaftMonitorMockRecorder) Start(arg0, arg1 interface{}) *gomock.Call {
+func (mr *MockRaftMonitorMockRecorder) Start(arg0 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockRaftMonitor)(nil).Start), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Start", reflect.TypeOf((*MockRaftMonitor)(nil).Start), arg0)
 }
 
 // Stop mocks base method.

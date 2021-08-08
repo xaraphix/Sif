@@ -5,7 +5,7 @@ import "github.com/xaraphix/Sif/internal/raft"
 func concludeElection(
 	rn *raft.RaftNode,
 	voteResponseChannel chan raft.VoteResponse,
-	electionOvertimeChannel <-chan raft.ElectionUpdates) {
+	electionOvertimeChannel chan raft.ElectionUpdates) {
 
 	counter := 1
 	electionUpdates := &raft.ElectionUpdates{ElectionOvertimed: false}
@@ -16,21 +16,23 @@ func concludeElection(
 	}(electionOvertimeChannel)
 
 	for response := range voteResponseChannel {
-		if electionUpdates.ElectionOvertimed == false {
+		if electionUpdates.ElectionOvertimed == false && 
+		rn.ElectionInProgress == true && rn.CurrentRole == raft.CANDIDATE {
 			concludeElectionIfPossible(rn, response, electionUpdates)
 			if counter == len(rn.Peers) {
 				break
 			}
 			counter = counter + 1
 		} else {
-			rn.Mu.Unlock()
 			rn.VotesReceived = nil
-			rn.Mu.Lock()
 		}
 	}
 
+	eu := raft.ElectionUpdates {
+		ElectionCompleted: true,
+	}
+	electionOvertimeChannel <- eu 
 	close(voteResponseChannel)
-
 }
 
 func (em *ElectionManager) StopElection(rn *raft.RaftNode) {
@@ -96,18 +98,16 @@ func concludeFromVoteIfPossible(
 }
 
 func becomeAFollower(rn *raft.RaftNode) {
-	rn.Mu.Unlock()
 	rn.CurrentRole = raft.FOLLOWER
 	rn.ElectionInProgress = false
 	rn.IsHeartBeating = false 
-	rn.Mu.Lock()
+	rn.LeaderHeartbeatMonitor.Start(rn)
 }
 
 func becomeTheLeader(rn *raft.RaftNode) {
-	rn.Mu.Unlock()
 	rn.CurrentRole = raft.LEADER
 	rn.ElectionInProgress = false
-	rn.Mu.Lock()
+	
 }
 
 func becomeAFollowerAccordingToPeersTerm(
@@ -115,13 +115,12 @@ func becomeAFollowerAccordingToPeersTerm(
 	v raft.VoteResponse,
 	electionUpdates *raft.ElectionUpdates) {
 
-	rn.Mu.Unlock()
 	rn.CurrentTerm = v.Term
 	rn.CurrentRole = raft.FOLLOWER
 	rn.VotedFor = 0
 	rn.ElectionInProgress = false
 	rn.IsHeartBeating = false
-	rn.Mu.Lock()
+	rn.LeaderHeartbeatMonitor.Start(rn)
 }
 
 func getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest raft.VoteRequest) raft.VoteResponse {

@@ -31,7 +31,7 @@ type LeaderHeartbeatMonitor struct {
 	*Monitor
 }
 
-func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode, electionUpdates chan ElectionUpdates) {
+func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 
 	l.LastResetAt = time.Now()
 	l.Stopped = false
@@ -39,7 +39,9 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode, electionUpdates chan Electi
 		for {
 			if time.Since(l.LastResetAt) >= l.TimeoutDuration &&
 				l.Stopped == false &&
-				rn.ElectionInProgress == false {
+				rn.ElectionInProgress == false && 
+				rn.CurrentRole != LEADER {
+					l.Stopped = true
 				rn.ElectionMgr.StartElection(rn)
 			}
 

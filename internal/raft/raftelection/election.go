@@ -29,20 +29,31 @@ func (el *ElectionManager) HasElectionTimerStopped() bool {
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	electionChannel := make(chan raft.ElectionUpdates)
-
+	done := make(chan bool)
+	defer close(done)
+	
 	rn.Mu.Lock()
+	defer rn.Mu.Unlock()
+
+	rn.LeaderHeartbeatMonitor.Stop()
 	rn.ElectionInProgress = true
 	rn.CurrentRole = raft.CANDIDATE
 	rn.VotedFor = rn.Id
 	rn.CurrentTerm = rn.CurrentTerm + 1
 	rn.VotesReceived = nil
 
-	rn.ElectionMgr.RequestVotes(rn, electionChannel)
-	rn.ElectionInProgress = false
-
-	ifLeaderStartHeartbeatTransmitter(rn)
-
-	rn.Mu.Unlock()
+	for {
+		select {
+		case <- followerAccordingToPeer:
+			becomeAFollowerAccordingToPeer()
+		case <- leader:
+			becomeALeader()
+		case <- leaderHeartbeatReceived:
+			becomeAFollowerAccordingToLeader()
+		case <- electionTimedOut:
+			restartElection()
+		}
+	}
 }
 
 func (em *ElectionManager) RequestVotes(
@@ -90,7 +101,6 @@ func (em *ElectionManager) setupElectionTimer(
 		rn.ElectionInProgress = false
 		rn.CurrentRole = raft.FOLLOWER
 		rn.VotesReceived = nil
-		rn.Mu.Unlock()
 		go em.StartElection(rn)
 	}
 
@@ -105,7 +115,9 @@ func requestVoteFromPeer(
 
 	for _, peer := range rn.Peers {
 		go func(p raft.Peer, vrc chan raft.VoteResponse) {
-			vrc <- rn.RPCAdapter.RequestVoteFromPeer(p, vr)
+			
+			voteResponse := rn.RPCAdapter.RequestVoteFromPeer(p, vr)
+			vrc <- voteResponse
 		}(peer, voteResponseChannel)
 	}
 }

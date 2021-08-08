@@ -76,7 +76,7 @@ type RaftConfig interface {
 
 //go:generate mockgen -destination=mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
 type RaftMonitor interface {
-	Start(raftNode *RaftNode, electionChannel chan ElectionUpdates)
+	Start(raftNode *RaftNode)
 	Stop()
 	Sleep()
 	GetLastResetAt() time.Time
@@ -145,6 +145,7 @@ type VoteResponse struct {
 
 type ElectionUpdates struct {
 	ElectionOvertimed    bool
+	ElectionCompleted    bool
 	ElectionStopped      bool
 	ElectionStarted      bool
 	ElectionTimerStarted bool
@@ -187,14 +188,14 @@ func NewRaftNode(
 	if forceNew {
 		raftnode = rn
 		initializeRaftNode(raftnode)
-		raftnode.LeaderHeartbeatMonitor.Start(raftnode, nil)
+		raftnode.LeaderHeartbeatMonitor.Start(raftnode)
 		return raftnode
 	} else {
 
 		if raftnode == nil {
 			raftnode = rn
 			initializeRaftNode(raftnode)
-			raftnode.LeaderHeartbeatMonitor.Start(raftnode, nil)
+			raftnode.LeaderHeartbeatMonitor.Start(raftnode)
 		}
 		return raftnode
 	}
