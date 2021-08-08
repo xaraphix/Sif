@@ -17,7 +17,7 @@ var (
 )
 
 type Node struct {
-	Mu sync.Mutex
+	Wg sync.WaitGroup
 
 	Id            int32
 	CurrentTerm   int32
@@ -84,6 +84,7 @@ type RaftMonitor interface {
 
 //go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
 type RaftElection interface {
+	GetReceivedVotes() []VoteResponse
 	HasElectionTimerStarted() bool
 	HasElectionTimerStopped() bool
 	StartElection(*RaftNode)

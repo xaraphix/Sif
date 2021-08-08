@@ -62,6 +62,20 @@ func (mr *MockRaftElectionMockRecorder) GetLeaderHeartChannel() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLeaderHeartChannel", reflect.TypeOf((*MockRaftElection)(nil).GetLeaderHeartChannel))
 }
 
+// GetReceivedVotes mocks base method.
+func (m *MockRaftElection) GetReceivedVotes() []raft.VoteResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetReceivedVotes")
+	ret0, _ := ret[0].([]raft.VoteResponse)
+	return ret0
+}
+
+// GetReceivedVotes indicates an expected call of GetReceivedVotes.
+func (mr *MockRaftElectionMockRecorder) GetReceivedVotes() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetReceivedVotes", reflect.TypeOf((*MockRaftElection)(nil).GetReceivedVotes))
+}
+
 // GetResponseForVoteRequest mocks base method.
 func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 raft.VoteRequest) raft.VoteResponse {
 	m.ctrl.T.Helper()
