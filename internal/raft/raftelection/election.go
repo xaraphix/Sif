@@ -32,26 +32,6 @@ type ElectionManager struct {
 	leaderHeartbeatChannel  chan raft.Peer
 }
 
-func (em *ElectionManager) GetReceivedVotes() []raft.VoteResponse {
-	return em.VotesReceived
-}
-
-func (em *ElectionManager) GetLeaderHeartChannel() chan raft.Peer {
-	if leaderHeartbeatChannel == nil {
-		leaderHeartbeatChannel = make(chan raft.Peer)
-	}
-
-	return leaderHeartbeatChannel
-}
-
-func (el *ElectionManager) HasElectionTimerStarted() bool {
-	return !el.ElectionTimerOff
-}
-
-func (el *ElectionManager) HasElectionTimerStopped() bool {
-	return el.ElectionTimerOff
-}
-
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	em.initChannels()
 	em.becomeACandidate(rn)
@@ -171,6 +151,26 @@ func (em *ElectionManager) askForVotes(rn *raft.RaftNode) {
 			em.votesResponse <- voteResponse
 		}(peer)
 	}
+}
+
+func (em *ElectionManager) GetReceivedVotes() []raft.VoteResponse {
+	return em.VotesReceived
+}
+
+func (em *ElectionManager) GetLeaderHeartChannel() chan raft.Peer {
+	if leaderHeartbeatChannel == nil {
+		leaderHeartbeatChannel = make(chan raft.Peer)
+	}
+
+	return leaderHeartbeatChannel
+}
+
+func (el *ElectionManager) HasElectionTimerStarted() bool {
+	return !el.ElectionTimerOff
+}
+
+func (el *ElectionManager) HasElectionTimerStopped() bool {
+	return el.ElectionTimerOff
 }
 
 func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr raft.VoteRequest) raft.VoteResponse {
