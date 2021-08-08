@@ -12,11 +12,20 @@ var (
 		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
 		ElectionTimerOff:        true,
 	}
+	leaderHeartbeatChannel chan raft.Peer
 )
 
 type ElectionManager struct {
 	ElectionTimeoutDuration time.Duration
 	ElectionTimerOff        bool
+}
+
+func (em *ElectionManager) GetLeaderHeartChannel() chan raft.Peer {
+	if leaderHeartbeatChannel == nil {
+		leaderHeartbeatChannel = make(chan raft.Peer)
+	}
+
+	return leaderHeartbeatChannel
 }
 
 func (el *ElectionManager) HasElectionTimerStarted() bool {
@@ -28,11 +37,9 @@ func (el *ElectionManager) HasElectionTimerStopped() bool {
 }
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
-	done := make(chan bool)
 	electionTimerDone := make(chan bool)
-	voteRequestsDone := make(chan bool)
+	votesReceived := make(chan raft.VoteResponse)
 	conclusionDone := make(chan bool)
-	defer close(done)
 
 	rn.Mu.Lock()
 	defer rn.Mu.Unlock()
@@ -44,28 +51,50 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 	rn.CurrentTerm = rn.CurrentTerm + 1
 	rn.VotesReceived = nil
 
-	votesReceived := em.askForVotes(voteRequestsDone, rn)
+	em.askForVotes(votesReceived, rn)
 	electionTimedOut := em.startElectionTimer(electionTimerDone, rn)
 	followerAccordingToPeer, leader, follower := concludeFromReceivedVotes(conclusionDone, rn, votesReceived)
 
 	for {
 		select {
-		case <-followerAccordingToPeer:
-			becomeAFollowerAccordingToPeer()
+		case vr := <-followerAccordingToPeer:
+			becomeAFollowerAccordingToPeer(rn, vr)
 		case <-leader:
-			becomeALeader()
-		// case <- leaderHeartbeatReceived:
-		// becomeAFollowerAccordingToLeader()
+			becomeALeader(rn)
+			break
+		case l := <-leaderHeartbeatChannel:
+			closeElectionChannels(electionTimerDone, votesReceived, conclusionDone)
+			becomeAFollowerAccordingToLeader(l)
+			break
 		case <-follower:
-			becomeAFollower()
+			becomeAFollower(rn)
+			closeElectionChannels(electionTimerDone, votesReceived, conclusionDone)
+			break
 		case <-electionTimedOut:
+			closeElectionChannels(electionTimerDone, votesReceived, conclusionDone)
 			restartElection()
+			break
 		}
 	}
 }
 
-func becomeAFollower() {
+func closeElectionChannels(electionTimerDone chan bool, votesReceived chan raft.VoteResponse, conclusionDone chan bool) {
+	close(electionTimerDone)
+	close(votesReceived)
+	close(conclusionDone)
+}
 
+func becomeAFollower(rn *raft.RaftNode) {
+	rn.CurrentRole = raft.FOLLOWER
+	rn.ElectionInProgress = false
+	rn.IsHeartBeating = false
+}
+
+func becomeALeader(rn *raft.RaftNode) {
+	rn.CurrentRole = raft.LEADER
+	rn.ElectionInProgress = false
+	rn.LogMgr.ReplicateLogs(rn)
+	rn.Heart.StartBeating()
 }
 
 func concludeFromReceivedVotes(
@@ -86,18 +115,19 @@ func concludeFromReceivedVotes(
 			case <-done:
 				break
 			default:
-				for voteResponse := range votesReceived {
-					valid := isElectionValid(rn, voteResponse)
-					if !valid {
-						followerAccordingToPeer <- voteResponse
-					} else if becomeLeader, becomeFollower := whatDoesTheMajorityWant(rn, voteResponse); true {
+				votes := []raft.VoteResponse{}
+				for vr := range votesReceived {
+					votes = append(votes, vr)
+					valid := isElectionValid(rn, vr)
+					if !valid && isPeerTermHigher(rn, vr) {
+						followerAccordingToPeer <- vr
+					} else if becomeLeader, becomeFollower := whatDoesTheMajorityWant(len(rn.Peers), votes, vr); true {
 						if becomeLeader {
 							leader <- true
 						} else if becomeFollower {
-							follower <- becomeFollower
+							follower <- true
 						}
 					}
-
 				}
 			}
 		}
@@ -106,26 +136,53 @@ func concludeFromReceivedVotes(
 	return followerAccordingToPeer, leader, follower
 }
 
+func isPeerTermHigher(rn *raft.RaftNode, vr raft.VoteResponse) bool {
+	return rn.CurrentTerm < vr.Term
+}
+
 func isElectionValid(rn *raft.RaftNode, vr raft.VoteResponse) bool {
-
-	return false
+	if rn.CurrentRole == raft.CANDIDATE &&
+		rn.CurrentTerm == vr.Term {
+		return true
+	} else {
+		return false
+	}
 }
 
-func whatDoesTheMajorityWant(rn *raft.RaftNode, vr raft.VoteResponse) (bool, bool) {
+func whatDoesTheMajorityWant(numOfPeers int, votesReceived []raft.VoteResponse, vr raft.VoteResponse) (bool, bool) {
 
-	return false, false
+	majorityCount := numOfPeers / 2
+	votesInFavor := 0
+	leader, follower := false, false
+	for _, vr := range votesReceived {
+		if vr.VoteGranted {
+			votesInFavor = votesInFavor + 1
+		}
+	}
+
+	// if majority has voted against, game over
+	if len(votesReceived)-votesInFavor > majorityCount {
+		leader = true
+	}
+
+	// if majority has voted in favor, game won
+	if votesInFavor >= majorityCount {
+		follower = false
+	}
+
+	return leader, follower
 }
 
-func becomeAFollowerAccordingToLeader() {
+func becomeAFollowerAccordingToLeader(leader raft.Peer) {
 
 }
 
-func becomeALeader() {
-
-}
-
-func becomeAFollowerAccordingToPeer() {
-
+func becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v raft.VoteResponse) {
+	rn.CurrentTerm = v.Term
+	rn.CurrentRole = raft.FOLLOWER
+	rn.VotedFor = 0
+	rn.ElectionInProgress = false
+	rn.IsHeartBeating = false
 }
 
 func restartElection() {
@@ -141,52 +198,19 @@ func (em *ElectionManager) startElectionTimer(done chan bool, rn *raft.RaftNode)
 				break
 			default:
 				time.Sleep(em.ElectionTimeoutDuration)
-				if rn.ElectionInProgress == true {
-					rn.ElectionInProgress = false
-				}
-
+				electionTimedOut <- true
 			}
 		}
 	}()
 	return electionTimedOut
 }
 
-func (em *ElectionManager) askForVotes(done chan bool, rn *raft.RaftNode) chan raft.VoteResponse {
-	votesReceived := make(chan raft.VoteResponse)
-	for {
-		select {
-		case <-done:
-			close(votesReceived)
-			break
-		default:
-			voteRequest := em.GenerateVoteRequest(rn)
-			for _, peer := range rn.Peers {
-				go func(p raft.Peer) {
-					votesReceived <- rn.RPCAdapter.RequestVoteFromPeer(p, voteRequest)
-				}(peer)
-			}
-		}
-	}
-
-	return votesReceived
-}
-
-func (em *ElectionManager) RequestVotes(
-	rn *raft.RaftNode,
-	electionChannel chan raft.ElectionUpdates) {
-
-	voteResponseChannel := make(chan raft.VoteResponse)
+func (em *ElectionManager) askForVotes(votesReceived chan raft.VoteResponse, rn *raft.RaftNode) {
 	voteRequest := em.GenerateVoteRequest(rn)
-	requestVoteFromPeer(rn, voteRequest, voteResponseChannel)
-	go em.setupElectionTimer(rn, electionChannel)
-	startTimer(electionChannel)
-	concludeElection(rn, voteResponseChannel, electionChannel)
-}
-
-func startTimer(ec chan raft.ElectionUpdates) {
-	eu := <-ec
-	if !eu.ElectionTimerStarted {
-		panic("Election Timer not started")
+	for _, peer := range rn.Peers {
+		go func(p raft.Peer) {
+			votesReceived <- rn.RPCAdapter.RequestVoteFromPeer(p, voteRequest)
+		}(peer)
 	}
 }
 
@@ -220,18 +244,4 @@ func (em *ElectionManager) setupElectionTimer(
 
 	em.ElectionTimerOff = true
 	close(electionChannel)
-}
-
-func requestVoteFromPeer(
-	rn *raft.RaftNode,
-	vr raft.VoteRequest,
-	voteResponseChannel chan raft.VoteResponse) {
-
-	for _, peer := range rn.Peers {
-		go func(p raft.Peer, vrc chan raft.VoteResponse) {
-
-			voteResponse := rn.RPCAdapter.RequestVoteFromPeer(p, vr)
-			vrc <- voteResponse
-		}(peer, voteResponseChannel)
-	}
 }

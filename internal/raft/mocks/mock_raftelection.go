@@ -48,6 +48,20 @@ func (mr *MockRaftElectionMockRecorder) GenerateVoteRequest(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateVoteRequest", reflect.TypeOf((*MockRaftElection)(nil).GenerateVoteRequest), arg0)
 }
 
+// GetLeaderHeartChannel mocks base method.
+func (m *MockRaftElection) GetLeaderHeartChannel() chan raft.Peer {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetLeaderHeartChannel")
+	ret0, _ := ret[0].(chan raft.Peer)
+	return ret0
+}
+
+// GetLeaderHeartChannel indicates an expected call of GetLeaderHeartChannel.
+func (mr *MockRaftElectionMockRecorder) GetLeaderHeartChannel() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLeaderHeartChannel", reflect.TypeOf((*MockRaftElection)(nil).GetLeaderHeartChannel))
+}
+
 // GetResponseForVoteRequest mocks base method.
 func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 raft.VoteRequest) raft.VoteResponse {
 	m.ctrl.T.Helper()
@@ -88,18 +102,6 @@ func (m *MockRaftElection) HasElectionTimerStopped() bool {
 func (mr *MockRaftElectionMockRecorder) HasElectionTimerStopped() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasElectionTimerStopped", reflect.TypeOf((*MockRaftElection)(nil).HasElectionTimerStopped))
-}
-
-// RequestVotes mocks base method.
-func (m *MockRaftElection) RequestVotes(arg0 *raft.RaftNode, arg1 chan raft.ElectionUpdates) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RequestVotes", arg0, arg1)
-}
-
-// RequestVotes indicates an expected call of RequestVotes.
-func (mr *MockRaftElectionMockRecorder) RequestVotes(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestVotes", reflect.TypeOf((*MockRaftElection)(nil).RequestVotes), arg0, arg1)
 }
 
 // StartElection mocks base method.

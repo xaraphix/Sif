@@ -87,27 +87,14 @@ func concludeFromVoteIfPossible(
 	// if majority has voted against, game over
 	if len(rn.VotesReceived)-votesInFavor > majorityCount &&
 		electionUpdates.ElectionOvertimed == false {
-		becomeAFollower(rn)
+		// becomeAFollower(rn)
 	}
 
 	// if majority has voted in favor, game won
 	if votesInFavor >= majorityCount &&
 		electionUpdates.ElectionOvertimed == false {
-		becomeTheLeader(rn)
+		// becomeTheLeader(rn)
 	}
-}
-
-func becomeAFollower(rn *raft.RaftNode) {
-	rn.CurrentRole = raft.FOLLOWER
-	rn.ElectionInProgress = false
-	rn.IsHeartBeating = false 
-	rn.LeaderHeartbeatMonitor.Start(rn)
-}
-
-func becomeTheLeader(rn *raft.RaftNode) {
-	rn.CurrentRole = raft.LEADER
-	rn.ElectionInProgress = false
-	
 }
 
 func becomeAFollowerAccordingToPeersTerm(

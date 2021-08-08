@@ -87,10 +87,10 @@ type RaftElection interface {
 	HasElectionTimerStarted() bool
 	HasElectionTimerStopped() bool
 	StartElection(*RaftNode)
-	RequestVotes(raftnode *RaftNode, electionOvertimeChannel chan ElectionUpdates)
 	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest VoteRequest) VoteResponse
 	StopElection(*RaftNode)
 	GenerateVoteRequest(*RaftNode) VoteRequest
+	GetLeaderHeartChannel() chan Peer
 }
 
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
