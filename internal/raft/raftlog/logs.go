@@ -5,7 +5,6 @@ import (
 )
 
 type LogMgr struct {
-		
 }
 
 func (l *LogMgr) GetLogs() []raft.Log {
@@ -26,13 +25,14 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	}
 
 	replicateLogsRequest := raft.ReplicateLogRequest{
-		LeaderId: rn.Id,
-		CurrentTerm: rn.CurrentTerm,
-		SentLength: i,
-		PrevLogTerm: prevLogTerm,
+		LeaderId:     rn.Id,
+		CurrentTerm:  rn.CurrentTerm,
+		SentLength:   i,
+		PrevLogTerm:  prevLogTerm,
 		CommitLength: rn.CommitLength,
-		Entries: &entries,
+		Entries:      &entries,
 	}
-	
+
 	rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
+	rn.SendSignal(raft.LogReplicationRequestSent)
 }

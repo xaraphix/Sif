@@ -19,11 +19,14 @@ const (
 	LeaderHeartbeatMonitorStopped
 	ElectionStarted
 	ElectionStopped
+	ElectionTimerStarted
+	ElectionTimerStopped
 	ElectionRestarted
 	RequestedVotes
 	ReceivedVoteResponse
 	BecameFollower
 	BecameLeader
 	VoteResponseSent
+	LogReplicationRequestSent
 )
 

@@ -169,6 +169,7 @@ func NewRaftNode(
 		RPCAdapter:             ra,
 		LogMgr:                 l,
 		Heart:                  h,
+		raftSignal: make(chan int),
 	}
 
 	raftnode := rn
@@ -197,6 +198,12 @@ func initializeRaftNode(rn *RaftNode) {
 
 func (rn *RaftNode) GetRaftSignalsChan() <-chan int {
 	return rn.raftSignal
+}
+
+func (rn *RaftNode) SendSignal(signal int) {
+	go func() {
+		rn.raftSignal <- signal
+	}()
 }
 
 func (m *Monitor) Stop() {

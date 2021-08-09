@@ -76,21 +76,26 @@ func (em *ElectionManager) handleElection(rn *raft.RaftNode) bool {
 		select {
 		case vr := <-em.followerAccordingToPeer:
 			em.ElectionTimerOff = true
+			rn.SendSignal(raft.ElectionTimerStopped)
 			em.becomeAFollowerAccordingToPeer(rn, vr)
 			return false
 		case <-em.leader:
 			em.ElectionTimerOff = true
+			rn.SendSignal(raft.ElectionTimerStopped)
 			em.becomeALeader(rn)
 			return false
 		case l := <-em.leaderHeartbeatChannel:
 			em.ElectionTimerOff = true
+			rn.SendSignal(raft.ElectionTimerStopped)
 			em.becomeAFollowerAccordingToLeader(l)
 			return false
 		case <-em.follower:
 			em.ElectionTimerOff = true
+			rn.SendSignal(raft.ElectionTimerStopped)
 			em.becomeAFollower(rn)
 			return false
 		case <-em.electionTimedOut:
+			rn.SendSignal(raft.ElectionTimerStopped)
 			em.ElectionTimerOff = true
 			return true
 		}
@@ -132,6 +137,7 @@ func (em *ElectionManager) startElectionTimer(rn *raft.RaftNode) {
 	em.electionTimedOut = make(chan bool)
 	go func() {
 		em.ElectionTimerOff = false
+		rn.SendSignal(raft.ElectionTimerStarted)
 		for {
 			select {
 			case <-em.electionTimerDone:

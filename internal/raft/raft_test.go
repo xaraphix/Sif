@@ -281,6 +281,19 @@ var _ = Describe("Sif Raft Consensus", func() {
 								break
 							}
 						}
+
+						counter := 0
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.LogReplicationRequestSent {
+								counter = counter + 1
+								if counter == 2 {
+									break
+								}
+							}
+						}
+
+						Succeed()
+
 					})
 
 					It("should replicate logs to all its peers", func() {
@@ -358,22 +371,9 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("Should Make its current term equal to the one in the voteResponse", func() {
 						setupVars = setupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.node
-						loopStartedAt := time.Now()
 						testConfig := loadTestRaftConfig()
-						for {
-							if setupVars.node.ElectionMgr.HasElectionTimerStarted() == true {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
-								Fail("Took too much time to be successful")
-								break
-							}
-						}
-
-						for {
-							if setupVars.node.ElectionMgr.HasElectionTimerStopped() == true {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
-								Fail("Took too much time to be successful")
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.ElectionTimerStopped {
 								break
 							}
 						}
@@ -383,24 +383,13 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("Should cancel election timer", func() {
 						setupVars = setupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.node
-						loopStartedAt := time.Now()
-						for {
-							if setupVars.node.ElectionMgr.HasElectionTimerStarted() == true {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
-								Fail("Took too much time to be successful")
+						
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.ElectionTimerStopped {
 								break
 							}
 						}
 
-						for {
-							if setupVars.node.ElectionMgr.HasElectionTimerStopped() == true {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
-								Fail("Took too much time to be successful")
-								break
-							}
-						}
 						Succeed()
 					})
 				})
