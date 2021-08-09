@@ -4,6 +4,10 @@ import (
 	"time"
 )
 
+var (
+	Sif *RaftNode
+)
+
 type Node struct {
 	Id            int32
 	CurrentTerm   int32
@@ -67,6 +71,7 @@ type RaftMonitor interface {
 	Stop()
 	Sleep()
 	GetLastResetAt() time.Time
+	Reset()
 }
 
 //go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
@@ -84,6 +89,7 @@ type RaftElection interface {
 type RaftRPCAdapter interface {
 	RequestVoteFromPeer(peer Peer, voteRequest VoteRequest) VoteResponse
 	ReplicateLog(peer Peer, replicateLogsRequest ReplicateLogRequest)
+	GenerateVoteResponse(VoteRequest) VoteResponse
 }
 
 //go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
@@ -161,7 +167,7 @@ func NewRaftNode(
 	l RaftLog,
 	h RaftHeart,
 ) *RaftNode {
-	rn := &RaftNode{
+	Sif = &RaftNode{
 		FileMgr:                fm,
 		Config:                 rc,
 		ElectionMgr:            re,
@@ -172,11 +178,12 @@ func NewRaftNode(
 		raftSignal: make(chan int),
 	}
 
-	raftnode := rn
+	raftnode := Sif
 	initializeRaftNode(raftnode)
 	raftnode.LeaderHeartbeatMonitor.Start(raftnode)
 	return raftnode
 }
+
 
 func DestructRaftNode(rn *RaftNode) {
 	rn = nil

@@ -47,3 +47,7 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 	}(rn)
 
 }
+
+func (l *LeaderHeartbeatMonitor) Reset() {
+	l.LastResetAt = time.Now()
+}

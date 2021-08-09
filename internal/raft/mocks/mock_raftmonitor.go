@@ -49,6 +49,18 @@ func (mr *MockRaftMonitorMockRecorder) GetLastResetAt() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetLastResetAt", reflect.TypeOf((*MockRaftMonitor)(nil).GetLastResetAt))
 }
 
+// Reset mocks base method.
+func (m *MockRaftMonitor) Reset() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "Reset")
+}
+
+// Reset indicates an expected call of Reset.
+func (mr *MockRaftMonitorMockRecorder) Reset() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Reset", reflect.TypeOf((*MockRaftMonitor)(nil).Reset))
+}
+
 // Sleep mocks base method.
 func (m *MockRaftMonitor) Sleep() {
 	m.ctrl.T.Helper()

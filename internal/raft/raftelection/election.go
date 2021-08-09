@@ -181,5 +181,7 @@ func (el *ElectionManager) HasElectionTimerStopped() bool {
 }
 
 func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr raft.VoteRequest) raft.VoteResponse {
-	return getVoteResponseForVoteRequest(rn, vr)
+	voteResponse := getVoteResponseForVoteRequest(rn, vr)
+	rn.SendSignal(raft.VoteResponseSent)
+	return voteResponse
 }

@@ -34,6 +34,20 @@ func (m *MockRaftRPCAdapter) EXPECT() *MockRaftRPCAdapterMockRecorder {
 	return m.recorder
 }
 
+// GenerateVoteResponse mocks base method.
+func (m *MockRaftRPCAdapter) GenerateVoteResponse(arg0 raft.VoteRequest) raft.VoteResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GenerateVoteResponse", arg0)
+	ret0, _ := ret[0].(raft.VoteResponse)
+	return ret0
+}
+
+// GenerateVoteResponse indicates an expected call of GenerateVoteResponse.
+func (mr *MockRaftRPCAdapterMockRecorder) GenerateVoteResponse(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateVoteResponse", reflect.TypeOf((*MockRaftRPCAdapter)(nil).GenerateVoteResponse), arg0)
+}
+
 // ReplicateLog mocks base method.
 func (m *MockRaftRPCAdapter) ReplicateLog(arg0 raft.Peer, arg1 raft.ReplicateLogRequest) {
 	m.ctrl.T.Helper()
