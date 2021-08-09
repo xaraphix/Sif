@@ -23,10 +23,12 @@ const (
 	ElectionTimerStopped
 	ElectionRestarted
 	RequestedVotes
+	VoteRequestReceived
+	VoteGranted
+	VoteNotGranted
 	ReceivedVoteResponse
 	BecameFollower
 	BecameLeader
-	VoteResponseSent
 	LogReplicationRequestSent
 )
 

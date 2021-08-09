@@ -421,7 +421,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						})
 
 						for e := range node.GetRaftSignalsChan() {
-							if e == raft.VoteResponseSent {
+							if e == raft.VoteGranted {
 								break
 							}
 						}
@@ -436,19 +436,19 @@ var _ = Describe("Sif Raft Consensus", func() {
 						node = setupVars.node
 
 						node.ElectionMgr.GetResponseForVoteRequest(node, raft.VoteRequest{
-							CurrentTerm: 10,
+							CurrentTerm: 0,
 							NodeId: 1,
 							LogLength: 0,
-							LastTerm: 0,
+							LastTerm: 10,
 						})
 
 						for e := range node.GetRaftSignalsChan() {
-							if e == raft.VoteResponseSent {
+							if e == raft.VoteNotGranted {
 								break
 							}
 						}
 
-						Expect(node.VotedFor).To(Equal(0))
+						Expect(node.VotedFor).To(Equal(int32(0)))
 					})
 				})
 			})
