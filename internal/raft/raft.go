@@ -1,13 +1,7 @@
 package raft
 
 import (
-	"sync"
 	"time"
-)
-
-var (
-	once     sync.Once
-	raftnode *RaftNode
 )
 
 type Node struct {
@@ -34,7 +28,7 @@ type RaftNode struct {
 
 	ElectionInProgress bool
 	IsHeartBeating     bool
-	raftSignal         chan RaftEvents
+	raftSignal         chan int
 
 	FileMgr                RaftFile
 	Config                 RaftConfig
@@ -43,10 +37,6 @@ type RaftNode struct {
 	RPCAdapter             RaftRPCAdapter
 	LogMgr                 RaftLog
 	Heart                  RaftHeart
-}
-
-type RaftEvents struct {
-		
 }
 
 //go:generate mockgen -destination=mocks/mock_raftfile.go -package=mocks . RaftFile
@@ -170,7 +160,6 @@ func NewRaftNode(
 	ra RaftRPCAdapter,
 	l RaftLog,
 	h RaftHeart,
-	forceNew bool,
 ) *RaftNode {
 	rn := &RaftNode{
 		FileMgr:                fm,
@@ -182,20 +171,10 @@ func NewRaftNode(
 		Heart:                  h,
 	}
 
-	if forceNew {
-		raftnode = rn
-		initializeRaftNode(raftnode)
-		raftnode.LeaderHeartbeatMonitor.Start(raftnode)
-		return raftnode
-	} else {
-
-		if raftnode == nil {
-			raftnode = rn
-			initializeRaftNode(raftnode)
-			raftnode.LeaderHeartbeatMonitor.Start(raftnode)
-		}
-		return raftnode
-	}
+	raftnode := rn
+	initializeRaftNode(raftnode)
+	raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+	return raftnode
 }
 
 func DestructRaftNode(rn *RaftNode) {
@@ -216,7 +195,7 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.ElectionInProgress = false
 }
 
-func (rn *RaftNode) GetRaftSignalsChan() <-chan RaftEvents {
+func (rn *RaftNode) GetRaftSignalsChan() <-chan int {
 	return rn.raftSignal
 }
 

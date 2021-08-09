@@ -7,14 +7,6 @@ import (
 	"github.com/xaraphix/Sif/internal/raft"
 )
 
-var (
-	ElctnMgr raft.RaftElection = &ElectionManager{
-		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
-		ElectionTimerOff:        true,
-		VotesReceived:           []raft.VoteResponse{},
-	}
-	leaderHeartbeatChannel chan raft.Peer
-)
 
 type ElectionManager struct {
 	ElectionTimeoutDuration time.Duration
@@ -30,6 +22,15 @@ type ElectionManager struct {
 	leader                  chan bool
 	follower                chan bool
 	leaderHeartbeatChannel  chan raft.Peer
+}
+
+func NewElectionManager() raft.RaftElection {
+	return &ElectionManager{
+		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
+		ElectionTimerOff:        true,
+		VotesReceived:           []raft.VoteResponse{},
+	}
+
 }
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
@@ -158,11 +159,11 @@ func (em *ElectionManager) GetReceivedVotes() []raft.VoteResponse {
 }
 
 func (em *ElectionManager) GetLeaderHeartChannel() chan raft.Peer {
-	if leaderHeartbeatChannel == nil {
-		leaderHeartbeatChannel = make(chan raft.Peer)
+	if em.leaderHeartbeatChannel == nil {
+		em.leaderHeartbeatChannel = make(chan raft.Peer)
 	}
 
-	return leaderHeartbeatChannel
+	return em.leaderHeartbeatChannel
 }
 
 func (el *ElectionManager) HasElectionTimerStarted() bool {

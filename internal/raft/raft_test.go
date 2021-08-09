@@ -380,9 +380,28 @@ var _ = Describe("Sif Raft Consensus", func() {
 						Expect(node.CurrentTerm).To(Equal((*setupVars.receivedVoteResponse)[testConfig.Peers()[0].Id].Term))
 					})
 
-					XIt("Should cancel election timer", func() {
+					It("Should cancel election timer", func() {
+						setupVars = setupCandidateReceivesVoteResponseWithHigherTerm()
+						node = setupVars.node
+						loopStartedAt := time.Now()
+						for {
+							if setupVars.node.ElectionMgr.HasElectionTimerStarted() == true {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
 
-						Fail("Not Yet Implemented")
+						for {
+							if setupVars.node.ElectionMgr.HasElectionTimerStopped() == true {
+								break
+							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
+								Fail("Took too much time to be successful")
+								break
+							}
+						}
+						Succeed()
 					})
 				})
 			})
@@ -580,8 +599,8 @@ func setupRaftNode(preNodeSetupCB func(
 		electionCtrl: electionCtrl,
 	}
 
-	election = raftelection.ElctnMgr
-	heart = raftelection.LdrHrt
+	election = raftelection.NewElectionManager()
+	heart = raftelection.NewLeaderHeart()
 	logMgr = &raftlog.LogMgr{}
 
 	if options.mockFile {
@@ -605,7 +624,7 @@ func setupRaftNode(preNodeSetupCB func(
 	preNodeSetupCB(mockFile, mockLog, mockElection, mockRPCAdapter, mockHeart)
 
 	node = nil
-	node = raft.NewRaftNode(fileMgr, config, election, leaderHeartbeatMonitor, rpcAdapter, logMgr, heart, true)
+	node = raft.NewRaftNode(fileMgr, config, election, leaderHeartbeatMonitor, rpcAdapter, logMgr, heart)
 	term_0 = node.CurrentTerm
 
 	return MockSetupVars{

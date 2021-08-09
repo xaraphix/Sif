@@ -6,29 +6,29 @@ import (
 	"github.com/xaraphix/Sif/internal/raft"
 )
 
-var (
-	LdrHrt raft.RaftHeart = &LeaderHeart{
-		Heart: raft.Heart{
-			DurationBetweenBeats: time.Millisecond * 200,
-		},
-	}
-)
-
 type LeaderHeart struct {
 	raft.Heart
 }
 
-func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
-	for _, peer := range rn.Peers {
-			rn.SentLength[peer.Id] = int32(len(rn.Logs))
-			rn.AckedLength[peer.Id] = 0
-			rn.LogMgr.ReplicateLog(rn, peer)
+func NewLeaderHeart() *LeaderHeart {
+	return &LeaderHeart{
+		Heart: raft.Heart{
+			DurationBetweenBeats: time.Millisecond * 200,
+		},
 	}
-
-	go startBeating(rn)
 }
 
-func startBeating(rn *raft.RaftNode) {
+func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
+	for _, peer := range rn.Peers {
+		rn.SentLength[peer.Id] = int32(len(rn.Logs))
+		rn.AckedLength[peer.Id] = 0
+		rn.LogMgr.ReplicateLog(rn, peer)
+	}
+
+	go beat(rn)
+}
+
+func beat(rn *raft.RaftNode) {
 	rn.IsHeartBeating = true
 	for {
 		if rn.IsHeartBeating == false || rn.CurrentRole != raft.LEADER {

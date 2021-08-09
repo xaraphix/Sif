@@ -1,6 +1,5 @@
 package raft
 
-
 const (
 	FOLLOWER  = "follower"
 	CANDIDATE = "candidate"
@@ -26,6 +25,5 @@ const (
 	BecameFollower
 	BecameLeader
 	VoteResponseSent
-	
 )
 

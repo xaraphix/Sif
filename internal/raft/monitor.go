@@ -5,10 +5,6 @@ import (
 	"time"
 )
 
-var (
-	leaderHeartbeatMonitor *LeaderHeartbeatMonitor
-)
-
 func NewLeaderHeartbeatMonitor(forceNew bool) *LeaderHeartbeatMonitor {
 	lhm := &LeaderHeartbeatMonitor{
 		Monitor: &Monitor{
@@ -17,14 +13,7 @@ func NewLeaderHeartbeatMonitor(forceNew bool) *LeaderHeartbeatMonitor {
 			TimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
 		},
 	}
-	if forceNew {
-		return lhm
-	} else {
-		if leaderHeartbeatMonitor == nil {
-			leaderHeartbeatMonitor = lhm
-		}
-		return leaderHeartbeatMonitor
-	}
+	return lhm
 }
 
 type LeaderHeartbeatMonitor struct {
