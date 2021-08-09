@@ -5,20 +5,12 @@ import (
 	"time"
 )
 
-const (
-	FOLLOWER  = "follower"
-	CANDIDATE = "candidate"
-	LEADER    = "leader"
-)
-
 var (
 	once     sync.Once
 	raftnode *RaftNode
 )
 
 type Node struct {
-	Wg sync.WaitGroup
-
 	Id            int32
 	CurrentTerm   int32
 	CurrentRole   string
@@ -42,6 +34,7 @@ type RaftNode struct {
 
 	ElectionInProgress bool
 	IsHeartBeating     bool
+	raftSignal         chan RaftEvents
 
 	FileMgr                RaftFile
 	Config                 RaftConfig
@@ -50,6 +43,10 @@ type RaftNode struct {
 	RPCAdapter             RaftRPCAdapter
 	LogMgr                 RaftLog
 	Heart                  RaftHeart
+}
+
+type RaftEvents struct {
+		
 }
 
 //go:generate mockgen -destination=mocks/mock_raftfile.go -package=mocks . RaftFile
@@ -219,6 +216,10 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.ElectionInProgress = false
 }
 
+func (rn *RaftNode) GetRaftSignalsChan() <-chan RaftEvents {
+	return rn.raftSignal
+}
+
 func (m *Monitor) Stop() {
 	m.Stopped = true
 }
@@ -230,6 +231,7 @@ func (m *Monitor) GetLastResetAt() time.Time {
 func (m *Monitor) Sleep() {
 	time.Sleep(m.TimeoutDuration)
 }
+
 func getCurrentRole(rn *RaftNode) string {
 	return FOLLOWER
 }
