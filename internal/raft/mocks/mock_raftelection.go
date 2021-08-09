@@ -49,10 +49,10 @@ func (mr *MockRaftElectionMockRecorder) GenerateVoteRequest(arg0 interface{}) *g
 }
 
 // GetLeaderHeartChannel mocks base method.
-func (m *MockRaftElection) GetLeaderHeartChannel() chan raft.Peer {
+func (m *MockRaftElection) GetLeaderHeartChannel() chan raft.RaftNode {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLeaderHeartChannel")
-	ret0, _ := ret[0].(chan raft.Peer)
+	ret0, _ := ret[0].(chan raft.RaftNode)
 	return ret0
 }
 

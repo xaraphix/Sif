@@ -11,11 +11,8 @@ func (ra *RaftNodeAdapter) RequestVoteFromPeer(peer int32, voteRequest raft.Vote
 	return raft.VoteResponse{}
 }
 
-func RequestVoteFromPeer(peer *raft.Peer, voteRequest raft.VoteRequest) raft.VoteResponse {
-	return raft.VoteResponse{PeerId: 2, VoteGranted: false}
-}
 
-
-func GenerateVoteRequest(req raft.VoteRequest) raft.VoteResponse {
+func (ra *RaftNodeAdapter) GenerateVoteRequest(req raft.VoteRequest) raft.VoteResponse {
 	return raft.Sif.ElectionMgr.GetResponseForVoteRequest(raft.Sif, req)
 }
+

@@ -30,5 +30,6 @@ const (
 	BecameFollower
 	BecameLeader
 	LogReplicationRequestSent
+	LeaderHeartbeatReceived
 )
 

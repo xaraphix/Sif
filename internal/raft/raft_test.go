@@ -454,13 +454,39 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			Context("Candidate falls back to being a follower", func() {
+				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
 				When("A legitimate leader sends a heartbeat", func() {
 					AfterEach(func() {
+						setupVars.ctrls.fileCtrl.Finish()
+						setupVars.ctrls.electionCtrl.Finish()
+						setupVars.ctrls.heartCtrl.Finish()
+						setupVars.ctrls.rpcCtrl.Finish()
 						raft.DestructRaftNode(node)
 					})
-					XIt("Should become a follower", func() {
-						Fail("Not Yet Implemented")
+					It("Should become a follower", func() {
+						setupVars = setupRestartElectionOnBeingIndecisive()
+						node = setupVars.node
+
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.ElectionTimerStarted {
+								node.ElectionMgr.GetLeaderHeartChannel() <- raft.RaftNode{
+									Node: raft.Node{
+										CurrentTerm: int32(10),
+								},
+							}
+								break;
+							}
+						}
+
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.ElectionTimerStopped {
+								break;
+							}
+						}
+
+						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
+						Expect(node.CurrentTerm).To(Equal(int32(10)))
 					})
 				})
 			})

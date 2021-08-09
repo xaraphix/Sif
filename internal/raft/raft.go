@@ -82,7 +82,7 @@ type RaftElection interface {
 	StartElection(*RaftNode)
 	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest VoteRequest) VoteResponse
 	GenerateVoteRequest(*RaftNode) VoteRequest
-	GetLeaderHeartChannel() chan Peer
+	GetLeaderHeartChannel() chan RaftNode
 }
 
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
