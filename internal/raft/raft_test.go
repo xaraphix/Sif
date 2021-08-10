@@ -238,18 +238,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStarted {
 								break
-							} else {
-								continue
-							}
-						}
+							} 						}
 
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} else {
-								continue
-							}
-						}
+							} 						}
 
 						counter := 0
 						for e := range node.GetRaftSignalsChan() {
@@ -258,10 +252,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 								if counter == 2 {
 									break
 								}
-							} else {
-								continue
-							}
-						}
+							} 						}
 
 						time.Sleep(100 * time.Millisecond)
 
@@ -319,10 +310,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} else {
-								continue
-							}
-						}
+							} 						}
 
 						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 					})
@@ -334,10 +322,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} else {
-								continue
-							}
-						}
+							} 						}
 						Expect(node.CurrentTerm).To(Equal((*setupVars.receivedVoteResponse)[testConfig.Peers()[0].Id].Term))
 					})
 
@@ -349,10 +334,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} else {
-								continue
-							}
-						}
+							} 						}
 
 						Succeed()
 					})
@@ -449,18 +431,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 									},
 								}
 								break
-							} else {
-								continue
-							}
-						}
+							} 						}
 
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.BecameFollower {
 								break
-							} else {
-								continue
-							}
-						}
+							} 						}
 
 						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 						Expect(node.CurrentTerm).To(Equal(int32(10)))
