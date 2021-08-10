@@ -162,11 +162,12 @@ func NewRaftNode(
 	fm RaftFile,
 	rc RaftConfig,
 	re RaftElection,
-	lhm *LeaderHeartbeatMonitor,
+	lhm RaftMonitor,
 	ra RaftRPCAdapter,
 	l RaftLog,
 	h RaftHeart,
 ) *RaftNode {
+	DestructRaftNode(Sif)
 	Sif = &RaftNode{
 		FileMgr:                fm,
 		Config:                 rc,
