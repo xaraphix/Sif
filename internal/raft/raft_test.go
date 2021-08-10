@@ -133,25 +133,30 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				It("Should become a candidate", func() {
+					for e := range node.GetRaftSignalsChan() {
+						if e == raft.ElectionTimerStarted {
+							break
+						}
+					}
 					Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
 				})
 
 				It("Should Vote for itself", func() {
-					Expect(node.VotedFor).To(Equal(node.Id))
-					for {
-						if len(node.ElectionMgr.GetReceivedVotes()) == len(node.Peers) {
+					for e := range node.GetRaftSignalsChan() {
+						if e == raft.ElectionTimerStarted {
 							break
 						}
 					}
+					Expect(node.VotedFor).To(Equal(node.Id))
 				})
 
 				It("Should Increment the current term", func() {
-					Expect(node.CurrentTerm).To(BeNumerically("==", term_0+1))
-					for {
-						if len(node.ElectionMgr.GetReceivedVotes()) == len(node.Peers) {
+					for e := range node.GetRaftSignalsChan() {
+						if e == raft.ElectionTimerStarted {
 							break
 						}
 					}
+					Expect(node.CurrentTerm).To(BeNumerically("==", term_0+1))
 				})
 
 				It("Should Request votes from peers", func() {

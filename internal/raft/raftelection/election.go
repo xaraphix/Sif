@@ -28,7 +28,7 @@ func NewElectionManager() raft.RaftElection {
 	return &ElectionManager{
 		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
 		VotesReceived:           []raft.VoteResponse{},
-		leaderHeartbeatChannel: make(chan raft.RaftNode),
+		leaderHeartbeatChannel:  make(chan raft.RaftNode),
 	}
 
 }
@@ -72,18 +72,15 @@ func (em *ElectionManager) handleElection(rn *raft.RaftNode) bool {
 	for {
 		select {
 		case vr := <-em.followerAccordingToPeer:
-			rn.SendSignal(raft.ElectionTimerStopped)
 			em.becomeAFollowerAccordingToPeer(rn, vr)
 			return false
 		case <-em.leader:
-			rn.SendSignal(raft.ElectionTimerStopped)
 			em.becomeALeader(rn)
 			return false
 		case l := <-em.leaderHeartbeatChannel:
 			em.becomeAFollowerAccordingToLeader(rn, l)
 			return false
 		case <-em.follower:
-			rn.SendSignal(raft.ElectionTimerStopped)
 			em.becomeAFollower(rn)
 			return false
 		case <-em.electionTimedOut:
@@ -93,17 +90,23 @@ func (em *ElectionManager) handleElection(rn *raft.RaftNode) bool {
 	}
 }
 
-func (em *ElectionManager) becomeAFollower(rn *raft.RaftNode) {
-	rn.ElectionInProgress = false
-	rn.CurrentRole = raft.FOLLOWER
+func (em *ElectionManager) becomeALeader(rn *raft.RaftNode) {
+	if rn.ElectionInProgress == true {
+		rn.CurrentRole = raft.LEADER
+		rn.SendSignal(raft.BecameLeader)
+		em.replicateLogs(rn)
+		rn.Heart.StartBeating(rn)
+		rn.ElectionInProgress = false
+		rn.SendSignal(raft.ElectionTimerStopped)
+	}
 }
 
-func (em *ElectionManager) becomeALeader(rn *raft.RaftNode) {
-	rn.ElectionInProgress = false
-	rn.CurrentRole = raft.LEADER
-	rn.SendSignal(raft.BecameLeader)
-	em.replicateLogs(rn)
-	rn.Heart.StartBeating(rn)
+func (em *ElectionManager) becomeAFollower(rn *raft.RaftNode) {
+	if rn.ElectionInProgress == true {
+		rn.CurrentRole = raft.FOLLOWER
+		rn.ElectionInProgress = false
+		rn.SendSignal(raft.ElectionTimerStopped)
+	}
 }
 
 func (em *ElectionManager) replicateLogs(rn *raft.RaftNode) {
@@ -116,18 +119,23 @@ func (em *ElectionManager) replicateLogs(rn *raft.RaftNode) {
 }
 
 func (em *ElectionManager) becomeAFollowerAccordingToLeader(rn *raft.RaftNode, leader raft.RaftNode) {
-	rn.ElectionInProgress = false
-	rn.SendSignal(raft.ElectionTimerStopped)
-	rn.CurrentRole = raft.FOLLOWER
-	rn.SendSignal(raft.BecameFollower)
-	rn.CurrentTerm = leader.CurrentTerm
+	if rn.ElectionInProgress == true {
+		rn.CurrentRole = raft.FOLLOWER
+		rn.SendSignal(raft.BecameFollower)
+		rn.CurrentTerm = leader.CurrentTerm
+		rn.ElectionInProgress = false
+		rn.SendSignal(raft.ElectionTimerStopped)
+	}
 }
 
 func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v raft.VoteResponse) {
-	rn.ElectionInProgress = false
-	rn.CurrentTerm = v.Term
-	rn.CurrentRole = raft.FOLLOWER
-	rn.VotedFor = 0
+	if rn.ElectionInProgress == true {
+		rn.CurrentTerm = v.Term
+		rn.CurrentRole = raft.FOLLOWER
+		rn.VotedFor = 0
+		rn.SendSignal(raft.ElectionTimerStopped)
+		rn.ElectionInProgress = false
+	}
 }
 
 func (em *ElectionManager) startElectionTimer(rn *raft.RaftNode) {
