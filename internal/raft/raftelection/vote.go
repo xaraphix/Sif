@@ -20,7 +20,6 @@ func becomeAFollowerAccordingToPeersTerm(
 	rn.CurrentRole = raft.FOLLOWER
 	rn.VotedFor = 0
 	rn.ElectionInProgress = false
-	rn.IsHeartBeating = false
 	rn.LeaderHeartbeatMonitor.Start(rn)
 }
 
@@ -72,30 +71,28 @@ func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
 
 	go func() {
 		for {
-			select {
-			case <-em.conclusionDone:
-				break
-			default:
-				votes := []raft.VoteResponse{}
-				for vr := range em.votesResponse {
-					if em.VotesReceived == nil {
-						em.VotesReceived = []raft.VoteResponse{}
-					}
-
-					em.VotesReceived = append(em.VotesReceived, vr)
-					em.concludeFromReceivedVote(rn, votes, vr)
+				if em.VotesReceived == nil {
+					em.VotesReceived = []raft.VoteResponse{}
 				}
+				if len(em.VotesReceived) == len(rn.Peers) {
+					continue
+				}
+				for vr := range em.votesResponse {
+					em.VotesReceived = append(em.VotesReceived, vr)
+					em.concludeFromReceivedVote(rn,vr)
+					if len(em.VotesReceived) == len(rn.Peers) {
+						break
+					}
 			}
 		}
 	}()
 }
 
-func (em *ElectionManager) concludeFromReceivedVote(rn *raft.RaftNode, votes []raft.VoteResponse, vr raft.VoteResponse) {
-	votes = append(votes, vr)
+func (em *ElectionManager) concludeFromReceivedVote(rn *raft.RaftNode, vr raft.VoteResponse) {
 	valid := isElectionValid(rn, vr)
 	if !valid && isPeerTermHigher(rn, vr) {
 		em.followerAccordingToPeer <- vr
-	} else if becomeLeader, becomeFollower := whatDoesTheMajorityWant(len(rn.Peers), votes, vr); true {
+	} else if becomeLeader, becomeFollower := em.whatDoesTheMajorityWant(len(rn.Peers), vr); true {
 		if becomeLeader {
 			em.leader <- true
 		} else if becomeFollower {
@@ -118,19 +115,19 @@ func isElectionValid(rn *raft.RaftNode, vr raft.VoteResponse) bool {
 	}
 }
 
-func whatDoesTheMajorityWant(numOfPeers int, votesReceived []raft.VoteResponse, vr raft.VoteResponse) (bool, bool) {
+func (em *ElectionManager) whatDoesTheMajorityWant(numOfPeers int, vr raft.VoteResponse) (bool, bool) {
 
 	majorityCount := numOfPeers / 2
 	votesInFavor := 0
 	leader, follower := false, false
-	for _, vr := range votesReceived {
+	for _, vr := range em.VotesReceived {
 		if vr.VoteGranted {
 			votesInFavor = votesInFavor + 1
 		}
 	}
 
 	// if majority has voted against, game over
-	if len(votesReceived)-votesInFavor > majorityCount {
+	if len(em.VotesReceived)-votesInFavor > majorityCount {
 		follower = true
 	}
 

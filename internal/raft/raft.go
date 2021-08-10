@@ -31,7 +31,6 @@ type RaftNode struct {
 	Node
 
 	ElectionInProgress bool
-	IsHeartBeating     bool
 	raftSignal         chan int
 
 	FileMgr                RaftFile
@@ -77,8 +76,6 @@ type RaftMonitor interface {
 //go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
 type RaftElection interface {
 	GetReceivedVotes() []VoteResponse
-	HasElectionTimerStarted() bool
-	HasElectionTimerStopped() bool
 	StartElection(*RaftNode)
 	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest VoteRequest) VoteResponse
 	GenerateVoteRequest(*RaftNode) VoteRequest
@@ -97,7 +94,6 @@ type RaftHeart interface {
 	StopBeating(*RaftNode)
 	StartBeating(*RaftNode)
 	Sleep(*RaftNode)
-	IsBeating(*RaftNode) bool
 }
 
 //go:generate mockgen -destination=mocks/mock_raftlog.go -package=mocks . RaftLog
@@ -105,6 +101,10 @@ type RaftLog interface {
 	GetLogs() []Log
 	GetLog(rn *RaftNode, idx int32) Log
 	ReplicateLog(raftNode *RaftNode, peer Peer)
+}
+
+type RaftOptions struct {
+	StartLeaderHeartbeatMonitorAfterInitializing bool
 }
 
 type Log struct {
@@ -166,6 +166,7 @@ func NewRaftNode(
 	ra RaftRPCAdapter,
 	l RaftLog,
 	h RaftHeart,
+	o RaftOptions,
 ) *RaftNode {
 	DestructRaftNode(Sif)
 	Sif = &RaftNode{
@@ -181,7 +182,9 @@ func NewRaftNode(
 
 	raftnode := Sif
 	initializeRaftNode(raftnode)
-	raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+	if o.StartLeaderHeartbeatMonitorAfterInitializing {
+		raftnode.LeaderHeartbeatMonitor.Start(raftnode)
+	}
 	return raftnode
 }
 

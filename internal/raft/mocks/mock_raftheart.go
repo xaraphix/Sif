@@ -34,20 +34,6 @@ func (m *MockRaftHeart) EXPECT() *MockRaftHeartMockRecorder {
 	return m.recorder
 }
 
-// IsBeating mocks base method.
-func (m *MockRaftHeart) IsBeating(arg0 *raft.RaftNode) bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "IsBeating", arg0)
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// IsBeating indicates an expected call of IsBeating.
-func (mr *MockRaftHeartMockRecorder) IsBeating(arg0 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "IsBeating", reflect.TypeOf((*MockRaftHeart)(nil).IsBeating), arg0)
-}
-
 // Sleep mocks base method.
 func (m *MockRaftHeart) Sleep(arg0 *raft.RaftNode) {
 	m.ctrl.T.Helper()

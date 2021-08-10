@@ -29,6 +29,8 @@ const (
 	ReceivedVoteResponse
 	BecameFollower
 	BecameLeader
+	HeartbeatStarted
+	HeartbeatStopped
 	LogReplicationRequestSent
 	LeaderHeartbeatReceived
 )

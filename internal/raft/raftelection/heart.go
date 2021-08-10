@@ -29,9 +29,10 @@ func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
 }
 
 func beat(rn *raft.RaftNode) {
-	rn.IsHeartBeating = true
+	rn.SendSignal(raft.HeartbeatStarted)
 	for {
-		if rn.IsHeartBeating == false || rn.CurrentRole != raft.LEADER {
+		if rn.CurrentRole != raft.LEADER {
+			rn.SendSignal(raft.HeartbeatStopped)
 			break
 		} else {
 			go func(n *raft.RaftNode) {
@@ -51,10 +52,6 @@ func (l *LeaderHeart) Sleep(rn *raft.RaftNode) {
 
 func (l *LeaderHeart) StopBeating(rn *raft.RaftNode) {
 
-}
-
-func (l *LeaderHeart) IsBeating(rn *raft.RaftNode) bool {
-	return rn.IsHeartBeating
 }
 
 func ifLeaderStartHeartbeatTransmitter(rn *raft.RaftNode) {

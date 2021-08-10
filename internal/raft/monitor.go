@@ -16,6 +16,10 @@ func NewLeaderHeartbeatMonitor(forceNew bool) *LeaderHeartbeatMonitor {
 	return lhm
 }
 
+func DestructLeaderHeartbeatMonitor(lhm *LeaderHeartbeatMonitor) {
+	lhm = nil
+}  
+
 type LeaderHeartbeatMonitor struct {
 	*Monitor
 }
@@ -32,7 +36,6 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 				l.Stopped == false &&
 				rn.ElectionInProgress == false &&
 				rn.CurrentRole != LEADER {
-				l.Stopped = true
 				rn.ElectionMgr.StartElection(rn)
 			}
 

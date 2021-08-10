@@ -90,34 +90,6 @@ func (mr *MockRaftElectionMockRecorder) GetResponseForVoteRequest(arg0, arg1 int
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResponseForVoteRequest", reflect.TypeOf((*MockRaftElection)(nil).GetResponseForVoteRequest), arg0, arg1)
 }
 
-// HasElectionTimerStarted mocks base method.
-func (m *MockRaftElection) HasElectionTimerStarted() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasElectionTimerStarted")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasElectionTimerStarted indicates an expected call of HasElectionTimerStarted.
-func (mr *MockRaftElectionMockRecorder) HasElectionTimerStarted() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasElectionTimerStarted", reflect.TypeOf((*MockRaftElection)(nil).HasElectionTimerStarted))
-}
-
-// HasElectionTimerStopped mocks base method.
-func (m *MockRaftElection) HasElectionTimerStopped() bool {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "HasElectionTimerStopped")
-	ret0, _ := ret[0].(bool)
-	return ret0
-}
-
-// HasElectionTimerStopped indicates an expected call of HasElectionTimerStopped.
-func (mr *MockRaftElectionMockRecorder) HasElectionTimerStopped() *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "HasElectionTimerStopped", reflect.TypeOf((*MockRaftElection)(nil).HasElectionTimerStopped))
-}
-
 // StartElection mocks base method.
 func (m *MockRaftElection) StartElection(arg0 *raft.RaftNode) {
 	m.ctrl.T.Helper()

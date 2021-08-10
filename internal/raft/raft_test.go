@@ -30,7 +30,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		var setupVars MockSetupVars
 
-		FWhen("The Raft node initializes", func() {
+		When("The Raft node initializes", func() {
 			BeforeEach(func() {
 				persistentState = loadTestRaftPersistentState()
 				setupVars = setupRaftNodeInitialization()
@@ -77,7 +77,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 		})
 
-		FWhen("On booting up from a crash", func() {
+		When("On booting up from a crash", func() {
 			BeforeEach(func() {
 				persistentState = loadTestRaftPersistentState()
 				setupVars = setupRaftNodeBootsUpFromCrash()
@@ -117,7 +117,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			term_0 := int32(0)
 			var setupVars MockSetupVars
 
-			FWhen("Raft Node doesn't receive leader heartbeat for the leader heartbeat duration", func() {
+			When("Raft Node doesn't receive leader heartbeat for the leader heartbeat duration", func() {
 				BeforeEach(func() {
 					setupVars = setupLeaderHeartbeatTimeout()
 					node = setupVars.node
@@ -134,11 +134,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				It("Should become a candidate", func() {
 					Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
-					for {
-						if len(node.ElectionMgr.GetReceivedVotes()) == len(node.Peers) {
-							break
-						}
-					}
 				})
 
 				It("Should Vote for itself", func() {
@@ -175,7 +170,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				node := &raft.RaftNode{}
 				term_0 := int32(0)
 				var setupVars MockSetupVars
-				FWhen("Candidate is not able to reach to a conclusion within the election allowed time", func() {
+				When("Candidate is not able to reach to a conclusion within the election allowed time", func() {
 					AfterEach(func() {
 						setupVars.ctrls.fileCtrl.Finish()
 						setupVars.ctrls.electionCtrl.Finish()
@@ -185,34 +180,23 @@ var _ = Describe("Sif Raft Consensus", func() {
 					})
 
 					It("Should restart election", func() {
-						setupVars = setupRestartElectionOnBeingIndecisive()
+						setupVars = setupPeerTakesTooMuchTimeToRespond()
 						node = setupVars.node
 						term_0 = setupVars.term_0
-						loopStartedAt := time.Now()
 
-						for {
-							if node.CurrentRole == raft.CANDIDATE &&
-								node.CurrentTerm == term_0+1 {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
-								Fail("Took too much time to be successful")
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.ElectionRestarted {
 								break
 							}
 						}
 
-						loopStartedAt = time.Now()
-						for {
-							if node.ElectionInProgress == true &&
-								node.CurrentTerm == term_0+2 &&
-								node.CurrentRole == raft.CANDIDATE {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*2200 {
-								Fail("Took too much time to be successful")
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.ElectionTimerStarted {
 								break
 							}
 						}
 
-						Succeed()
+						Expect(node.CurrentTerm).To(Equal(term_0 + 2))
 					})
 
 				})
@@ -221,7 +205,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			Context("Collecting votes", func() {
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
-				FWhen("Majority votes in favor", func() {
+				When("Majority votes in favor", func() {
 
 					AfterEach(func() {
 						setupVars.ctrls.fileCtrl.Finish()
@@ -234,15 +218,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("should become a leader", func() {
 						setupVars = setupMajorityVotesInFavor()
 						node = setupVars.node
-						loopStartedAt := time.Now()
-						for {
-							if node.CurrentRole == raft.LEADER {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
-								Fail("Took too much time to be successful")
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.BecameLeader {
 								break
 							}
-
 						}
 						Succeed()
 					})
@@ -290,39 +269,36 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = setupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.node
 
-						loopStartedAt := time.Now()
-						for {
-							if setupVars.node.ElectionMgr.HasElectionTimerStarted() == true {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
-								Fail("Took too much time to be successful")
+						for e := range setupVars.node.GetRaftSignalsChan() {
+							if e == raft.ElectionTimerStarted {
 								break
 							}
 						}
 
-						for {
-							if setupVars.node.CurrentRole == raft.LEADER {
+	
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.BecameLeader {
 								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*40000 {
-								Fail("Took too much time to be successful")
+							}
+						}
+						
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.HeartbeatStarted {
 								break
 							}
 						}
 
-						for {
-							if setupVars.node.IsHeartBeating == true {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*4000 {
-								Fail("Took too much time to be successful")
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.LogReplicationRequestSent {
+								Succeed()
 								break
 							}
 						}
 
-						Succeed()
 					})
 				})
 
-				FWhen("The candidate receives a vote response with a higher term than its current term", func() {
+				When("The candidate receives a vote response with a higher term than its current term", func() {
 
 					AfterEach(func() {
 						setupVars.ctrls.fileCtrl.Finish()
@@ -335,22 +311,11 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("Should become a follower", func() {
 						setupVars = setupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.node
-						loopStartedAt := time.Now()
-						for {
-							if setupVars.node.ElectionInProgress == true {
+						for e := range node.GetRaftSignalsChan() {
+							if e == raft.ElectionTimerStopped {
 								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*300 {
-								Fail("Took too much time to be successful")
-								break
-							}
-						}
-
-						for {
-							if setupVars.node.ElectionInProgress == false {
-								break
-							} else if time.Since(loopStartedAt) > time.Millisecond*600 {
-								Fail("Took too much time to be successful")
-								break
+							} else {
+								continue
 							}
 						}
 
@@ -393,7 +358,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
 
-				FWhen("The candidate's log and term are both ok", func() {
+				When("The candidate's log and term are both ok", func() {
 
 					AfterEach(func() {
 						setupVars.ctrls.fileCtrl.Finish()
@@ -417,8 +382,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.VoteGranted {
 								break
-							} else {
-								continue
 							}
 						}
 
@@ -435,7 +398,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						raft.DestructRaftNode(node)
 					})
 
-					It("Should vote no", func() {
+				It("Should vote no", func() {
 						setupVars = setupPeerReceivingCandidateVoteRequest()
 						node = setupVars.node
 
@@ -449,8 +412,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.VoteNotGranted {
 								break
-							} else {
-								continue
 							}
 						}
 
@@ -471,7 +432,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars.ctrls.rpcCtrl.Finish()
 						raft.DestructRaftNode(node)
 					})
-					FIt("Should become a follower", func() {
+					It("Should become a follower", func() {
 						setupVars = setupMajorityVotesAgainst()
 						node = setupVars.node
 
@@ -489,7 +450,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						}
 
 						for e := range node.GetRaftSignalsChan() {
-							if e == raft.ElectionTimerStopped {
+							if e == raft.BecameFollower {
 								break
 							} else {
 								continue
@@ -672,6 +633,12 @@ func setupRaftNode(preNodeSetupCB func(
 		monitorCtrl:  monitorCtrl,
 	}
 
+	raftOptions := raft.RaftOptions{}
+
+	if options.startMonitor {
+		raftOptions.StartLeaderHeartbeatMonitorAfterInitializing = true
+	}
+
 	election = raftelection.NewElectionManager()
 	heart = raftelection.NewLeaderHeart()
 	logMgr = &raftlog.LogMgr{}
@@ -701,7 +668,7 @@ func setupRaftNode(preNodeSetupCB func(
 	preNodeSetupCB(mockFile, mockLog, mockElection, mockRPCAdapter, mockHeart, mockMonitor)
 
 	node = nil
-	node = raft.NewRaftNode(fileMgr, config, election, monitor, rpcAdapter, logMgr, heart)
+	node = raft.NewRaftNode(fileMgr, config, election, monitor, rpcAdapter, logMgr, heart, raftOptions)
 	term_0 = node.CurrentTerm
 
 	return MockSetupVars{
@@ -802,6 +769,7 @@ type SetupOptions struct {
 	mockConfig        bool
 	mockRPCAdapter    bool
 	mockLeaderMonitor bool
+	startMonitor      bool
 }
 
 type Controllers struct {
@@ -831,6 +799,7 @@ func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 		mockLog:        true,
 		mockFile:       true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -872,6 +841,7 @@ func setupRaftNodeInitialization() MockSetupVars {
 		mockFile:       true,
 		mockLog:        true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -913,6 +883,7 @@ func setupLeaderHeartbeatTimeout() MockSetupVars {
 		mockLog:        true,
 		mockElection:   false,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -962,6 +933,7 @@ func setupMajorityVotesAgainst() MockSetupVars {
 		mockFile:       true,
 		mockLog:        true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -1010,6 +982,7 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		mockFile:       true,
 		mockLog:        true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -1062,6 +1035,7 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 		mockFile:       true,
 		mockLog:        true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -1110,13 +1084,14 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 	}
 }
 
-func setupRestartElectionOnBeingIndecisive() MockSetupVars {
+func setupPeerTakesTooMuchTimeToRespond() MockSetupVars {
 	options := SetupOptions{
 		mockHeart:      false,
 		mockElection:   false,
 		mockFile:       true,
 		mockLog:        true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -1136,7 +1111,7 @@ func setupRestartElectionOnBeingIndecisive() MockSetupVars {
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Do(
 			func(p raft.Peer, vr raft.VoteRequest) raft.VoteResponse {
-				time.Sleep(time.Second)
+				time.Sleep(100 * time.Second)
 				return raft.VoteResponse{}
 			}).Return(raft.VoteResponse{
 			VoteGranted: false,
@@ -1164,6 +1139,7 @@ func setupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 		mockLog:        true,
 		mockFile:       true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -1204,6 +1180,7 @@ func setupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 		mockFile:       true,
 		mockLog:        true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	preNodeSetupCB := func(
@@ -1245,6 +1222,7 @@ func setupCandidateReceivesVoteResponseWithHigherTerm() MockSetupVars {
 		mockLog:        true,
 		mockFile:       true,
 		mockRPCAdapter: true,
+		startMonitor:   true,
 	}
 
 	sentVoteResponse := make(map[int32]raft.VoteResponse)
@@ -1315,7 +1293,6 @@ func setupPeerReceivingCandidateVoteRequest() MockSetupVars {
 
 	setupVars := setupRaftNode(preNodeSetupCB, options)
 
-	setupVars.node.LeaderHeartbeatMonitor.Stop()
 	return setupVars
 }
 
