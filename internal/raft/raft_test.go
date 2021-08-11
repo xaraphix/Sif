@@ -238,21 +238,24 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStarted {
 								break
-							} 						}
+							}
+						}
 
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} 						}
+							}
+						}
 
 						counter := 0
 						for e := range node.GetRaftSignalsChan() {
-							if e == raft.LogReplicationRequestSent {
+							if e == raft.LogRequestSent {
 								counter = counter + 1
 								if counter == 2 {
 									break
 								}
-							} 						}
+							}
+						}
 
 						time.Sleep(100 * time.Millisecond)
 
@@ -271,13 +274,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 							}
 						}
 
-	
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.BecameLeader {
 								break
 							}
 						}
-						
+
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.HeartbeatStarted {
 								break
@@ -285,7 +287,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						}
 
 						for e := range node.GetRaftSignalsChan() {
-							if e == raft.LogReplicationRequestSent {
+							if e == raft.LogRequestSent {
 								Succeed()
 								break
 							}
@@ -310,7 +312,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} 						}
+							}
+						}
 
 						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 					})
@@ -322,7 +325,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} 						}
+							}
+						}
 						Expect(node.CurrentTerm).To(Equal((*setupVars.receivedVoteResponse)[testConfig.Peers()[0].Id].Term))
 					})
 
@@ -334,7 +338,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStopped {
 								break
-							} 						}
+							}
+						}
 
 						Succeed()
 					})
@@ -385,7 +390,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						raft.DestructRaftNode(node)
 					})
 
-				It("Should vote no", func() {
+					It("Should vote no", func() {
 						setupVars = setupPeerReceivingCandidateVoteRequest()
 						node = setupVars.node
 
@@ -431,12 +436,14 @@ var _ = Describe("Sif Raft Consensus", func() {
 									},
 								}
 								break
-							} 						}
+							}
+						}
 
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.BecameFollower {
 								break
-							} 						}
+							}
+						}
 
 						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 						Expect(node.CurrentTerm).To(Equal(int32(10)))
@@ -482,7 +489,18 @@ var _ = Describe("Sif Raft Consensus", func() {
 	})
 
 	Context("Log Replication", func() {
+		var setupVars MockSetupVars
+		node := &raft.RaftNode{}
 		When("Leader is replicating log to followers", func() {
+
+			AfterEach(func() {
+				setupVars.ctrls.fileCtrl.Finish()
+				setupVars.ctrls.electionCtrl.Finish()
+				setupVars.ctrls.heartCtrl.Finish()
+				setupVars.ctrls.rpcCtrl.Finish()
+				raft.DestructRaftNode(node)
+			})
+
 			Specify(`The log request should have leaderId, 
 			currentTerm, 
 			index of the last sent log entry,
@@ -490,6 +508,17 @@ var _ = Describe("Sif Raft Consensus", func() {
 			commitLength and
 			suffix of log entries`, func() {
 
+				setupVars = setupMajorityVotesInFavor()
+				node = setupVars.node
+
+				for e := range node.GetRaftSignalsChan() {
+					if e == raft.LogRequestSent {
+						break
+					}
+				}
+
+				Expect(setupVars.sentLogReplicationReq.CurrentTerm).To(Equal(node.CurrentTerm))
+				Succeed()
 			})
 		})
 
@@ -764,13 +793,14 @@ type Controllers struct {
 }
 
 type MockSetupVars struct {
-	node                 *raft.RaftNode
-	term_0               int32
-	sentHeartbeats       *map[int]bool
-	sentVoteRequests     *map[int]raft.VoteRequest
-	receivedVoteResponse *map[int32]raft.VoteResponse
-	ctrls                Controllers
-	leaderId             int32
+	node                  *raft.RaftNode
+	term_0                int32
+	sentHeartbeats        *map[int]bool
+	sentVoteRequests      *map[int]raft.VoteRequest
+	receivedVoteResponse  *map[int32]raft.VoteResponse
+	sentLogReplicationReq *raft.LogRequest
+	ctrls                 Controllers
+	leaderId              int32
 }
 
 func setupRaftNodeBootsUpFromCrash() MockSetupVars {
@@ -966,6 +996,8 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		startMonitor:   true,
 	}
 
+	var logReplicationReq raft.LogRequest 
+
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
 		logMgr *mocks.MockRaftLog,
@@ -992,7 +1024,9 @@ func setupMajorityVotesInFavor() MockSetupVars {
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(interface{}, interface{}) {
+		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(p raft.Peer, r raft.LogRequest) {
+			logReplicationReq = r
+			return
 		}).AnyTimes()
 
 		adapter.EXPECT().ReplicateLog(testConfig.Peers()[1], gomock.Any()).Do(func(interface{}, interface{}) {
@@ -1001,7 +1035,9 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
 	}
 
-	return setupRaftNode(preNodeSetupCB, options)
+	setupVars := setupRaftNode(preNodeSetupCB, options)
+	setupVars.sentLogReplicationReq = &logReplicationReq
+	return setupVars
 }
 
 func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {

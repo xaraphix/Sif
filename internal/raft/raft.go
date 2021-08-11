@@ -85,7 +85,8 @@ type RaftElection interface {
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
 	RequestVoteFromPeer(peer Peer, voteRequest VoteRequest) VoteResponse
-	ReplicateLog(peer Peer, replicateLogsRequest ReplicateLogRequest)
+	ReplicateLog(peer Peer, logRequest LogRequest)
+	ReceiveLogRequest(logRequest LogRequest) LogResponse
 	GenerateVoteResponse(VoteRequest) VoteResponse
 }
 
@@ -149,13 +150,20 @@ type Peer struct {
 	Address string `yaml:"address"`
 }
 
-type ReplicateLogRequest struct {
+type LogRequest struct {
 	LeaderId     int32
 	CurrentTerm  int32
 	SentLength   int32
 	PrevLogTerm  int32
 	CommitLength int32
 	Entries      *[]Log
+}
+
+type LogResponse struct {
+	FollowerId int32
+	Term       int32
+	AckLength  int32
+	Success    bool
 }
 
 func NewRaftNode(
@@ -177,7 +185,7 @@ func NewRaftNode(
 		RPCAdapter:             ra,
 		LogMgr:                 l,
 		Heart:                  h,
-		raftSignal: make(chan int),
+		raftSignal:             make(chan int),
 	}
 
 	raftnode := Sif
@@ -187,7 +195,6 @@ func NewRaftNode(
 	}
 	return raftnode
 }
-
 
 func DestructRaftNode(rn *RaftNode) {
 	rn = nil

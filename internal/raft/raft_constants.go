@@ -31,7 +31,7 @@ const (
 	BecameLeader
 	HeartbeatStarted
 	HeartbeatStopped
-	LogReplicationRequestSent
+	LogRequestSent
 	LeaderHeartbeatReceived
 )
 

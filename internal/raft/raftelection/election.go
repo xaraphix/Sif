@@ -114,7 +114,7 @@ func (em *ElectionManager) replicateLogs(rn *raft.RaftNode) {
 		for _, peer := range rn.Peers {
 			rn.LogMgr.ReplicateLog(rn, peer)
 		}
-		rn.SendSignal(raft.LogReplicationRequestSent)
+		rn.SendSignal(raft.LogRequestSent)
 	}(rn)
 }
 

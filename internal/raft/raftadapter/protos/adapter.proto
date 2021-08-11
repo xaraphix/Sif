@@ -1,0 +1,45 @@
+syntax = "proto3";
+option go_package = "github.com/xaraphix/Sif/internal/raft/raftadapter/protos;protos";
+
+import "google/protobuf/struct.proto";
+
+service RaftRPCAdapter {
+  rpc RequestVoteFromPeer(VoteRequest) returns (VoteResponse);
+  rpc ReplicateLog(LogRequest) returns (LogResponse);
+}
+
+message VoteRequest {
+  int32 NodeId = 1;
+  int32 CurrentTerm = 2;
+  int32 LogLength = 3;
+  int32 LastTerm = 4;
+}
+
+message VoteResponse {
+  int32 PeerId = 1;
+  int32 Term = 2;
+  bool VoteGranted = 3;
+}
+
+message LogRequest {
+  int32 LeaderId = 1;
+  int32 CurrentTerm = 2;
+  int32 SentLength = 3;
+  int32 PrevLogTerm = 4;
+  int32 CommitLength = 5;
+  repeated Log Entries = 6;
+
+}
+
+message Log {
+  int32 Term = 1;
+  .google.protobuf.Struct Message = 2;
+}
+
+message LogResponse {
+  int32 FollowerId = 1;
+  int32 Term = 2;
+  int32 AckLength = 3;
+  int32 Success = 4;
+}
+

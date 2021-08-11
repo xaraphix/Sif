@@ -1,18 +1,25 @@
 package raftadapter
 
-import "github.com/xaraphix/Sif/internal/raft"
+import (
+	. "github.com/xaraphix/Sif/internal/raft"
+)
 
 type RaftNodeAdapter struct {
 	//TODO
 }
 
-func (ra *RaftNodeAdapter) RequestVoteFromPeer(peer int32, voteRequest raft.VoteRequest) raft.VoteResponse {
-	//TODO
-	return raft.VoteResponse{}
+func (a RaftNodeAdapter) RequestVoteFromPeer(peer Peer, voteRequest VoteRequest) VoteResponse {
+	return VoteResponse{}
 }
 
-
-func (ra *RaftNodeAdapter) GenerateVoteRequest(req raft.VoteRequest) raft.VoteResponse {
-	return raft.Sif.ElectionMgr.GetResponseForVoteRequest(raft.Sif, req)
+func (a RaftNodeAdapter) ReplicateLog(peer Peer, logRequest LogRequest) {
+ return
 }
 
+func (a RaftNodeAdapter) ReceiveLogRequest(logRequest LogRequest) LogResponse {
+ return LogResponse{ }
+ }
+
+func (a RaftNodeAdapter) GenerateVoteResponse(VoteRequest) VoteResponse {
+	return VoteResponse{}
+}

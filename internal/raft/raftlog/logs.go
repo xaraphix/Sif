@@ -24,7 +24,7 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 		prevLogTerm = rn.Logs[i].Term
 	}
 
-	replicateLogsRequest := raft.ReplicateLogRequest{
+	replicateLogsRequest := raft.LogRequest{
 		LeaderId:     rn.Id,
 		CurrentTerm:  rn.CurrentTerm,
 		SentLength:   i,
@@ -34,5 +34,5 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	}
 
 	rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
-	rn.SendSignal(raft.LogReplicationRequestSent)
+	rn.SendSignal(raft.LogRequestSent)
 }
