@@ -34,6 +34,18 @@ func (m *MockRaftRPCAdapter) EXPECT() *MockRaftRPCAdapterMockRecorder {
 	return m.recorder
 }
 
+// BroadcastMessage mocks base method.
+func (m *MockRaftRPCAdapter) BroadcastMessage(arg0 map[string]interface{}) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "BroadcastMessage", arg0)
+}
+
+// BroadcastMessage indicates an expected call of BroadcastMessage.
+func (mr *MockRaftRPCAdapterMockRecorder) BroadcastMessage(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BroadcastMessage", reflect.TypeOf((*MockRaftRPCAdapter)(nil).BroadcastMessage), arg0)
+}
+
 // GenerateVoteResponse mocks base method.
 func (m *MockRaftRPCAdapter) GenerateVoteResponse(arg0 raft.VoteRequest) raft.VoteResponse {
 	m.ctrl.T.Helper()

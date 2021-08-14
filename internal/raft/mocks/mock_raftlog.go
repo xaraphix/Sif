@@ -34,6 +34,18 @@ func (m *MockRaftLog) EXPECT() *MockRaftLogMockRecorder {
 	return m.recorder
 }
 
+// BroadcastMessage mocks base method.
+func (m *MockRaftLog) BroadcastMessage(arg0 *raft.RaftNode, arg1 map[string]interface{}) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "BroadcastMessage", arg0, arg1)
+}
+
+// BroadcastMessage indicates an expected call of BroadcastMessage.
+func (mr *MockRaftLogMockRecorder) BroadcastMessage(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BroadcastMessage", reflect.TypeOf((*MockRaftLog)(nil).BroadcastMessage), arg0, arg1)
+}
+
 // GetLog mocks base method.
 func (m *MockRaftLog) GetLog(arg0 *raft.RaftNode, arg1 int32) raft.Log {
 	m.ctrl.T.Helper()

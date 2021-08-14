@@ -36,3 +36,24 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
 	rn.SendSignal(raft.LogRequestSent)
 }
+
+func (l *LogMgr) BroadcastMessage(rn *raft.RaftNode, msg map[string]interface{}) {
+
+	if rn.CurrentRole == raft.LEADER {
+		rn.SendSignal(raft.MsgAppendedToLogs)
+		rn.Logs = append(rn.Logs, raft.Log{
+			Term: rn.CurrentTerm,
+			Message: msg,
+		})
+
+		rn.AckedLength[rn.Id] = int32(len(rn.Logs))
+
+		for _, peer := range rn.Peers {
+			go func (n *raft.RaftNode, p raft.Peer)  {
+				l.ReplicateLog(n, p)
+			}(rn, peer)
+		}
+	} else {
+		//raftRPCAdapter forward request
+	}
+}

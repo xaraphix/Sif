@@ -88,6 +88,7 @@ type RaftRPCAdapter interface {
 	ReplicateLog(peer Peer, logRequest LogRequest)
 	ReceiveLogRequest(logRequest LogRequest) LogResponse
 	GenerateVoteResponse(VoteRequest) VoteResponse
+	BroadcastMessage(msg map[string]interface{})
 }
 
 //go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
@@ -102,6 +103,7 @@ type RaftLog interface {
 	GetLogs() []Log
 	GetLog(rn *RaftNode, idx int32) Log
 	ReplicateLog(raftNode *RaftNode, peer Peer)
+	BroadcastMessage(raftNode *RaftNode, msg map[string]interface{})
 }
 
 type RaftOptions struct {

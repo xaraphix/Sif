@@ -23,12 +23,20 @@ func becomeAFollowerAccordingToPeersTerm(
 	rn.LeaderHeartbeatMonitor.Start(rn)
 }
 
-func getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest raft.VoteRequest) raft.VoteResponse {
+func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest raft.VoteRequest) raft.VoteResponse {
 	voteResponse := raft.VoteResponse{}
 	logOk := isCandidateLogOK(rn, voteRequest)
 	termOK := isCandidateTermOK(rn, voteRequest)
 
 	if logOk && termOK {
+		if rn.ElectionInProgress {
+			em.peerVoteChannel <- raft.RaftNode{
+				Node: raft.Node{
+					Id:          voteRequest.NodeId,
+					CurrentTerm: voteRequest.CurrentTerm,
+				},
+			}
+		}
 		rn.CurrentTerm = voteRequest.CurrentTerm
 		rn.CurrentRole = raft.FOLLOWER
 		rn.VotedFor = voteRequest.NodeId
@@ -71,18 +79,18 @@ func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
 
 	go func() {
 		for {
-				if em.VotesReceived == nil {
-					em.VotesReceived = []raft.VoteResponse{}
-				}
+			if em.VotesReceived == nil {
+				em.VotesReceived = []raft.VoteResponse{}
+			}
+			if len(em.VotesReceived) == len(rn.Peers) {
+				continue
+			}
+			for vr := range em.votesResponse {
+				em.VotesReceived = append(em.VotesReceived, vr)
+				em.concludeFromReceivedVote(rn, vr)
 				if len(em.VotesReceived) == len(rn.Peers) {
-					continue
+					break
 				}
-				for vr := range em.votesResponse {
-					em.VotesReceived = append(em.VotesReceived, vr)
-					em.concludeFromReceivedVote(rn,vr)
-					if len(em.VotesReceived) == len(rn.Peers) {
-						break
-					}
 			}
 		}
 	}()
