@@ -127,7 +127,7 @@ func (em *ElectionManager) becomeAFollowerAccordingToLeader(rn *raft.RaftNode, l
 		rn.CurrentRole = raft.FOLLOWER
 		rn.SendSignal(raft.BecameFollower)
 		rn.CurrentTerm = leader.CurrentTerm
-		rn.VotedFor = 0
+		rn.VotedFor = leader.Id
 		rn.ElectionInProgress = false
 		rn.SendSignal(raft.ElectionTimerStopped)
 	}

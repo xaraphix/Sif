@@ -155,9 +155,9 @@ type Peer struct {
 
 type LogRequest struct {
 	LeaderId     int32
-	CurrentTerm  int32
-	SentLength   int32
-	PrevLogTerm  int32
+	Term  int32
+	LogLength   int32
+	LogTerm  int32
 	CommitLength int32
 	Entries      *[]Log
 }

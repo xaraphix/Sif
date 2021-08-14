@@ -26,9 +26,9 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 
 	replicateLogsRequest := raft.LogRequest{
 		LeaderId:     rn.Id,
-		CurrentTerm:  rn.CurrentTerm,
-		SentLength:   i,
-		PrevLogTerm:  prevLogTerm,
+		Term:         rn.CurrentTerm,
+		LogLength:    i,
+		LogTerm:      prevLogTerm,
 		CommitLength: rn.CommitLength,
 		Entries:      &entries,
 	}
@@ -42,23 +42,62 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg map[string]
 	if rn.CurrentRole == raft.LEADER {
 		rn.SendSignal(raft.MsgAppendedToLogs)
 		rn.Logs = append(rn.Logs, raft.Log{
-			Term: rn.CurrentTerm,
+			Term:    rn.CurrentTerm,
 			Message: msg,
 		})
 
 		rn.AckedLength[rn.Id] = int32(len(rn.Logs))
 
 		for _, peer := range rn.Peers {
-			go func (n *raft.RaftNode, p raft.Peer)  {
+			go func(n *raft.RaftNode, p raft.Peer) {
 				l.ReplicateLog(n, p)
 			}(rn, peer)
 		}
 	} else {
-		//raftRPCAdapter forward request
+		//TODO raftRPCAdapter forward request
 	}
 }
 
 func (l *LogMgr) RespondToLogRequest(rn *raft.RaftNode, lr raft.LogRequest) raft.LogResponse {
 
-	return raft.LogResponse{}
+	if lr.Term > rn.CurrentTerm {
+		rn.CurrentTerm = lr.Term
+		rn.VotedFor = 0
+	}
+
+	logOk := int32(len(rn.Logs)) >= lr.LogLength
+
+	if logOk && lr.LogLength > 0 {
+		logOk = lr.LogTerm == rn.Logs[lr.LogLength-1].Term
+	}
+
+	if rn.ElectionInProgress && rn.CurrentTerm < lr.Term && logOk {
+		rn.ElectionMgr.GetLeaderHeartChannel() <- raft.RaftNode{
+			Node: raft.Node{
+				Id: lr.LeaderId,
+				CurrentTerm: lr.Term,
+			},
+		}
+		rn.CurrentTerm = lr.Term
+	}
+
+	if lr.Term == rn.CurrentTerm && logOk {
+		rn.CurrentRole = raft.FOLLOWER
+		rn.CurrentLeader = lr.LeaderId
+		//TODO l.appendEntries()
+		ack := lr.LogLength + int32(len(*lr.Entries))
+		return raft.LogResponse{
+			FollowerId: rn.Id,
+			Term:       rn.CurrentTerm,
+			AckLength:  ack,
+			Success:    true,
+		}
+	} else {
+		return raft.LogResponse{
+			FollowerId: rn.Id,
+			Term:       rn.CurrentTerm,
+			AckLength:  0,
+			Success:    false,
+		}
+	}
 }
