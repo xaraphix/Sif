@@ -38,7 +38,6 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 }
 
 func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg map[string]interface{}) raft.BroadcastMessageResponse {
-
 	if rn.CurrentRole == raft.LEADER {
 		rn.SendSignal(raft.MsgAppendedToLogs)
 		rn.Logs = append(rn.Logs, raft.Log{
@@ -62,7 +61,6 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg map[string]
 }
 
 func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr raft.LogRequest) raft.LogResponse {
-
 	if lr.Term > rn.CurrentTerm {
 		rn.CurrentTerm = lr.Term
 		rn.VotedFor = 0
@@ -106,7 +104,6 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr raft.LogRe
 }
 
 func (l *LogMgr) ReceiveLogAcknowledgements(rn *raft.RaftNode, lr raft.LogResponse) {
-
 	if lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
 		if lr.Success {
 			rn.SentLength[lr.FollowerId] = lr.AckLength
@@ -142,7 +139,6 @@ func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int32) int {
 }
 
 func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []raft.Log) {
-
 	if len(entries) > 0 && int32(len(rn.Logs)) > logLength {
 		if rn.Logs[logLength].Term != entries[0].Term {
 			//truncate logs

@@ -51,8 +51,8 @@ func (em *ElectionManager) wrapUpElection(rn *raft.RaftNode, restartElection boo
 	} else {
 		rn.ElectionInProgress = false
 	}
-
 }
+
 func (em *ElectionManager) initChannels() {
 	em.votesResponse = make(chan raft.VoteResponse)
 	em.electionTimedOut = make(chan bool)

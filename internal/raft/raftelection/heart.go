@@ -19,31 +19,23 @@ func NewLeaderHeart() *LeaderHeart {
 }
 
 func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
-	for _, peer := range rn.Peers {
-		rn.SentLength[peer.Id] = int32(len(rn.Logs))
-		rn.AckedLength[peer.Id] = 0
-		rn.LogMgr.ReplicateLog(rn, peer)
-	}
+	go func(rn *raft.RaftNode) {
+		rn.SendSignal(raft.HeartbeatStarted)
+		for {
+			if rn.CurrentRole != raft.LEADER {
+				rn.SendSignal(raft.HeartbeatStopped)
+				break
+			} else {
+				go func(n *raft.RaftNode) {
+					for _, peer := range rn.Peers {
+						rn.LogMgr.ReplicateLog(rn, peer)
+					}
+				}(rn)
 
-	go beat(rn)
-}
-
-func beat(rn *raft.RaftNode) {
-	rn.SendSignal(raft.HeartbeatStarted)
-	for {
-		if rn.CurrentRole != raft.LEADER {
-			rn.SendSignal(raft.HeartbeatStopped)
-			break
-		} else {
-			go func(n *raft.RaftNode) {
-				for _, peer := range rn.Peers {
-					rn.LogMgr.ReplicateLog(rn, peer)
-				}
-			}(rn)
-
-			rn.Heart.Sleep(rn)
+				rn.Heart.Sleep(rn)
+			}
 		}
-	}
+	}(rn)
 }
 
 func (l *LeaderHeart) Sleep(rn *raft.RaftNode) {
@@ -52,10 +44,4 @@ func (l *LeaderHeart) Sleep(rn *raft.RaftNode) {
 
 func (l *LeaderHeart) StopBeating(rn *raft.RaftNode) {
 
-}
-
-func ifLeaderStartHeartbeatTransmitter(rn *raft.RaftNode) {
-	if rn.CurrentRole == raft.LEADER {
-		rn.Heart.StartBeating(rn)
-	}
 }
