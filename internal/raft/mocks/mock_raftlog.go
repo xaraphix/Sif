@@ -34,18 +34,6 @@ func (m *MockRaftLog) EXPECT() *MockRaftLogMockRecorder {
 	return m.recorder
 }
 
-// BroadcastMessage mocks base method.
-func (m *MockRaftLog) BroadcastMessage(arg0 *raft.RaftNode, arg1 map[string]interface{}) {
-	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "BroadcastMessage", arg0, arg1)
-}
-
-// BroadcastMessage indicates an expected call of BroadcastMessage.
-func (mr *MockRaftLogMockRecorder) BroadcastMessage(arg0, arg1 interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BroadcastMessage", reflect.TypeOf((*MockRaftLog)(nil).BroadcastMessage), arg0, arg1)
-}
-
 // GetLog mocks base method.
 func (m *MockRaftLog) GetLog(arg0 *raft.RaftNode, arg1 int32) raft.Log {
 	m.ctrl.T.Helper()
@@ -84,4 +72,30 @@ func (m *MockRaftLog) ReplicateLog(arg0 *raft.RaftNode, arg1 raft.Peer) {
 func (mr *MockRaftLogMockRecorder) ReplicateLog(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReplicateLog", reflect.TypeOf((*MockRaftLog)(nil).ReplicateLog), arg0, arg1)
+}
+
+// RespondToBroadcastMsgRequest mocks base method.
+func (m *MockRaftLog) RespondToBroadcastMsgRequest(arg0 *raft.RaftNode, arg1 map[string]interface{}) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "RespondToBroadcastMsgRequest", arg0, arg1)
+}
+
+// RespondToBroadcastMsgRequest indicates an expected call of RespondToBroadcastMsgRequest.
+func (mr *MockRaftLogMockRecorder) RespondToBroadcastMsgRequest(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RespondToBroadcastMsgRequest", reflect.TypeOf((*MockRaftLog)(nil).RespondToBroadcastMsgRequest), arg0, arg1)
+}
+
+// RespondToLogRequest mocks base method.
+func (m *MockRaftLog) RespondToLogRequest(arg0 *raft.RaftNode, arg1 raft.LogRequest) raft.LogResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "RespondToLogRequest", arg0, arg1)
+	ret0, _ := ret[0].(raft.LogResponse)
+	return ret0
+}
+
+// RespondToLogRequest indicates an expected call of RespondToLogRequest.
+func (mr *MockRaftLogMockRecorder) RespondToLogRequest(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RespondToLogRequest", reflect.TypeOf((*MockRaftLog)(nil).RespondToLogRequest), arg0, arg1)
 }

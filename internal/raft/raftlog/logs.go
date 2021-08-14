@@ -21,7 +21,7 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	prevLogTerm := int32(0)
 
 	if i > 0 {
-		prevLogTerm = rn.Logs[i].Term
+		prevLogTerm = rn.Logs[i-1].Term
 	}
 
 	replicateLogsRequest := raft.LogRequest{
@@ -37,7 +37,7 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	rn.SendSignal(raft.LogRequestSent)
 }
 
-func (l *LogMgr) BroadcastMessage(rn *raft.RaftNode, msg map[string]interface{}) {
+func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg map[string]interface{}) {
 
 	if rn.CurrentRole == raft.LEADER {
 		rn.SendSignal(raft.MsgAppendedToLogs)
@@ -56,4 +56,9 @@ func (l *LogMgr) BroadcastMessage(rn *raft.RaftNode, msg map[string]interface{})
 	} else {
 		//raftRPCAdapter forward request
 	}
+}
+
+func (l *LogMgr) RespondToLogRequest(rn *raft.RaftNode, lr raft.LogRequest) raft.LogResponse {
+
+	return raft.LogResponse{}
 }

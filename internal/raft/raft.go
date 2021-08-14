@@ -103,7 +103,8 @@ type RaftLog interface {
 	GetLogs() []Log
 	GetLog(rn *RaftNode, idx int32) Log
 	ReplicateLog(raftNode *RaftNode, peer Peer)
-	BroadcastMessage(raftNode *RaftNode, msg map[string]interface{})
+	RespondToBroadcastMsgRequest(raftNode *RaftNode, msg map[string]interface{})
+	RespondToLogRequest(raftNode *RaftNode, logRequest LogRequest) LogResponse
 }
 
 type RaftOptions struct {
