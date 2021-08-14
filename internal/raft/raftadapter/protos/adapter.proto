@@ -6,6 +6,7 @@ import "google/protobuf/struct.proto";
 service RaftRPCAdapter {
   rpc RequestVoteFromPeer(VoteRequest) returns (VoteResponse);
   rpc ReplicateLog(LogRequest) returns (LogResponse);
+  rpc BroadcastMessage(.google.protobuf.Struct) returns (BroadcastMessageResponse);
 }
 
 message VoteRequest {
@@ -40,6 +41,10 @@ message LogResponse {
   int32 FollowerId = 1;
   int32 Term = 2;
   int32 AckLength = 3;
-  int32 Success = 4;
+  bool Success = 4;
 }
 
+
+message BroadcastMessageResponse {
+  bool success = 1;
+}
