@@ -56,7 +56,7 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg map[string]
 
 		return raft.BroadcastMessageResponse{}
 	} else {
-		leaderPeer := rn.GetLeaderPeer()
+		leaderPeer := rn.GetPeerById(rn.CurrentLeader)
 		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg)
 	}
 }
@@ -77,7 +77,7 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr raft.LogRe
 	if rn.ElectionInProgress && rn.CurrentTerm < lr.Term && logOk {
 		rn.ElectionMgr.GetLeaderHeartChannel() <- raft.RaftNode{
 			Node: raft.Node{
-				Id: lr.LeaderId,
+				Id:          lr.LeaderId,
 				CurrentTerm: lr.Term,
 			},
 		}
@@ -102,5 +102,65 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr raft.LogRe
 			AckLength:  0,
 			Success:    false,
 		}
+	}
+}
+
+func (l *LogMgr) ReceiveLogAcknowledgements(rn *raft.RaftNode, lr raft.LogResponse) {
+
+	if lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
+		if lr.Success {
+			rn.SentLength[lr.FollowerId] = lr.AckLength
+			rn.AckedLength[lr.FollowerId] = lr.AckLength
+			l.commitLogEntries(rn)
+		} else if rn.SentLength[lr.FollowerId] > 0 {
+			rn.SentLength[lr.FollowerId] = rn.SentLength[lr.FollowerId] - 1
+			follower := rn.GetPeerById(lr.FollowerId)
+			l.ReplicateLog(rn, follower)
+		}
+	} else if lr.Term > rn.CurrentTerm {
+		rn.CurrentTerm = lr.Term
+		rn.CurrentRole = raft.FOLLOWER
+		rn.VotedFor = 0
+	}
+}
+
+func (l *LogMgr) commitLogEntries(rn *raft.RaftNode) {
+	// minAcks := math.Ceil((len(rn.Peers) + 1) /2)
+	//TODO
+}
+
+//GIVEN an ackLength return the peers who have atleast acked till that length
+func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int32) int {
+	count := 0
+	for _, peer := range rn.Peers {
+		if rn.AckedLength[peer.Id] >= ackLength {
+			count++
+		}
+	}
+
+	return count
+}
+
+func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []raft.Log) {
+
+	if len(entries) > 0 && int32(len(rn.Logs)) > logLength {
+		if rn.Logs[logLength].Term != entries[0].Term {
+			//truncate logs
+			rn.Logs = rn.Logs[0:logLength]
+		}
+	}
+
+	if logLength+int32(len(entries)) > int32(len(rn.Logs)) {
+		for i := int32(len(rn.Logs)) - logLength; i < int32(len(entries)); i++ {
+			rn.Logs = append(rn.Logs, entries[i])
+		}
+	}
+
+	if leaderCommitLength > rn.CommitLength {
+		for i := rn.CommitLength; i < leaderCommitLength; i++ {
+			//deliver rn.Logs[i].msg to the app TODO
+		}
+
+		rn.CommitLength = leaderCommitLength
 	}
 }

@@ -277,9 +277,9 @@ func getCommitLength(rn *RaftNode) int32 {
 	}
 }
 
-func (rn *RaftNode) GetLeaderPeer() Peer {
+func (rn *RaftNode) GetPeerById(id int32) Peer {
 	for _, peer := range rn.Peers {
-		if peer.Id == rn.CurrentLeader {
+		if peer.Id == id {
 			return peer
 		}
 	}
