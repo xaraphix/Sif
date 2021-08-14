@@ -517,7 +517,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					}
 				}
 
-				Expect(setupVars.sentLogReplicationReq.CurrentTerm).To(Equal(node.CurrentTerm))
+				Expect(setupVars.sentLogReplicationReq.Term).To(Equal(node.CurrentTerm))
 				Succeed()
 			})
 		})

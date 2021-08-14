@@ -75,9 +75,11 @@ func (mr *MockRaftLogMockRecorder) ReplicateLog(arg0, arg1 interface{}) *gomock.
 }
 
 // RespondToBroadcastMsgRequest mocks base method.
-func (m *MockRaftLog) RespondToBroadcastMsgRequest(arg0 *raft.RaftNode, arg1 map[string]interface{}) {
+func (m *MockRaftLog) RespondToBroadcastMsgRequest(arg0 *raft.RaftNode, arg1 map[string]interface{}) raft.BroadcastMessageResponse {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "RespondToBroadcastMsgRequest", arg0, arg1)
+	ret := m.ctrl.Call(m, "RespondToBroadcastMsgRequest", arg0, arg1)
+	ret0, _ := ret[0].(raft.BroadcastMessageResponse)
+	return ret0
 }
 
 // RespondToBroadcastMsgRequest indicates an expected call of RespondToBroadcastMsgRequest.
@@ -86,16 +88,16 @@ func (mr *MockRaftLogMockRecorder) RespondToBroadcastMsgRequest(arg0, arg1 inter
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RespondToBroadcastMsgRequest", reflect.TypeOf((*MockRaftLog)(nil).RespondToBroadcastMsgRequest), arg0, arg1)
 }
 
-// RespondToLogRequest mocks base method.
-func (m *MockRaftLog) RespondToLogRequest(arg0 *raft.RaftNode, arg1 raft.LogRequest) raft.LogResponse {
+// RespondToLogReplicationRequest mocks base method.
+func (m *MockRaftLog) RespondToLogReplicationRequest(arg0 *raft.RaftNode, arg1 raft.LogRequest) raft.LogResponse {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "RespondToLogRequest", arg0, arg1)
+	ret := m.ctrl.Call(m, "RespondToLogReplicationRequest", arg0, arg1)
 	ret0, _ := ret[0].(raft.LogResponse)
 	return ret0
 }
 
-// RespondToLogRequest indicates an expected call of RespondToLogRequest.
-func (mr *MockRaftLogMockRecorder) RespondToLogRequest(arg0, arg1 interface{}) *gomock.Call {
+// RespondToLogReplicationRequest indicates an expected call of RespondToLogReplicationRequest.
+func (mr *MockRaftLogMockRecorder) RespondToLogReplicationRequest(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RespondToLogRequest", reflect.TypeOf((*MockRaftLog)(nil).RespondToLogRequest), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RespondToLogReplicationRequest", reflect.TypeOf((*MockRaftLog)(nil).RespondToLogReplicationRequest), arg0, arg1)
 }

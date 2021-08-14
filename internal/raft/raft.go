@@ -84,11 +84,9 @@ type RaftElection interface {
 
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
-	RequestVoteFromPeer(peer Peer, voteRequest VoteRequest) VoteResponse
-	ReplicateLog(peer Peer, logRequest LogRequest)
-	ReceiveLogRequest(logRequest LogRequest) LogResponse
-	GenerateVoteResponse(VoteRequest) VoteResponse
-	BroadcastMessage(msg map[string]interface{})
+	RequestVoteFromPeer(Peer, VoteRequest) VoteResponse
+	ReplicateLog(Peer, LogRequest) LogResponse
+	BroadcastMessage(leader Peer, msg map[string]interface{}) BroadcastMessageResponse
 }
 
 //go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
@@ -103,8 +101,8 @@ type RaftLog interface {
 	GetLogs() []Log
 	GetLog(rn *RaftNode, idx int32) Log
 	ReplicateLog(raftNode *RaftNode, peer Peer)
-	RespondToBroadcastMsgRequest(raftNode *RaftNode, msg map[string]interface{})
-	RespondToLogRequest(raftNode *RaftNode, logRequest LogRequest) LogResponse
+	RespondToBroadcastMsgRequest(raftNode *RaftNode, msg map[string]interface{}) BroadcastMessageResponse
+	RespondToLogReplicationRequest(raftNode *RaftNode, logRequest LogRequest) LogResponse
 }
 
 type RaftOptions struct {
@@ -125,6 +123,10 @@ type Monitor struct {
 	LastResetAt     time.Time
 	Stopped         bool
 	Started         bool
+}
+
+type BroadcastMessageResponse struct {
+	
 }
 
 type VoteRequest struct {
@@ -273,4 +275,13 @@ func getCommitLength(rn *RaftNode) int32 {
 	} else {
 		return 0
 	}
+}
+
+func (rn *RaftNode) GetLeaderPeer() Peer {
+	for _, peer := range rn.Peers {
+		if peer.Id == rn.CurrentLeader {
+			return peer
+		}
+	}
+	return Peer{}
 }
