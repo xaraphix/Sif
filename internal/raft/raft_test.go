@@ -1387,13 +1387,26 @@ func loadTestRaftConfig() *raftconfig.Config {
 	return cfg
 }
 
-func setup3FollowerNodes() {
+func setup3FollowerNodes() (*raft.RaftNode, *raft.RaftNode, *raft.RaftNode) {
 
+	deps1 := getNewNodeDeps()
+	node1 := raft.NewRaftNode(deps1)
+
+	deps2 := getNewNodeDeps()
+	node2 := raft.NewRaftNode(deps2)
+
+	deps3 := getNewNodeDeps()
+	node3 := raft.NewRaftNode(deps3)
+
+	return node1, node2, node3
+}
+
+func getNewNodeDeps() raft.RaftDeps {
 	options := raft.RaftOptions{
 		StartLeaderHeartbeatMonitorAfterInitializing: true,
 	}
 
-	deps := raft.RaftDeps{
+	return raft.RaftDeps{
 		FileManager:      raftfile.NewFileManager(),
 		ConfigManager:    raftconfig.NewConfig(),
 		ElectionManager:  raftelection.NewElectionManager(),
@@ -1404,5 +1417,4 @@ func setup3FollowerNodes() {
 		Options:          options,
 	}
 
-	node1 := raft.NewRaftNode(deps)
 }
