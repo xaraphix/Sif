@@ -32,6 +32,7 @@ const (
 	HeartbeatStarted
 	HeartbeatStopped
 	LogRequestSent
+	DeliveredToApplication
 	MsgAppendedToLogs
 	LeaderHeartbeatReceived
 )

@@ -1,6 +1,8 @@
 package raftlog
 
 import (
+	"math"
+
 	"github.com/xaraphix/Sif/internal/raft"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -35,7 +37,8 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 		Entries:      entries,
 	}
 
-	rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
+	logResponse := rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
+	l.processLogAcknowledgements(rn, logResponse)
 	rn.SendSignal(raft.LogRequestSent)
 }
 
@@ -87,7 +90,7 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 	if lr.CurrentTerm == rn.CurrentTerm && logOk {
 		rn.CurrentRole = raft.FOLLOWER
 		rn.CurrentLeader = lr.LeaderId
-		//TODO l.appendEntries()
+		l.appendEntries(rn, lr.SentLength, lr.CommitLength, lr.Entries)
 		ack := lr.SentLength + int32(len(lr.Entries))
 		return &pb.LogResponse{
 			FollowerId: rn.Id,
@@ -105,8 +108,13 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 	}
 }
 
-func (l *LogMgr) ReceiveLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse) {
-	if lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
+func (l *LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse) {
+
+	if lr == nil {
+		return 
+	}
+
+	if  lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
 		if lr.Success {
 			rn.SentLength[lr.FollowerId] = lr.AckLength
 			rn.AckedLength[lr.FollowerId] = lr.AckLength
@@ -124,20 +132,38 @@ func (l *LogMgr) ReceiveLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogRespons
 }
 
 func (l *LogMgr) commitLogEntries(rn *raft.RaftNode) {
-	// minAcks := math.Ceil((len(rn.Peers) + 1) /2)
-	//TODO
+	minAcks := int(math.Ceil(float64((len(rn.Peers) + 1) / 2)))
+	maxReady := 0
+	for i := 0; i < len(rn.Logs); i++ {
+		if countOfNodesWithAckLengthGTE(rn, i) > minAcks && i > maxReady {
+			maxReady = i
+		}
+	}
+
+	if maxReady > 0 && maxReady > int(rn.CommitLength) &&
+		rn.Logs[maxReady-1].Term == rn.CurrentTerm {
+		for i := int(rn.CommitLength); i < maxReady; i++ {
+			l.deliverToApplication(rn, rn.Logs[i].Message)
+		}
+
+		rn.CommitLength = int32(maxReady)
+	}
 }
 
 //GIVEN an ackLength return the peers who have atleast acked till that length
-func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int32) int {
+func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int) int {
 	count := 0
 	for _, peer := range rn.Peers {
-		if rn.AckedLength[peer.Id] >= ackLength {
+		if int(rn.AckedLength[peer.Id]) >= ackLength {
 			count++
 		}
 	}
 
 	return count
+}
+
+func (l *LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
+	rn.SendSignal(raft.DeliveredToApplication)
 }
 
 func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []*pb.Log) {
@@ -156,7 +182,7 @@ func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitL
 
 	if leaderCommitLength > rn.CommitLength {
 		for i := rn.CommitLength; i < leaderCommitLength; i++ {
-			//deliver rn.Logs[i].msg to the app TODO
+			l.deliverToApplication(rn, rn.Logs[i].Message)
 		}
 
 		rn.CommitLength = leaderCommitLength

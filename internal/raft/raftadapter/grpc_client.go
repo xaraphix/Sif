@@ -13,9 +13,6 @@ import (
 type RaftGRPCClient struct {
 	client              pb.RaftClient
 	ctx                 context.Context
-	ReplicateLog        func(*pb.LogRequest) (*pb.LogResponse, error)
-	RequestVoteFromPeer func(*pb.VoteRequest) (*pb.VoteResponse, error)
-	BroadcastMessage    func(*structpb.Struct) (*pb.BroadcastMessageResponse, error)
 }
 
 func NewRaftGRPCClient(address string, timeoutIn time.Duration) RaftGRPCClient {
@@ -35,14 +32,14 @@ func NewRaftGRPCClient(address string, timeoutIn time.Duration) RaftGRPCClient {
 	return grpcClient
 }
 
-func (c *RaftGRPCClient) replicateLog(lr *pb.LogRequest) (*pb.LogResponse, error) {
+func (c RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error) {
 	return c.client.ReplicateLog(c.ctx, lr)
 }
 
-func (c *RaftGRPCClient) requestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteResponse, error) {
+func (c RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteResponse, error) {
 	return c.client.RequestVoteFromPeer(c.ctx, vr)
 }
 
-func (c *RaftGRPCClient) broadcastMessage(m *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
+func (c RaftGRPCClient) BroadcastMessage(m *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
 	return c.client.BroadcastMessage(c.ctx, m)
 }
