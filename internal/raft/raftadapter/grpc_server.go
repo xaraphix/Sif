@@ -6,6 +6,7 @@ import (
 	"log"
 	"net"
 
+	"github.com/xaraphix/Sif/internal/raft"
 	pb "github.com/xaraphix/Sif/internal/raft/raftadapter/protos"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -16,25 +17,24 @@ type RaftGRPCServer struct {
 }
 
 type RaftRPCServer struct {
+	raftnode *raft.RaftNode
 }
 
-func (s *RaftRPCServer) Start() {
+func (s *RaftRPCServer) Start(rn *raft.RaftNode) {
 
+	s.raftnode = rn
 	address := "0.0.0.0:50051"
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
 		log.Fatalf("Error %v", err)
 	}
 	fmt.Printf("Server is listening on %v ...", address)
-
 	server := grpc.NewServer()
 	pb.RegisterRaftRPCAdapterServer(server, &RaftGRPCServer{})
-
 	server.Serve(lis)
 }
 
 func (s *RaftGRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
-
 	response := &pb.VoteResponse{
 		PeerId:      int32(3),
 		Term:        int32(32),
@@ -45,7 +45,6 @@ func (s *RaftGRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteReq
 }
 
 func (s *RaftGRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*pb.LogResponse, error) {
-
 	response := &pb.LogResponse{
 		FollowerId: int32(3),
 		Term:       int32(32),
@@ -57,7 +56,6 @@ func (s *RaftGRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*
 }
 
 func (s *RaftGRPCServer) BroadcastMessage(ctx context.Context, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
-
 	response := &pb.BroadcastMessageResponse{}
 	return response, nil
 }
