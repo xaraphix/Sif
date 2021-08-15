@@ -99,7 +99,8 @@ func (l LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequ
 	
 		logrus.WithFields(logrus.Fields{
 			"LeaderId" : lr.LeaderId,
-		}).Info("Received Heartbeat from leader")
+			"FollowerId": rn.Id,
+		}).Debug("Received Heartbeat from leader")
 
 		rn.LeaderHeartbeatMonitor.Reset()
 		l.appendEntries(rn, lr.SentLength, lr.CommitLength, lr.Entries)

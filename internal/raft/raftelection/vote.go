@@ -57,7 +57,7 @@ func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, vote
 		"MyId": rn.Id,
 		"Voted": voteResponse.VoteGranted,
 		"For": voteRequest.NodeId,
-	}).Info("Sending Vote Response")
+	}).Debug("Sending Vote Response")
 
 	return voteResponse
 }

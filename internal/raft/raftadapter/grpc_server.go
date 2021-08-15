@@ -33,7 +33,7 @@ func (s *GRPCServer) Start(host string, port string) {
 
 		logrus.WithFields(logrus.Fields{
 			"Address": address,
-		}).Info("Starting GRPC Server")
+		}).Debug("Starting GRPC Server")
 
 		server := grpc.NewServer()
 		pb.RegisterRaftServer(server, s)
@@ -42,17 +42,21 @@ func (s *GRPCServer) Start(host string, port string) {
 }
 
 func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
+
 	logrus.WithFields(logrus.Fields{
-		"ReceivedReqFrom": vr.NodeId,
-	}).Info("")
+		"From": vr.NodeId,
+		"Received by": s.raftnode.Id,
+	}).Debug("Received Vote Request")
 
 	return s.raftnode.ElectionMgr.GetResponseForVoteRequest(s.raftnode, vr)
 }
 
 func (s *GRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*pb.LogResponse, error) {
+
 	logrus.WithFields(logrus.Fields{
-		"Replicate Log Receieved From": vr.LeaderId,
-	}).Info("")
+		"From": vr.LeaderId,
+		"Received by": s.raftnode.Id,
+	}).Debug("Replicate Log Receieved")
 
 	return s.raftnode.LogMgr.RespondToLogReplicationRequest(s.raftnode, vr)
 }
