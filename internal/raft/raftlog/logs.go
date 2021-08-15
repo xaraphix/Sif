@@ -2,19 +2,19 @@ package raftlog
 
 import (
 	"github.com/xaraphix/Sif/internal/raft"
-	"github.com/xaraphix/Sif/internal/raft/protos"
+	pb "github.com/xaraphix/Sif/internal/raft/protos"
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
 type LogMgr struct {
 }
 
-func (l *LogMgr) GetLogs() []*protos.Log {
+func (l *LogMgr) GetLogs() []*pb.Log {
 	return nil
 }
 
-func (l *LogMgr) GetLog(rn *raft.RaftNode, idx int32) *protos.Log {
-	return &protos.Log{}
+func (l *LogMgr) GetLog(rn *raft.RaftNode, idx int32) *pb.Log {
+	return &pb.Log{}
 }
 
 func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
@@ -26,7 +26,7 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 		prevLogTerm = (rn.Logs)[i-1].Term
 	}
 
-	replicateLogsRequest := &protos.LogRequest{
+	replicateLogsRequest := &pb.LogRequest{
 		LeaderId:     rn.Id,
 		CurrentTerm:  rn.CurrentTerm,
 		SentLength:   i,
@@ -39,10 +39,10 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	rn.SendSignal(raft.LogRequestSent)
 }
 
-func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) *protos.BroadcastMessageResponse {
+func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) *pb.BroadcastMessageResponse {
 	if rn.CurrentRole == raft.LEADER {
 		rn.SendSignal(raft.MsgAppendedToLogs)
-		rn.Logs = append(rn.Logs, &protos.Log{
+		rn.Logs = append(rn.Logs, &pb.Log{
 			Term:    rn.CurrentTerm,
 			Message: msg,
 		})
@@ -55,14 +55,14 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 			}(rn, peer)
 		}
 
-		return &protos.BroadcastMessageResponse{}
+		return &pb.BroadcastMessageResponse{}
 	} else {
 		leaderPeer := rn.GetPeerById(rn.CurrentLeader)
 		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg)
 	}
 }
 
-func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *protos.LogRequest) *protos.LogResponse {
+func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequest) *pb.LogResponse {
 	if lr.CurrentTerm > rn.CurrentTerm {
 		rn.CurrentTerm = lr.CurrentTerm
 		rn.VotedFor = 0
@@ -89,14 +89,14 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *protos.Lo
 		rn.CurrentLeader = lr.LeaderId
 		//TODO l.appendEntries()
 		ack := lr.SentLength + int32(len(lr.Entries))
-		return &protos.LogResponse{
+		return &pb.LogResponse{
 			FollowerId: rn.Id,
 			Term:       rn.CurrentTerm,
 			AckLength:  ack,
 			Success:    true,
 		}
 	} else {
-		return &protos.LogResponse{
+		return &pb.LogResponse{
 			FollowerId: rn.Id,
 			Term:       rn.CurrentTerm,
 			AckLength:  0,
@@ -105,7 +105,7 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *protos.Lo
 	}
 }
 
-func (l *LogMgr) ReceiveLogAcknowledgements(rn *raft.RaftNode, lr *protos.LogResponse) {
+func (l *LogMgr) ReceiveLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse) {
 	if lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
 		if lr.Success {
 			rn.SentLength[lr.FollowerId] = lr.AckLength
@@ -140,7 +140,7 @@ func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int32) int {
 	return count
 }
 
-func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []*protos.Log) {
+func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []*pb.Log) {
 	if len(entries) > 0 && int32(len(rn.Logs)) > logLength {
 		if rn.Logs[logLength].Term != entries[0].Term {
 			//truncate logs

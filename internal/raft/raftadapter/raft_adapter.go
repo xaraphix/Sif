@@ -2,25 +2,25 @@ package raftadapter
 
 import (
 	. "github.com/xaraphix/Sif/internal/raft"
-	"github.com/xaraphix/Sif/internal/raft/protos"
+	pb "github.com/xaraphix/Sif/internal/raft/protos"
 )
 
 type RaftNodeAdapter struct {
 	//TODO
 }
 
-func (a RaftNodeAdapter) RequestVoteFromPeer(peer Peer, voteRequest *protos.VoteRequest) *protos.VoteResponse {
-	return &protos.VoteResponse{}
+func (a RaftNodeAdapter) RequestVoteFromPeer(peer Peer, voteRequest *pb.VoteRequest) *pb.VoteResponse {
+	return &pb.VoteResponse{}
 }
 
-func (a RaftNodeAdapter) ReplicateLog(peer Peer, logRequest *protos.LogRequest) {
+func (a RaftNodeAdapter) ReplicateLog(peer Peer, logRequest *pb.LogRequest) {
  return
 }
 
-func (a RaftNodeAdapter) ReceiveLogRequest(logRequest *protos.LogRequest) *protos.LogResponse {
- return &protos.LogResponse{ }
+func (a RaftNodeAdapter) ReceiveLogRequest(logRequest *pb.LogRequest) *pb.LogResponse {
+ return &pb.LogResponse{ }
  }
 
-func (a RaftNodeAdapter) GenerateVoteResponse(*protos.VoteRequest) *protos.VoteResponse {
-	return &protos.VoteResponse{}
+func (a RaftNodeAdapter) GenerateVoteResponse(*pb.VoteRequest) *pb.VoteResponse {
+	return &pb.VoteResponse{}
 }

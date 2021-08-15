@@ -5,21 +5,21 @@ import (
 	"time"
 
 	"github.com/xaraphix/Sif/internal/raft"
-	"github.com/xaraphix/Sif/internal/raft/protos"
+	pb "github.com/xaraphix/Sif/internal/raft/protos"
 )
 
 type ElectionManager struct {
 	ElectionTimeoutDuration time.Duration
 	ElectionTimerOff        bool
 
-	VotesReceived []*protos.VoteResponse
+	VotesReceived []*pb.VoteResponse
 
 	electionTimerDone       chan bool
-	votesResponse           chan *protos.VoteResponse
+	votesResponse           chan *pb.VoteResponse
 	conclusionDone          chan bool
 	askForVotesDone         chan bool
 	electionTimedOut        chan bool
-	followerAccordingToPeer chan *protos.VoteResponse
+	followerAccordingToPeer chan *pb.VoteResponse
 	leader                  chan bool
 	follower                chan bool
 	leaderHeartbeatChannel  chan raft.RaftNode
@@ -29,7 +29,7 @@ type ElectionManager struct {
 func NewElectionManager() raft.RaftElection {
 	return &ElectionManager{
 		ElectionTimeoutDuration: time.Duration(rand.Intn(149)+150) * time.Millisecond,
-		VotesReceived:           []*protos.VoteResponse{},
+		VotesReceived:           []*pb.VoteResponse{},
 		leaderHeartbeatChannel:  make(chan raft.RaftNode),
 	}
 
@@ -55,9 +55,9 @@ func (em *ElectionManager) wrapUpElection(rn *raft.RaftNode, restartElection boo
 }
 
 func (em *ElectionManager) initChannels() {
-	em.votesResponse = make(chan *protos.VoteResponse)
+	em.votesResponse = make(chan *pb.VoteResponse)
 	em.electionTimedOut = make(chan bool)
-	em.followerAccordingToPeer = make(chan *protos.VoteResponse)
+	em.followerAccordingToPeer = make(chan *pb.VoteResponse)
 	em.leader = make(chan bool)
 	em.follower = make(chan bool)
 }
@@ -145,7 +145,7 @@ func (em *ElectionManager) becomeAFollowerAccordingToCandidatePeer(rn *raft.Raft
 	}
 }
 
-func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v *protos.VoteResponse) {
+func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v *pb.VoteResponse) {
 	if rn.ElectionInProgress == true {
 		rn.CurrentTerm = v.Term
 		rn.CurrentRole = raft.FOLLOWER
@@ -188,7 +188,7 @@ func (em *ElectionManager) askForVotes(rn *raft.RaftNode) {
 	}
 }
 
-func (em *ElectionManager) GetReceivedVotes() []*protos.VoteResponse {
+func (em *ElectionManager) GetReceivedVotes() []*pb.VoteResponse {
 	return em.VotesReceived
 }
 
@@ -196,7 +196,7 @@ func (em *ElectionManager) GetLeaderHeartChannel() chan raft.RaftNode {
 	return em.leaderHeartbeatChannel
 }
 
-func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr *protos.VoteRequest) *protos.VoteResponse {
+func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr *pb.VoteRequest) *pb.VoteResponse {
 	rn.SendSignal(raft.VoteRequestReceived)
 	voteResponse := em.getVoteResponseForVoteRequest(rn, vr)
 
