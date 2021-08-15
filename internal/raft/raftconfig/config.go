@@ -34,8 +34,7 @@ type Config struct {
 }
 
 func NewConfig() *Config {
-	RaftCfg = Config{}
-	return &RaftCfg
+	return &Config{}
 }
 
 func parseConfig(c *Config, rn *raft.RaftNode) {

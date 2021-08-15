@@ -140,31 +140,33 @@ type Peer struct {
 	Address string `yaml:"address"`
 }
 
-func NewRaftNode(
-	fm RaftFile,
-	rc RaftConfig,
-	re RaftElection,
-	lhm RaftMonitor,
-	ra RaftRPCAdapter,
-	l RaftLog,
-	h RaftHeart,
-	o RaftOptions,
-) *RaftNode {
+type RaftDeps struct {
+	FileManager RaftFile
+	ConfigManager RaftConfig
+	ElectionManager RaftElection
+	HeartbeatMonitor RaftMonitor
+	RPCAdapter RaftRPCAdapter
+	LogManager RaftLog
+	Heart RaftHeart
+	Options RaftOptions
+}
+
+func NewRaftNode(deps RaftDeps) *RaftNode {
 	DestructRaftNode(Sif)
 	Sif = &RaftNode{
-		FileMgr:                fm,
-		Config:                 rc,
-		ElectionMgr:            re,
-		LeaderHeartbeatMonitor: lhm,
-		RPCAdapter:             ra,
-		LogMgr:                 l,
-		Heart:                  h,
+		FileMgr:                deps.FileManager,
+		Config:                 deps.ConfigManager,
+		ElectionMgr:            deps.ElectionManager,
+		LeaderHeartbeatMonitor: deps.HeartbeatMonitor,
+		RPCAdapter:             deps.RPCAdapter,
+		LogMgr:                 deps.LogManager,
+		Heart:                  deps.Heart,
 		raftSignal:             make(chan int),
 	}
 
 	raftnode := Sif
 	initializeRaftNode(raftnode)
-	if o.StartLeaderHeartbeatMonitorAfterInitializing {
+	if deps.Options.StartLeaderHeartbeatMonitorAfterInitializing {
 		raftnode.LeaderHeartbeatMonitor.Start(raftnode)
 	}
 	return raftnode

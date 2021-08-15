@@ -11,6 +11,10 @@ type RaftNodeAdapter struct {
 	clients  map[int32]RaftGRPCClient
 }
 
+func NewRaftNodeAdapter() RaftNodeAdapter {
+	return RaftNodeAdapter{}
+}
+
 func (a RaftNodeAdapter) InitializeClients(rn *raft.RaftNode) {
 	a.clients = make(map[int32]RaftGRPCClient)
 	for _, peer := range rn.Peers {

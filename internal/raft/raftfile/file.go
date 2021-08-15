@@ -5,17 +5,12 @@ import (
 	"path/filepath"
 )
 
-var fileMgr *RaftFileMgr
-
-func init() {
-	fileMgr = &RaftFileMgr{}
-}
 
 type RaftFileMgr struct {
 }
 
-func NewRaftFileMfg() *RaftFileMgr {
-	return fileMgr
+func NewFileManager() RaftFileMgr {
+	return RaftFileMgr{}
 }
 
 func (fm *RaftFileMgr) LoadFile(path string) ([]byte, error) {

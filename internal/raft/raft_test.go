@@ -679,7 +679,18 @@ func setupRaftNode(preNodeSetupCB func(
 	preNodeSetupCB(mockFile, mockLog, mockElection, mockRPCAdapter, mockHeart, mockMonitor)
 
 	node = nil
-	node = raft.NewRaftNode(fileMgr, config, election, monitor, rpcAdapter, logMgr, heart, raftOptions)
+	deps := raft.RaftDeps{
+		FileManager: fileMgr,
+		ConfigManager: config,
+		ElectionManager: election,
+		HeartbeatMonitor: monitor,
+		RPCAdapter: rpcAdapter,
+		LogManager: logMgr,
+		Heart: heart,
+		Options: raftOptions,
+	}
+
+	node = raft.NewRaftNode(deps)
 	term_0 = node.CurrentTerm
 
 	return MockSetupVars{
@@ -1360,7 +1371,7 @@ func loadTestRaftConfig() *raftconfig.Config {
 
 	filename, _ := filepath.Abs(dir + "/mocks/sifconfig_test.yaml")
 
-	fileMgr := raftfile.NewRaftFileMfg()
+	fileMgr := raftfile.NewFileManager()
 	cfg := &raftconfig.Config{}
 	file, err2 := fileMgr.LoadFile(filename)
 
@@ -1374,3 +1385,40 @@ func loadTestRaftConfig() *raftconfig.Config {
 	}
 	return cfg
 }
+
+func setup3FollowerNodes() {
+
+//	preNodeSetupCB := func(
+//		fileMgr *mocks.MockRaftFile,
+//		logMgr *mocks.MockRaftLog,
+//		election *mocks.MockRaftElection,
+//		adapter *mocks.MockRaftRPCAdapter,
+//		heart *mocks.MockRaftHeart,
+//		monitor *mocks.MockRaftMonitor,
+//	) {
+//	}
+//
+////	fm RaftFile,
+////	rc RaftConfig,
+////	re RaftElection,
+////	lhm RaftMonitor,
+////	ra RaftRPCAdapter,
+////	l RaftLog,
+////	h RaftHeart,
+////	o RaftOptions,
+//	fileMgr := raftfile.NewFileManager()
+//	electionMgr := raftelection.NewElectionManager()
+//	logMgr := raftlog.NewLogManager()
+//	lhm := raft.NewLeaderHeartbeatMonitor(true)
+//	adapter := raftadapter.NewRaftNodeAdapter()
+//	adapterServer := raftadapter.NewGRPCServer()
+//	adapterClient := raftadapter.NewRaftGRPCClient()
+//	config := raftconfig.NewConfig()
+//	heart := raftelection.NewLeaderHeart()
+//
+//	options := raft.RaftOptions{
+//		StartLeaderHeartbeatMonitorAfterInitializing: true,
+//	}
+//	node1 = raft.NewRaftNode(&fileMgr, config, electionMgr, lhm, adapter, &logMgr, heart, options)
+}
+

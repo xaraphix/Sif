@@ -11,6 +11,10 @@ import (
 type LogMgr struct {
 }
 
+func NewLogManager() LogMgr {
+	return LogMgr{}
+}
+
 func (l *LogMgr) GetLogs() []*pb.Log {
 	return nil
 }
