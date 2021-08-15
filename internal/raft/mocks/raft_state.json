@@ -1,11 +1,11 @@
 {
-  "currentTerm": 91919,
-  "commitLength": 111111,
-  "VotedFor": 2,
-  "logs": [
+  "RaftCurrentTerm": 91919,
+  "RaftCommitLength": 111111,
+  "RaftVotedFor": 2,
+  "RaftLogs": [
     {
-      "term": 0,
-      "message": {
+      "Term": 0,
+      "Message": {
         "x": 1,
         "y": 2
       }

@@ -1,7 +1,6 @@
 package raft_test
 
 import (
-	"encoding/json"
 	"errors"
 	"io/ioutil"
 	"log"
@@ -19,6 +18,7 @@ import (
 	"github.com/xaraphix/Sif/internal/raft/raftelection"
 	"github.com/xaraphix/Sif/internal/raft/raftfile"
 	"github.com/xaraphix/Sif/internal/raft/raftlog"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/yaml.v2"
 )
 
@@ -27,7 +27,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 	Context("RaftNode initialization", func() {
 		node := &raft.RaftNode{}
-		var persistentState *raftconfig.RaftPersistentState
+		var persistentState *pb.RaftPersistentState
 
 		var setupVars MockSetupVars
 
@@ -1338,11 +1338,11 @@ func loadTestRaftPersistentStorageFile() ([]byte, error) {
 	return ioutil.ReadFile(filename)
 }
 
-func loadTestRaftPersistentState() *raftconfig.RaftPersistentState {
+func loadTestRaftPersistentState() *pb.RaftPersistentState {
 	psFile, _ := loadTestRaftPersistentStorageFile()
-	cfg := &raftconfig.RaftPersistentState{}
+	cfg := &pb.RaftPersistentState{}
 
-	err := json.Unmarshal(psFile, cfg)
+	err := protojson.Unmarshal(psFile, cfg)
 	if err != nil {
 		panic(err)
 	}

@@ -1,7 +1,6 @@
 package raftconfig
 
 import (
-	"encoding/json"
 	"io/ioutil"
 	"math/rand"
 	"path/filepath"
@@ -9,6 +8,7 @@ import (
 
 	"github.com/xaraphix/Sif/internal/raft"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
+	"google.golang.org/protobuf/encoding/protojson"
 	"gopkg.in/yaml.v2"
 )
 
@@ -20,13 +20,6 @@ var (
 	RaftVersion         string = "v0.1"
 )
 
-type RaftPersistentState struct {
-	RaftLogs         []*pb.Log `json:"logs"`
-	RaftCurrentTerm  int32       `json:"currentTerm"`
-	RaftVotedFor     int32       `json:"votedFor"`
-	RaftCommitLength int32       `json:"commitLength"`
-}
-
 type Config struct {
 	RaftInstanceName                    string      `yaml:"name"`
 	RaftInstanceId                      int32       `yaml:"id"`
@@ -35,7 +28,7 @@ type Config struct {
 	RaftVersion                         string      `yaml:"version"`
 	RaftInstancePersistentStateFilePath string
 
-	RaftPersistentState
+	pb.RaftPersistentState
 
 	BootedFromCrash bool
 }
@@ -65,7 +58,7 @@ func parseConfig(c *Config, rn *raft.RaftNode) {
 	setPersistentState(rn, c, persistentState)
 }
 
-func setPersistentState(rn *raft.RaftNode, c *Config, s *RaftPersistentState) {
+func setPersistentState(rn *raft.RaftNode, c *Config, s *pb.RaftPersistentState) {
 	if c.BootedFromCrash {
 		c.RaftCurrentTerm = s.RaftCurrentTerm
 		c.RaftCommitLength = s.RaftCommitLength
@@ -88,15 +81,15 @@ func getDefaultName() string {
 	return "Sif-" + strconv.Itoa(rand.Int())
 }
 
-func loadRaftPersistentState(filepath string, rn *raft.RaftNode) *RaftPersistentState {
+func loadRaftPersistentState(filepath string, rn *raft.RaftNode) *pb.RaftPersistentState {
 	stateFile, err := rn.FileMgr.LoadFile(filepath)
-	state := &RaftPersistentState{}
+	state := &pb.RaftPersistentState{}
 
 	if err != nil {
 		//TODO do something
 	}
 
-	err = json.Unmarshal(stateFile, state)
+	err = protojson.Unmarshal(stateFile, state)
 
 	if err != nil {
 		//TODO do something

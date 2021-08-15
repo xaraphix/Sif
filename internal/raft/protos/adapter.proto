@@ -48,3 +48,10 @@ message LogResponse {
 message BroadcastMessageResponse {
   bool success = 1;
 }
+
+message RaftPersistentState {
+  repeated Log RaftLogs = 1;
+  int32 RaftCurrentTerm = 2;
+  int32 RaftVotedFor = 3;
+  int32 RaftCommitLength = 4;
+}
