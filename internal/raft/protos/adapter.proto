@@ -3,7 +3,7 @@ option go_package = "github.com/xaraphix/Sif/internal/raft/raftadapter/protos;pr
 
 import "google/protobuf/struct.proto";
 
-service RaftRPCAdapter {
+service Raft {
   rpc RequestVoteFromPeer(VoteRequest) returns (VoteResponse);
   rpc ReplicateLog(LogRequest) returns (LogResponse);
   rpc BroadcastMessage(.google.protobuf.Struct) returns (BroadcastMessageResponse);

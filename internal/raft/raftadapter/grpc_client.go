@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	pb "github.com/xaraphix/Sif/internal/raft/raftadapter/protos"
+	pb "github.com/xaraphix/Sif/internal/raft/protos"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
 )
