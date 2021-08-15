@@ -6,6 +6,7 @@ package mocks
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 	raft "github.com/xaraphix/Sif/internal/raft"
@@ -49,6 +50,20 @@ func (mr *MockRaftElectionMockRecorder) GenerateVoteRequest(arg0 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GenerateVoteRequest", reflect.TypeOf((*MockRaftElection)(nil).GenerateVoteRequest), arg0)
 }
 
+// GetElectionTimeoutDuration mocks base method.
+func (m *MockRaftElection) GetElectionTimeoutDuration() time.Duration {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetElectionTimeoutDuration")
+	ret0, _ := ret[0].(time.Duration)
+	return ret0
+}
+
+// GetElectionTimeoutDuration indicates an expected call of GetElectionTimeoutDuration.
+func (mr *MockRaftElectionMockRecorder) GetElectionTimeoutDuration() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetElectionTimeoutDuration", reflect.TypeOf((*MockRaftElection)(nil).GetElectionTimeoutDuration))
+}
+
 // GetLeaderHeartChannel mocks base method.
 func (m *MockRaftElection) GetLeaderHeartChannel() chan raft.RaftNode {
 	m.ctrl.T.Helper()
@@ -78,11 +93,12 @@ func (mr *MockRaftElectionMockRecorder) GetReceivedVotes() *gomock.Call {
 }
 
 // GetResponseForVoteRequest mocks base method.
-func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 *protos.VoteRequest) *protos.VoteResponse {
+func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 *protos.VoteRequest) (*protos.VoteResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetResponseForVoteRequest", arg0, arg1)
 	ret0, _ := ret[0].(*protos.VoteResponse)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetResponseForVoteRequest indicates an expected call of GetResponseForVoteRequest.

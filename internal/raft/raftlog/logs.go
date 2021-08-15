@@ -39,7 +39,7 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	rn.SendSignal(raft.LogRequestSent)
 }
 
-func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) *pb.BroadcastMessageResponse {
+func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
 	if rn.CurrentRole == raft.LEADER {
 		rn.SendSignal(raft.MsgAppendedToLogs)
 		rn.Logs = append(rn.Logs, &pb.Log{
@@ -55,14 +55,14 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 			}(rn, peer)
 		}
 
-		return &pb.BroadcastMessageResponse{}
+		return &pb.BroadcastMessageResponse{}, nil
 	} else {
 		leaderPeer := rn.GetPeerById(rn.CurrentLeader)
-		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg)
+		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg), nil
 	}
 }
 
-func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequest) *pb.LogResponse {
+func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequest) (*pb.LogResponse, error) {
 	if lr.CurrentTerm > rn.CurrentTerm {
 		rn.CurrentTerm = lr.CurrentTerm
 		rn.VotedFor = 0
@@ -94,14 +94,14 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 			Term:       rn.CurrentTerm,
 			AckLength:  ack,
 			Success:    true,
-		}
+		}, nil
 	} else {
 		return &pb.LogResponse{
 			FollowerId: rn.Id,
 			Term:       rn.CurrentTerm,
 			AckLength:  0,
 			Success:    false,
-		}
+		}, nil
 	}
 }
 

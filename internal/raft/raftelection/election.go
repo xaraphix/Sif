@@ -32,7 +32,6 @@ func NewElectionManager() raft.RaftElection {
 		VotesReceived:           []*pb.VoteResponse{},
 		leaderHeartbeatChannel:  make(chan raft.RaftNode),
 	}
-
 }
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
@@ -196,7 +195,7 @@ func (em *ElectionManager) GetLeaderHeartChannel() chan raft.RaftNode {
 	return em.leaderHeartbeatChannel
 }
 
-func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr *pb.VoteRequest) *pb.VoteResponse {
+func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
 	rn.SendSignal(raft.VoteRequestReceived)
 	voteResponse := em.getVoteResponseForVoteRequest(rn, vr)
 
@@ -205,5 +204,9 @@ func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr *pb.V
 	} else {
 		rn.SendSignal(raft.VoteNotGranted)
 	}
-	return voteResponse
+	return voteResponse, nil
+}
+
+func (em *ElectionManager) GetElectionTimeoutDuration() time.Duration {
+	return em.ElectionTimeoutDuration
 }

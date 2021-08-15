@@ -77,11 +77,12 @@ func (mr *MockRaftLogMockRecorder) ReplicateLog(arg0, arg1 interface{}) *gomock.
 }
 
 // RespondToBroadcastMsgRequest mocks base method.
-func (m *MockRaftLog) RespondToBroadcastMsgRequest(arg0 *raft.RaftNode, arg1 *structpb.Struct) *protos.BroadcastMessageResponse {
+func (m *MockRaftLog) RespondToBroadcastMsgRequest(arg0 *raft.RaftNode, arg1 *structpb.Struct) (*protos.BroadcastMessageResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RespondToBroadcastMsgRequest", arg0, arg1)
 	ret0, _ := ret[0].(*protos.BroadcastMessageResponse)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RespondToBroadcastMsgRequest indicates an expected call of RespondToBroadcastMsgRequest.
@@ -91,11 +92,12 @@ func (mr *MockRaftLogMockRecorder) RespondToBroadcastMsgRequest(arg0, arg1 inter
 }
 
 // RespondToLogReplicationRequest mocks base method.
-func (m *MockRaftLog) RespondToLogReplicationRequest(arg0 *raft.RaftNode, arg1 *protos.LogRequest) *protos.LogResponse {
+func (m *MockRaftLog) RespondToLogReplicationRequest(arg0 *raft.RaftNode, arg1 *protos.LogRequest) (*protos.LogResponse, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RespondToLogReplicationRequest", arg0, arg1)
 	ret0, _ := ret[0].(*protos.LogResponse)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // RespondToLogReplicationRequest indicates an expected call of RespondToLogReplicationRequest.

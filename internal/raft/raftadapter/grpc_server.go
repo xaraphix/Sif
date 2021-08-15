@@ -12,17 +12,19 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 )
 
-type RaftGRPCServer struct {
+type GRPCServer struct {
 	pb.UnimplementedRaftServer
-}
-
-type RaftRPCServer struct {
 	raftnode *raft.RaftNode
 }
 
-func (s *RaftRPCServer) Start(rn *raft.RaftNode) {
-
+func NewGRPCServer(rn *raft.RaftNode) GRPCServer {
+	s := GRPCServer{}
 	s.raftnode = rn
+	return s
+}
+
+func (s *GRPCServer) Start() {
+
 	address := "0.0.0.0:50051"
 	lis, err := net.Listen("tcp", address)
 	if err != nil {
@@ -30,32 +32,18 @@ func (s *RaftRPCServer) Start(rn *raft.RaftNode) {
 	}
 	fmt.Printf("Server is listening on %v ...", address)
 	server := grpc.NewServer()
-	pb.RegisterRaftServer(server, &RaftGRPCServer{})
+	pb.RegisterRaftServer(server, &GRPCServer{})
 	server.Serve(lis)
 }
 
-func (s *RaftGRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
-	response := &pb.VoteResponse{
-		PeerId:      int32(3),
-		Term:        int32(32),
-		VoteGranted: true,
-	}
-
-	return response, nil
+func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
+	return s.raftnode.ElectionMgr.GetResponseForVoteRequest(s.raftnode, vr)
 }
 
-func (s *RaftGRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*pb.LogResponse, error) {
-	response := &pb.LogResponse{
-		FollowerId: int32(3),
-		Term:       int32(32),
-		AckLength:  int32(32),
-		Success:    true,
-	}
-
-	return response, nil
+func (s *GRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*pb.LogResponse, error) {
+	return s.raftnode.LogMgr.RespondToLogReplicationRequest(s.raftnode, vr)
 }
 
-func (s *RaftGRPCServer) BroadcastMessage(ctx context.Context, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
-	response := &pb.BroadcastMessageResponse{}
-	return response, nil
+func (s *GRPCServer) BroadcastMessage(ctx context.Context, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
+	return s.raftnode.LogMgr.RespondToBroadcastMsgRequest(s.raftnode, msg)
 }

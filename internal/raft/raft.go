@@ -80,15 +80,16 @@ type RaftMonitor interface {
 type RaftElection interface {
 	GetReceivedVotes() []*pb.VoteResponse
 	StartElection(*RaftNode)
-	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest *pb.VoteRequest) *pb.VoteResponse
+	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest *pb.VoteRequest) (*pb.VoteResponse, error)
 	GenerateVoteRequest(*RaftNode) *pb.VoteRequest
 	GetLeaderHeartChannel() chan RaftNode
+	GetElectionTimeoutDuration() time.Duration
 }
 
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
 	RequestVoteFromPeer(Peer, *pb.VoteRequest) *pb.VoteResponse
-	ReplicateLog(Peer, *pb.LogRequest) *pb.LogResponse
+	ReplicateLog(Peer, *pb.LogRequest)*pb.LogResponse
 	BroadcastMessage(leader Peer, msg *structpb.Struct) *pb.BroadcastMessageResponse
 }
 
@@ -104,8 +105,8 @@ type RaftLog interface {
 	GetLogs() []*pb.Log
 	GetLog(rn *RaftNode, idx int32) *pb.Log
 	ReplicateLog(raftNode *RaftNode, peer Peer)
-	RespondToBroadcastMsgRequest(raftNode *RaftNode, msg *structpb.Struct) *pb.BroadcastMessageResponse
-	RespondToLogReplicationRequest(raftNode *RaftNode, logRequest *pb.LogRequest) *pb.LogResponse
+	RespondToBroadcastMsgRequest(raftNode *RaftNode, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error)
+	RespondToLogReplicationRequest(raftNode *RaftNode, logRequest *pb.LogRequest) (*pb.LogResponse, error)
 }
 
 type RaftOptions struct {

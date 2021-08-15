@@ -18,9 +18,9 @@ type RaftGRPCClient struct {
 	BroadcastMessage    func(*structpb.Struct) (*pb.BroadcastMessageResponse, error)
 }
 
-func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient {
+func NewRaftGRPCClient(address string, timeoutIn time.Duration) RaftGRPCClient {
 
-	grpcClient := &RaftGRPCClient{}
+	grpcClient := RaftGRPCClient{}
 	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
