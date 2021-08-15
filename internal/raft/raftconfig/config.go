@@ -27,6 +27,8 @@ type Config struct {
 	RaftInstanceDirPath                 string      `yaml:"sifdir"`
 	RaftVersion                         string      `yaml:"version"`
 	RaftInstancePersistentStateFilePath string
+	RaftHost                            string
+	RaftPort                            string
 
 	pb.RaftPersistentState
 
@@ -144,6 +146,14 @@ func (c *Config) CommitLength() int32 {
 
 func (c *Config) Version() string {
 	return c.RaftVersion
+}
+
+func (c *Config) Host() string {
+	return c.RaftHost
+}
+
+func (c *Config) Port() string {
+	return c.RaftPort
 }
 
 func getOrDefault(prop interface{}, defaultVal interface{}) interface{} {

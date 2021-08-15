@@ -77,3 +77,15 @@ func (mr *MockRaftRPCAdapterMockRecorder) RequestVoteFromPeer(arg0, arg1 interfa
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "RequestVoteFromPeer", reflect.TypeOf((*MockRaftRPCAdapter)(nil).RequestVoteFromPeer), arg0, arg1)
 }
+
+// StartAdapter mocks base method.
+func (m *MockRaftRPCAdapter) StartAdapter(arg0 *raft.RaftNode) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "StartAdapter", arg0)
+}
+
+// StartAdapter indicates an expected call of StartAdapter.
+func (mr *MockRaftRPCAdapterMockRecorder) StartAdapter(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartAdapter", reflect.TypeOf((*MockRaftRPCAdapter)(nil).StartAdapter), arg0)
+}

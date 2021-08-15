@@ -23,17 +23,18 @@ func NewGRPCServer(rn *raft.RaftNode) GRPCServer {
 	return s
 }
 
-func (s *GRPCServer) Start() {
-
-	address := "0.0.0.0:50051"
-	lis, err := net.Listen("tcp", address)
-	if err != nil {
-		log.Fatalf("Error %v", err)
-	}
-	fmt.Printf("Server is listening on %v ...", address)
-	server := grpc.NewServer()
-	pb.RegisterRaftServer(server, &GRPCServer{})
-	server.Serve(lis)
+func (s *GRPCServer) Start(host string, port string) {
+	go func() {
+		address := host + ":" + port
+		lis, err := net.Listen("tcp", address)
+		if err != nil {
+			log.Fatalf("Error %v", err)
+		}
+		fmt.Printf("Server is listening on %v ...", address)
+		server := grpc.NewServer()
+		pb.RegisterRaftServer(server, &GRPCServer{})
+		server.Serve(lis)
+	}()
 }
 
 func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {

@@ -77,6 +77,20 @@ func (mr *MockRaftConfigMockRecorder) DidNodeCrash(arg0 interface{}) *gomock.Cal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "DidNodeCrash", reflect.TypeOf((*MockRaftConfig)(nil).DidNodeCrash), arg0)
 }
 
+// Host mocks base method.
+func (m *MockRaftConfig) Host() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Host")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Host indicates an expected call of Host.
+func (mr *MockRaftConfigMockRecorder) Host() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Host", reflect.TypeOf((*MockRaftConfig)(nil).Host))
+}
+
 // InstanceDirPath mocks base method.
 func (m *MockRaftConfig) InstanceDirPath() string {
 	m.ctrl.T.Helper()
@@ -171,6 +185,20 @@ func (m *MockRaftConfig) Peers() []raft.Peer {
 func (mr *MockRaftConfigMockRecorder) Peers() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Peers", reflect.TypeOf((*MockRaftConfig)(nil).Peers))
+}
+
+// Port mocks base method.
+func (m *MockRaftConfig) Port() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Port")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// Port indicates an expected call of Port.
+func (mr *MockRaftConfigMockRecorder) Port() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Port", reflect.TypeOf((*MockRaftConfig)(nil).Port))
 }
 
 // Version mocks base method.

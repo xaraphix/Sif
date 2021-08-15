@@ -14,6 +14,7 @@ import (
 	"github.com/xaraphix/Sif/internal/raft"
 	"github.com/xaraphix/Sif/internal/raft/mocks"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
+	"github.com/xaraphix/Sif/internal/raft/raftadapter"
 	"github.com/xaraphix/Sif/internal/raft/raftconfig"
 	"github.com/xaraphix/Sif/internal/raft/raftelection"
 	"github.com/xaraphix/Sif/internal/raft/raftfile"
@@ -680,14 +681,14 @@ func setupRaftNode(preNodeSetupCB func(
 
 	node = nil
 	deps := raft.RaftDeps{
-		FileManager: fileMgr,
-		ConfigManager: config,
-		ElectionManager: election,
+		FileManager:      fileMgr,
+		ConfigManager:    config,
+		ElectionManager:  election,
 		HeartbeatMonitor: monitor,
-		RPCAdapter: rpcAdapter,
-		LogManager: logMgr,
-		Heart: heart,
-		Options: raftOptions,
+		RPCAdapter:       rpcAdapter,
+		LogManager:       logMgr,
+		Heart:            heart,
+		Options:          raftOptions,
 	}
 
 	node = raft.NewRaftNode(deps)
@@ -1008,7 +1009,7 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		startMonitor:   true,
 	}
 
-	var logReplicationReq *pb.LogRequest 
+	var logReplicationReq *pb.LogRequest
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
@@ -1388,37 +1389,20 @@ func loadTestRaftConfig() *raftconfig.Config {
 
 func setup3FollowerNodes() {
 
-//	preNodeSetupCB := func(
-//		fileMgr *mocks.MockRaftFile,
-//		logMgr *mocks.MockRaftLog,
-//		election *mocks.MockRaftElection,
-//		adapter *mocks.MockRaftRPCAdapter,
-//		heart *mocks.MockRaftHeart,
-//		monitor *mocks.MockRaftMonitor,
-//	) {
-//	}
-//
-////	fm RaftFile,
-////	rc RaftConfig,
-////	re RaftElection,
-////	lhm RaftMonitor,
-////	ra RaftRPCAdapter,
-////	l RaftLog,
-////	h RaftHeart,
-////	o RaftOptions,
-//	fileMgr := raftfile.NewFileManager()
-//	electionMgr := raftelection.NewElectionManager()
-//	logMgr := raftlog.NewLogManager()
-//	lhm := raft.NewLeaderHeartbeatMonitor(true)
-//	adapter := raftadapter.NewRaftNodeAdapter()
-//	adapterServer := raftadapter.NewGRPCServer()
-//	adapterClient := raftadapter.NewRaftGRPCClient()
-//	config := raftconfig.NewConfig()
-//	heart := raftelection.NewLeaderHeart()
-//
-//	options := raft.RaftOptions{
-//		StartLeaderHeartbeatMonitorAfterInitializing: true,
-//	}
-//	node1 = raft.NewRaftNode(&fileMgr, config, electionMgr, lhm, adapter, &logMgr, heart, options)
-}
+	options := raft.RaftOptions{
+		StartLeaderHeartbeatMonitorAfterInitializing: true,
+	}
 
+	deps := raft.RaftDeps{
+		FileManager:      raftfile.NewFileManager(),
+		ConfigManager:    raftconfig.NewConfig(),
+		ElectionManager:  raftelection.NewElectionManager(),
+		HeartbeatMonitor: raft.NewLeaderHeartbeatMonitor(true),
+		RPCAdapter:       raftadapter.NewRaftNodeAdapter(),
+		LogManager:       raftlog.NewLogManager(),
+		Heart:            raftelection.NewLeaderHeart(),
+		Options:          options,
+	}
+
+	node1 := raft.NewRaftNode(deps)
+}

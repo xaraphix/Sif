@@ -65,6 +65,8 @@ type RaftConfig interface {
 	CurrentTerm() int32
 	CommitLength() int32
 	VotedFor() int32
+	Host() string
+	Port() string
 }
 
 //go:generate mockgen -destination=mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
@@ -91,6 +93,8 @@ type RaftRPCAdapter interface {
 	RequestVoteFromPeer(Peer, *pb.VoteRequest) *pb.VoteResponse
 	ReplicateLog(Peer, *pb.LogRequest)*pb.LogResponse
 	BroadcastMessage(leader Peer, msg *structpb.Struct) *pb.BroadcastMessageResponse
+
+	StartAdapter(*RaftNode)
 }
 
 //go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
