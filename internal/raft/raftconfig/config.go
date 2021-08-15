@@ -26,10 +26,10 @@ type Config struct {
 	RaftPeers                           []raft.Peer `yaml:"peers"`
 	RaftInstanceDirPath                 string      `yaml:"sifdir"`
 	RaftVersion                         string      `yaml:"version"`
-	RaftInstancePersistentStateFilePath string
-	RaftHost                            string
-	RaftPort                            string
-
+	RaftInstancePersistentStateFilePath string      `yaml:"persistentStateFile"`
+	RaftHost                            string      `yaml:"host"`
+	RaftPort                            string      `yaml:"port"`
+	ConfigFilePath                      string
 	pb.RaftPersistentState
 
 	BootedFromCrash bool
@@ -40,18 +40,21 @@ func NewConfig() *Config {
 }
 
 func parseConfig(c *Config, rn *raft.RaftNode) {
-	cfgFile, err := rn.FileMgr.LoadFile("./sifconfig.yml")
+
+	path := getOrDefault(c.ConfigFilePath, "./sifconfig.yml").(string)
+	cfgFile, err := rn.FileMgr.LoadFile(path)
 	cfg := &Config{}
 	err = yaml.Unmarshal(cfgFile, cfg)
 	if err != nil {
 		panic(err)
 	}
 
+	c.RaftHost = getOrDefault(cfg.Host(), nil).(string)
+	c.RaftPort = getOrDefault(cfg.Port(), nil).(string)
 	c.RaftPeers = getOrDefault(cfg.Peers(), nil).([]raft.Peer)
 	c.RaftInstanceDirPath = getOrDefault(cfg.InstanceDirPath(), RaftInstanceDirPath).(string)
 	c.RaftInstanceId = getOrDefault(cfg.InstanceId(), 0).(int32)
 	c.RaftInstanceName = getOrDefault(cfg.InstanceName(), getDefaultName()).(string)
-	c.RaftInstancePersistentStateFilePath = getOrDefault(cfg.LogFilePath(), getDefaultName()).(string)
 	c.RaftInstancePersistentStateFilePath = getOrDefault(cfg.InstanceDirPath()+PersistentStateFile, getDefaultName()).(string)
 	c.RaftVersion = RaftVersion
 	c.BootedFromCrash = c.DidNodeCrash(rn)
@@ -156,9 +159,13 @@ func (c *Config) Port() string {
 	return c.RaftPort
 }
 
+func (c *Config) SetConfigFilePath(path string) {
+	c.ConfigFilePath = path
+}
+
 func getOrDefault(prop interface{}, defaultVal interface{}) interface{} {
 
-	if prop == nil {
+	if prop == nil || prop == "" {
 		return defaultVal
 	}
 

@@ -201,6 +201,18 @@ func (mr *MockRaftConfigMockRecorder) Port() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Port", reflect.TypeOf((*MockRaftConfig)(nil).Port))
 }
 
+// SetConfigFilePath mocks base method.
+func (m *MockRaftConfig) SetConfigFilePath(arg0 string) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetConfigFilePath", arg0)
+}
+
+// SetConfigFilePath indicates an expected call of SetConfigFilePath.
+func (mr *MockRaftConfigMockRecorder) SetConfigFilePath(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetConfigFilePath", reflect.TypeOf((*MockRaftConfig)(nil).SetConfigFilePath), arg0)
+}
+
 // Version mocks base method.
 func (m *MockRaftConfig) Version() string {
 	m.ctrl.T.Helper()

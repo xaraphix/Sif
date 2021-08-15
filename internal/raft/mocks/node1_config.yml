@@ -1,0 +1,12 @@
+version: v0.1
+name: sif-instance-1
+id: 1
+sifdir: /tmp/
+host: localhost
+port: 5051
+peers:
+  - id: 2
+    address: localhost:5052
+  - id: 3
+    address: localhost:5053
+

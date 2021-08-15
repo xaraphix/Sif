@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/xaraphix/Sif/internal/raft"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
 )
@@ -35,6 +36,11 @@ func NewElectionManager() raft.RaftElection {
 }
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
+	logrus.WithFields(logrus.Fields{
+		"Started By": rn.Config.InstanceName(),
+		"Started By Id": rn.Config.InstanceId(),
+	}).Info("Starting election")
+
 	em.initChannels()
 	em.becomeACandidate(rn)
 	em.askForVotes(rn)
@@ -102,6 +108,9 @@ func (em *ElectionManager) becomeALeader(rn *raft.RaftNode) {
 		rn.Heart.StartBeating(rn)
 		rn.ElectionInProgress = false
 		rn.SendSignal(raft.ElectionTimerStopped)
+		logrus.WithFields(logrus.Fields{
+			"Name": rn.Config.InstanceName(),
+		}).Info("I become the leader")
 	}
 }
 
@@ -109,7 +118,11 @@ func (em *ElectionManager) becomeAFollower(rn *raft.RaftNode) {
 	if rn.ElectionInProgress == true {
 		rn.CurrentRole = raft.FOLLOWER
 		rn.ElectionInProgress = false
+		rn.VotedFor = 0
 		rn.SendSignal(raft.ElectionTimerStopped)
+		logrus.WithFields(logrus.Fields{
+			"Name": rn.Config.InstanceName(),
+		}).Info("I become a follower because people voted against me")
 	}
 }
 
@@ -127,9 +140,12 @@ func (em *ElectionManager) becomeAFollowerAccordingToLeader(rn *raft.RaftNode, l
 		rn.CurrentRole = raft.FOLLOWER
 		rn.SendSignal(raft.BecameFollower)
 		rn.CurrentTerm = leader.CurrentTerm
-		rn.VotedFor = leader.Id
+		rn.VotedFor = 0
 		rn.ElectionInProgress = false
 		rn.SendSignal(raft.ElectionTimerStopped)
+		logrus.WithFields(logrus.Fields{
+			"Name": rn.Config.InstanceName(),
+		}).Info("I become a follower according to leader")
 	}
 }
 
@@ -138,9 +154,12 @@ func (em *ElectionManager) becomeAFollowerAccordingToCandidatePeer(rn *raft.Raft
 		rn.CurrentRole = raft.FOLLOWER
 		rn.SendSignal(raft.BecameFollower)
 		rn.CurrentTerm = peer.CurrentTerm
-		rn.VotedFor = peer.Id
+		rn.VotedFor = 0
 		rn.ElectionInProgress = false
 		rn.SendSignal(raft.ElectionTimerStopped)
+		logrus.WithFields(logrus.Fields{
+			"Name": rn.Config.InstanceName(),
+		}).Info("I become a follower according to candidate")
 	}
 }
 
@@ -151,6 +170,9 @@ func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v *
 		rn.VotedFor = 0
 		rn.SendSignal(raft.ElectionTimerStopped)
 		rn.ElectionInProgress = false
+		logrus.WithFields(logrus.Fields{
+			"Name": rn.Config.InstanceName(),
+		}).Info("I become a follower according to peer")
 	}
 }
 
@@ -181,6 +203,10 @@ func (em *ElectionManager) askForVotes(rn *raft.RaftNode) {
 	voteRequest := em.GenerateVoteRequest(rn)
 	for idx, peer := range rn.Peers {
 		go func(i int, p raft.Peer, n *raft.RaftNode) {
+			logrus.WithFields(logrus.Fields{
+				"ReqVoteFrom": p.Id,
+				"MyId":        rn.Id,
+			}).Info("")
 			voteResponse := n.RPCAdapter.RequestVoteFromPeer(p, voteRequest)
 			em.votesResponse <- voteResponse
 		}(idx, peer, rn)

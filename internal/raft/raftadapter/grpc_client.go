@@ -2,9 +2,11 @@ package raftadapter
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"time"
 
+	"github.com/sirupsen/logrus"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
 	"google.golang.org/grpc"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -12,34 +14,66 @@ import (
 
 type RaftGRPCClient struct {
 	client              pb.RaftClient
-	ctx                 context.Context
 }
 
-func NewRaftGRPCClient(address string, timeoutIn time.Duration) RaftGRPCClient {
+func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient {
 
 	grpcClient := RaftGRPCClient{}
-	conn, err := grpc.Dial(address, grpc.WithInsecure(), grpc.WithBlock())
+	conn, err := grpc.Dial(address, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
-	defer conn.Close()
 	c := pb.NewRaftClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), timeoutIn)
 	grpcClient.client = c
-	grpcClient.ctx = ctx
-	defer cancel()
 
-	return grpcClient
+	return &grpcClient
 }
 
-func (c RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error) {
-	return c.client.ReplicateLog(c.ctx, lr)
+func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error) {
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(400 * time.Millisecond))
+	x,y := c.client.ReplicateLog(ctx, lr)
+
+	if x == nil {
+		return nil, y
+	}
+	logrus.WithFields(logrus.Fields{
+		"MyId": lr.LeaderId,
+		"Log response from": x.FollowerId,
+	}).Info("Received log response")
+	if y != nil {
+		logrus.Error("In repl log :: " +y.Error())
+		fmt.Printf(y.Error())
+	}
+
+	return x, nil
 }
 
-func (c RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteResponse, error) {
-	return c.client.RequestVoteFromPeer(c.ctx, vr)
+func (c *RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteResponse, error) {
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(400 * time.Millisecond))
+	x,y := c.client.RequestVoteFromPeer(ctx, vr)	
+	if x == nil {
+		return nil, y
+	}
+	logrus.WithFields(logrus.Fields{
+		"MyId": vr.NodeId,
+		"From": x.PeerId,
+	}).Info("Received vote response")
+
+	if y != nil {
+		logrus.Error( "In req vote :: " + y.Error())
+		fmt.Printf(y.Error())
+	}
+
+	return x,nil
 }
 
-func (c RaftGRPCClient) BroadcastMessage(m *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
-	return c.client.BroadcastMessage(c.ctx, m)
+func (c *RaftGRPCClient) BroadcastMessage(m *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(400 * time.Millisecond))
+	x,y := c.client.BroadcastMessage(ctx, m)	
+	if y != nil {
+		logrus.Error( "In broadcast msg :: " + y.Error())
+		fmt.Printf(y.Error())
+	}
+
+	return x,nil
 }

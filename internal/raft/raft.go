@@ -54,6 +54,7 @@ type RaftFile interface {
 //go:generate mockgen -destination=mocks/mock_raftconfig.go -package=mocks . RaftConfig
 type RaftConfig interface {
 	LoadConfig(*RaftNode)
+	SetConfigFilePath(string)
 	DidNodeCrash(*RaftNode) bool
 	InstanceName() string
 	InstanceId() int32
@@ -156,8 +157,7 @@ type RaftDeps struct {
 }
 
 func NewRaftNode(deps RaftDeps) *RaftNode {
-	DestructRaftNode(Sif)
-	Sif = &RaftNode{
+	sif := &RaftNode{
 		FileMgr:                deps.FileManager,
 		Config:                 deps.ConfigManager,
 		ElectionMgr:            deps.ElectionManager,
@@ -168,7 +168,7 @@ func NewRaftNode(deps RaftDeps) *RaftNode {
 		raftSignal:             make(chan int),
 	}
 
-	raftnode := Sif
+	raftnode := sif
 	initializeRaftNode(raftnode)
 	if deps.Options.StartLeaderHeartbeatMonitorAfterInitializing {
 		raftnode.LeaderHeartbeatMonitor.Start(raftnode)
@@ -182,6 +182,7 @@ func DestructRaftNode(rn *RaftNode) {
 
 func initializeRaftNode(rn *RaftNode) {
 	rn.Config.LoadConfig(rn)
+	rn.Id = getId(rn)
 	rn.CurrentRole = getCurrentRole(rn)
 	rn.CurrentTerm = getCurrentTerm(rn)
 	rn.Logs = getLogs(rn)
@@ -192,6 +193,7 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.AckedLength = map[int32]int32{}
 	rn.VotesReceived = nil
 	rn.ElectionInProgress = false
+	rn.RPCAdapter.StartAdapter(rn)
 }
 
 func (rn *RaftNode) GetRaftSignalsChan() <-chan int {
@@ -218,6 +220,10 @@ func (m *Monitor) Sleep() {
 
 func getCurrentRole(rn *RaftNode) string {
 	return FOLLOWER
+}
+
+func getId(rn *RaftNode) int32 {
+	return rn.Config.InstanceId()
 }
 
 func getCurrentTerm(rn *RaftNode) int32 {

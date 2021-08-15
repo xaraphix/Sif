@@ -1,6 +1,7 @@
 package raftelection
 
 import (
+	"github.com/sirupsen/logrus"
 	"github.com/xaraphix/Sif/internal/raft"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
 )
@@ -52,6 +53,12 @@ func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, vote
 		voteResponse.VoteGranted = false
 	}
 
+	logrus.WithFields(logrus.Fields{
+		"MyId": rn.Id,
+		"Voted": voteResponse.VoteGranted,
+		"For": voteRequest.NodeId,
+	}).Info("Sending Vote Response")
+
 	return voteResponse
 }
 
@@ -100,10 +107,15 @@ func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
 }
 
 func (em *ElectionManager) concludeFromReceivedVote(rn *raft.RaftNode, vr *pb.VoteResponse) {
+
+	if vr == nil {
+		return
+	}
+
 	valid := isElectionValid(rn, vr)
 	if !valid && isPeerTermHigher(rn, vr) {
 		em.followerAccordingToPeer <- vr
-	} else if becomeLeader, becomeFollower := em.whatDoesTheMajorityWant(len(rn.Peers), vr); true {
+	} else if becomeLeader, becomeFollower := em.whatDoesTheMajorityWant(len(rn.Peers)); true {
 		if becomeLeader {
 			em.leader <- true
 		} else if becomeFollower {
@@ -126,13 +138,13 @@ func isElectionValid(rn *raft.RaftNode, vr *pb.VoteResponse) bool {
 	}
 }
 
-func (em *ElectionManager) whatDoesTheMajorityWant(numOfPeers int, vr *pb.VoteResponse) (bool, bool) {
+func (em *ElectionManager) whatDoesTheMajorityWant(numOfPeers int) (bool, bool) {
 
 	majorityCount := numOfPeers / 2
 	votesInFavor := 0
 	leader, follower := false, false
 	for _, vr := range em.VotesReceived {
-		if vr.VoteGranted {
+		if vr != nil && vr.VoteGranted {
 			votesInFavor = votesInFavor + 1
 		}
 	}

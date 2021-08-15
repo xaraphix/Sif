@@ -3,6 +3,7 @@ package raftlog
 import (
 	"math"
 
+	"github.com/sirupsen/logrus"
 	"github.com/xaraphix/Sif/internal/raft"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
 	"google.golang.org/protobuf/types/known/structpb"
@@ -94,6 +95,13 @@ func (l LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequ
 	if lr.CurrentTerm == rn.CurrentTerm && logOk {
 		rn.CurrentRole = raft.FOLLOWER
 		rn.CurrentLeader = lr.LeaderId
+
+	
+		logrus.WithFields(logrus.Fields{
+			"LeaderId" : lr.LeaderId,
+		}).Info("Received Heartbeat from leader")
+
+		rn.LeaderHeartbeatMonitor.Reset()
 		l.appendEntries(rn, lr.SentLength, lr.CommitLength, lr.Entries)
 		ack := lr.SentLength + int32(len(lr.Entries))
 		return &pb.LogResponse{
