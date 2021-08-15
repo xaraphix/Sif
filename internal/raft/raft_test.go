@@ -518,7 +518,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					}
 				}
 
-				Expect(setupVars.sentLogReplicationReq.CurrentTerm).To(Equal(node.CurrentTerm))
+				Expect((*setupVars.sentLogReplicationReq).CurrentTerm).To(Equal(node.CurrentTerm))
 				Succeed()
 			})
 		})
@@ -799,7 +799,7 @@ type MockSetupVars struct {
 	sentHeartbeats        *map[int]bool
 	sentVoteRequests      *map[int]*protos.VoteRequest
 	receivedVoteResponse  *map[int32]*protos.VoteResponse
-	sentLogReplicationReq *protos.LogRequest
+	sentLogReplicationReq **protos.LogRequest
 	ctrls                 Controllers
 	leaderId              int32
 }
@@ -997,7 +997,7 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		startMonitor:   true,
 	}
 
-	var logReplicationReq protos.LogRequest 
+	var logReplicationReq *protos.LogRequest 
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
@@ -1026,7 +1026,7 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		}).AnyTimes()
 
 		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(p raft.Peer, r *protos.LogRequest) *protos.LogResponse {
-			logReplicationReq = *r
+			logReplicationReq = r
 			return &protos.LogResponse{}
 		}).AnyTimes()
 
