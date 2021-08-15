@@ -2,6 +2,9 @@ package raft
 
 import (
 	"time"
+
+	pb "github.com/xaraphix/Sif/internal/raft/protos"
+	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var (
@@ -14,7 +17,7 @@ type Node struct {
 	CurrentRole   string
 	CurrentLeader int32
 	VotedFor      int32
-	VotesReceived []VoteResponse
+	VotesReceived []pb.VoteResponse
 	CommitIndex   int32
 	CommitLength  int32
 	AckedLength   map[int32]int32
@@ -24,7 +27,7 @@ type Node struct {
 	MatchIndex    int32
 	PrevLogIndex  int32
 	Peers         []Peer
-	Logs          []Log
+	Logs          []*pb.Log
 }
 
 type RaftNode struct {
@@ -58,7 +61,7 @@ type RaftConfig interface {
 	InstanceDirPath() string
 	Version() string
 	LogFilePath() string
-	Logs() *[]Log
+	Logs() []*pb.Log
 	CurrentTerm() int32
 	CommitLength() int32
 	VotedFor() int32
@@ -75,18 +78,18 @@ type RaftMonitor interface {
 
 //go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
 type RaftElection interface {
-	GetReceivedVotes() []VoteResponse
+	GetReceivedVotes() []*pb.VoteResponse
 	StartElection(*RaftNode)
-	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest VoteRequest) VoteResponse
-	GenerateVoteRequest(*RaftNode) VoteRequest
+	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest *pb.VoteRequest) *pb.VoteResponse
+	GenerateVoteRequest(*RaftNode) *pb.VoteRequest
 	GetLeaderHeartChannel() chan RaftNode
 }
 
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
-	RequestVoteFromPeer(Peer, VoteRequest) VoteResponse
-	ReplicateLog(Peer, LogRequest) LogResponse
-	BroadcastMessage(leader Peer, msg map[string]interface{}) BroadcastMessageResponse
+	RequestVoteFromPeer(Peer, *pb.VoteRequest) *pb.VoteResponse
+	ReplicateLog(Peer, *pb.LogRequest) *pb.LogResponse
+	BroadcastMessage(leader Peer, msg *structpb.Struct) *pb.BroadcastMessageResponse
 }
 
 //go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
@@ -98,20 +101,15 @@ type RaftHeart interface {
 
 //go:generate mockgen -destination=mocks/mock_raftlog.go -package=mocks . RaftLog
 type RaftLog interface {
-	GetLogs() []Log
-	GetLog(rn *RaftNode, idx int32) Log
+	GetLogs() []*pb.Log
+	GetLog(rn *RaftNode, idx int32) *pb.Log
 	ReplicateLog(raftNode *RaftNode, peer Peer)
-	RespondToBroadcastMsgRequest(raftNode *RaftNode, msg map[string]interface{}) BroadcastMessageResponse
-	RespondToLogReplicationRequest(raftNode *RaftNode, logRequest LogRequest) LogResponse
+	RespondToBroadcastMsgRequest(raftNode *RaftNode, msg *structpb.Struct) *pb.BroadcastMessageResponse
+	RespondToLogReplicationRequest(raftNode *RaftNode, logRequest *pb.LogRequest) *pb.LogResponse
 }
 
 type RaftOptions struct {
 	StartLeaderHeartbeatMonitorAfterInitializing bool
-}
-
-type Log struct {
-	Term    int32                  `json:"term"`
-	Message map[string]interface{} `json:"message"`
 }
 
 type Heart struct {
@@ -128,20 +126,6 @@ type Monitor struct {
 type BroadcastMessageResponse struct {
 	
 }
-
-type VoteRequest struct {
-	NodeId      int32
-	CurrentTerm int32
-	LogLength   int32
-	LastTerm    int32
-}
-
-type VoteResponse struct {
-	PeerId      int32
-	Term        int32
-	VoteGranted bool
-}
-
 type ElectionUpdates struct {
 	ElectionOvertimed    bool
 	ElectionCompleted    bool
@@ -153,22 +137,6 @@ type ElectionUpdates struct {
 type Peer struct {
 	Id      int32  `yaml:"id"`
 	Address string `yaml:"address"`
-}
-
-type LogRequest struct {
-	LeaderId     int32
-	Term  int32
-	LogLength   int32
-	LogTerm  int32
-	CommitLength int32
-	Entries      *[]Log
-}
-
-type LogResponse struct {
-	FollowerId int32
-	Term       int32
-	AckLength  int32
-	Success    bool
 }
 
 func NewRaftNode(
@@ -209,7 +177,7 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.Config.LoadConfig(rn)
 	rn.CurrentRole = getCurrentRole(rn)
 	rn.CurrentTerm = getCurrentTerm(rn)
-	rn.Logs = *getLogs(rn)
+	rn.Logs = getLogs(rn)
 	rn.VotedFor = getVotedFor(rn)
 	rn.CommitLength = getCommitLength(rn)
 	rn.Peers = rn.Config.Peers()
@@ -253,11 +221,12 @@ func getCurrentTerm(rn *RaftNode) int32 {
 	}
 }
 
-func getLogs(rn *RaftNode) *[]Log {
+func getLogs(rn *RaftNode) []*pb.Log {
 	if rn.Config.DidNodeCrash(rn) {
 		return rn.Config.Logs()
 	} else {
-		return &[]Log{}
+		logs := make([]*pb.Log, 0)
+		return logs
 	}
 }
 

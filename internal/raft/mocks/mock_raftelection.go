@@ -9,6 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	raft "github.com/xaraphix/Sif/internal/raft"
+	protos "github.com/xaraphix/Sif/internal/raft/protos"
 )
 
 // MockRaftElection is a mock of RaftElection interface.
@@ -35,10 +36,10 @@ func (m *MockRaftElection) EXPECT() *MockRaftElectionMockRecorder {
 }
 
 // GenerateVoteRequest mocks base method.
-func (m *MockRaftElection) GenerateVoteRequest(arg0 *raft.RaftNode) raft.VoteRequest {
+func (m *MockRaftElection) GenerateVoteRequest(arg0 *raft.RaftNode) *protos.VoteRequest {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GenerateVoteRequest", arg0)
-	ret0, _ := ret[0].(raft.VoteRequest)
+	ret0, _ := ret[0].(*protos.VoteRequest)
 	return ret0
 }
 
@@ -63,10 +64,10 @@ func (mr *MockRaftElectionMockRecorder) GetLeaderHeartChannel() *gomock.Call {
 }
 
 // GetReceivedVotes mocks base method.
-func (m *MockRaftElection) GetReceivedVotes() []raft.VoteResponse {
+func (m *MockRaftElection) GetReceivedVotes() []*protos.VoteResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetReceivedVotes")
-	ret0, _ := ret[0].([]raft.VoteResponse)
+	ret0, _ := ret[0].([]*protos.VoteResponse)
 	return ret0
 }
 
@@ -77,10 +78,10 @@ func (mr *MockRaftElectionMockRecorder) GetReceivedVotes() *gomock.Call {
 }
 
 // GetResponseForVoteRequest mocks base method.
-func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 raft.VoteRequest) raft.VoteResponse {
+func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 *protos.VoteRequest) *protos.VoteResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetResponseForVoteRequest", arg0, arg1)
-	ret0, _ := ret[0].(raft.VoteResponse)
+	ret0, _ := ret[0].(*protos.VoteResponse)
 	return ret0
 }
 

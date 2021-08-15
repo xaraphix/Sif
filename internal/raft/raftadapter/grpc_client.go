@@ -11,7 +11,7 @@ import (
 )
 
 type RaftGRPCClient struct {
-	client              pb.RaftRPCAdapterClient
+	client              pb.RaftClient
 	ctx                 context.Context
 	ReplicateLog        func(*pb.LogRequest) (*pb.LogResponse, error)
 	RequestVoteFromPeer func(*pb.VoteRequest) (*pb.VoteResponse, error)
@@ -26,7 +26,7 @@ func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient 
 		log.Fatalf("did not connect: %v", err)
 	}
 	defer conn.Close()
-	c := pb.NewRaftRPCAdapterClient(conn)
+	c := pb.NewRaftClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), timeoutIn)
 	grpcClient.client = c
 	grpcClient.ctx = ctx

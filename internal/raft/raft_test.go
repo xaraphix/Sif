@@ -14,6 +14,7 @@ import (
 	. "github.com/onsi/gomega"
 	"github.com/xaraphix/Sif/internal/raft"
 	"github.com/xaraphix/Sif/internal/raft/mocks"
+	"github.com/xaraphix/Sif/internal/raft/protos"
 	"github.com/xaraphix/Sif/internal/raft/raftconfig"
 	"github.com/xaraphix/Sif/internal/raft/raftelection"
 	"github.com/xaraphix/Sif/internal/raft/raftfile"
@@ -97,7 +98,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			It("should load up logs from persistent storage", func() {
-				Expect(len(node.Logs)).To(Equal(len(*persistentState.RaftLogs)))
+				Expect(len(node.Logs)).To(Equal(len(persistentState.RaftLogs)))
 				Expect(len(node.Logs)).To(BeNumerically(">", 0))
 			})
 
@@ -364,7 +365,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = setupPeerReceivingCandidateVoteRequest()
 						node = setupVars.node
 
-						node.ElectionMgr.GetResponseForVoteRequest(node, raft.VoteRequest{
+						node.ElectionMgr.GetResponseForVoteRequest(node, &protos.VoteRequest{
 							CurrentTerm: 10,
 							NodeId:      0,
 							LogLength:   0,
@@ -394,7 +395,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = setupPeerReceivingCandidateVoteRequest()
 						node = setupVars.node
 
-						node.ElectionMgr.GetResponseForVoteRequest(node, raft.VoteRequest{
+						node.ElectionMgr.GetResponseForVoteRequest(node, &protos.VoteRequest{
 							CurrentTerm: 0,
 							NodeId:      1,
 							LogLength:   0,
@@ -517,7 +518,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					}
 				}
 
-				Expect(setupVars.sentLogReplicationReq.Term).To(Equal(node.CurrentTerm))
+				Expect(setupVars.sentLogReplicationReq.CurrentTerm).To(Equal(node.CurrentTerm))
 				Succeed()
 			})
 		})
@@ -796,9 +797,9 @@ type MockSetupVars struct {
 	node                  *raft.RaftNode
 	term_0                int32
 	sentHeartbeats        *map[int]bool
-	sentVoteRequests      *map[int]raft.VoteRequest
-	receivedVoteResponse  *map[int32]raft.VoteResponse
-	sentLogReplicationReq *raft.LogRequest
+	sentVoteRequests      *map[int]*protos.VoteRequest
+	receivedVoteResponse  *map[int32]*protos.VoteResponse
+	sentLogReplicationReq *protos.LogRequest
 	ctrls                 Controllers
 	leaderId              int32
 }
@@ -827,13 +828,13 @@ func setupRaftNodeBootsUpFromCrash() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, nil)
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
@@ -869,13 +870,13 @@ func setupRaftNodeInitialization() MockSetupVars {
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
@@ -910,13 +911,13 @@ func setupLeaderHeartbeatTimeout() MockSetupVars {
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
@@ -962,9 +963,9 @@ func setupMajorityVotesAgainst() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
-		adapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).DoAndReturn(func(interface{}, interface{}) raft.VoteResponse {
+		adapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).DoAndReturn(func(interface{}, interface{}) *protos.VoteResponse {
 
-			return raft.VoteResponse{
+			return &protos.VoteResponse{
 				VoteGranted: false,
 				Term:        1,
 				PeerId:      testConfig.Peers()[0].Id,
@@ -972,9 +973,9 @@ func setupMajorityVotesAgainst() MockSetupVars {
 
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).DoAndReturn(func(interface{}, interface{}) raft.VoteResponse {
+		adapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).DoAndReturn(func(interface{}, interface{}) *protos.VoteResponse {
 
-			return raft.VoteResponse{
+			return &protos.VoteResponse{
 				VoteGranted: false,
 				Term:        1,
 				PeerId:      testConfig.Peers()[1].Id,
@@ -996,7 +997,7 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		startMonitor:   true,
 	}
 
-	var logReplicationReq raft.LogRequest 
+	var logReplicationReq protos.LogRequest 
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
@@ -1012,21 +1013,21 @@ func setupMajorityVotesInFavor() MockSetupVars {
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: true,
 			Term:        1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(p raft.Peer, r raft.LogRequest) {
-			logReplicationReq = r
-			return
+		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(p raft.Peer, r *protos.LogRequest) *protos.LogResponse {
+			logReplicationReq = *r
+			return &protos.LogResponse{}
 		}).AnyTimes()
 
 		adapter.EXPECT().ReplicateLog(testConfig.Peers()[1], gomock.Any()).Do(func(interface{}, interface{}) {
@@ -1069,13 +1070,13 @@ func setupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: true,
 			Term:        1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
@@ -1127,17 +1128,17 @@ func setupPeerTakesTooMuchTimeToRespond() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Do(
-			func(p raft.Peer, vr raft.VoteRequest) raft.VoteResponse {
+			func(p raft.Peer, vr *protos.VoteRequest) *protos.VoteResponse {
 				time.Sleep(100 * time.Second)
-				return raft.VoteResponse{}
-			}).Return(raft.VoteResponse{
+				return &protos.VoteResponse{}
+			}).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
 		},
 		).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
@@ -1173,13 +1174,13 @@ func setupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(loadTestRaftConfigFile())
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
@@ -1214,13 +1215,13 @@ func setupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[0].Id,
 		}).AnyTimes()
 
-		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(raft.VoteResponse{
+		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(&protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,
@@ -1242,7 +1243,7 @@ func setupCandidateReceivesVoteResponseWithHigherTerm() MockSetupVars {
 		startMonitor:   true,
 	}
 
-	sentVoteResponse := make(map[int32]raft.VoteResponse)
+	sentVoteResponse := make(map[int32]*protos.VoteResponse)
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
 		logMgr *mocks.MockRaftLog,
@@ -1254,13 +1255,13 @@ func setupCandidateReceivesVoteResponseWithHigherTerm() MockSetupVars {
 
 		testConfig := loadTestRaftConfig()
 		testPersistentStorageFile, _ := loadTestRaftPersistentStorageFile()
-		vr1 := raft.VoteResponse{
+		vr1 := &protos.VoteResponse{
 			VoteGranted: false,
 			Term:        10,
 			PeerId:      testConfig.Peers()[0].Id,
 		}
 
-		vr2 := raft.VoteResponse{
+		vr2 := &protos.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
 			PeerId:      testConfig.Peers()[1].Id,

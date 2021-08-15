@@ -9,6 +9,8 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	raft "github.com/xaraphix/Sif/internal/raft"
+	protos "github.com/xaraphix/Sif/internal/raft/protos"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 // MockRaftRPCAdapter is a mock of RaftRPCAdapter interface.
@@ -35,10 +37,10 @@ func (m *MockRaftRPCAdapter) EXPECT() *MockRaftRPCAdapterMockRecorder {
 }
 
 // BroadcastMessage mocks base method.
-func (m *MockRaftRPCAdapter) BroadcastMessage(arg0 raft.Peer, arg1 map[string]interface{}) raft.BroadcastMessageResponse {
+func (m *MockRaftRPCAdapter) BroadcastMessage(arg0 raft.Peer, arg1 *structpb.Struct) *protos.BroadcastMessageResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "BroadcastMessage", arg0, arg1)
-	ret0, _ := ret[0].(raft.BroadcastMessageResponse)
+	ret0, _ := ret[0].(*protos.BroadcastMessageResponse)
 	return ret0
 }
 
@@ -49,10 +51,10 @@ func (mr *MockRaftRPCAdapterMockRecorder) BroadcastMessage(arg0, arg1 interface{
 }
 
 // ReplicateLog mocks base method.
-func (m *MockRaftRPCAdapter) ReplicateLog(arg0 raft.Peer, arg1 raft.LogRequest) raft.LogResponse {
+func (m *MockRaftRPCAdapter) ReplicateLog(arg0 raft.Peer, arg1 *protos.LogRequest) *protos.LogResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReplicateLog", arg0, arg1)
-	ret0, _ := ret[0].(raft.LogResponse)
+	ret0, _ := ret[0].(*protos.LogResponse)
 	return ret0
 }
 
@@ -63,10 +65,10 @@ func (mr *MockRaftRPCAdapterMockRecorder) ReplicateLog(arg0, arg1 interface{}) *
 }
 
 // RequestVoteFromPeer mocks base method.
-func (m *MockRaftRPCAdapter) RequestVoteFromPeer(arg0 raft.Peer, arg1 raft.VoteRequest) raft.VoteResponse {
+func (m *MockRaftRPCAdapter) RequestVoteFromPeer(arg0 raft.Peer, arg1 *protos.VoteRequest) *protos.VoteResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RequestVoteFromPeer", arg0, arg1)
-	ret0, _ := ret[0].(raft.VoteResponse)
+	ret0, _ := ret[0].(*protos.VoteResponse)
 	return ret0
 }
 

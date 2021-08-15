@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/xaraphix/Sif/internal/raft"
+	pb "github.com/xaraphix/Sif/internal/raft/protos"
 	"gopkg.in/yaml.v2"
 )
 
@@ -20,7 +21,7 @@ var (
 )
 
 type RaftPersistentState struct {
-	RaftLogs         *[]raft.Log `json:"logs"`
+	RaftLogs         []*pb.Log `json:"logs"`
 	RaftCurrentTerm  int32       `json:"currentTerm"`
 	RaftVotedFor     int32       `json:"votedFor"`
 	RaftCommitLength int32       `json:"commitLength"`
@@ -137,7 +138,7 @@ func (c *Config) CurrentTerm() int32 {
 	return c.RaftCurrentTerm
 }
 
-func (c *Config) Logs() *[]raft.Log {
+func (c *Config) Logs() []*pb.Log {
 	return c.RaftLogs
 }
 

@@ -9,6 +9,7 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	raft "github.com/xaraphix/Sif/internal/raft"
+	protos "github.com/xaraphix/Sif/internal/raft/protos"
 )
 
 // MockRaftConfig is a mock of RaftConfig interface.
@@ -145,10 +146,10 @@ func (mr *MockRaftConfigMockRecorder) LogFilePath() *gomock.Call {
 }
 
 // Logs mocks base method.
-func (m *MockRaftConfig) Logs() *[]raft.Log {
+func (m *MockRaftConfig) Logs() []*protos.Log {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Logs")
-	ret0, _ := ret[0].(*[]raft.Log)
+	ret0, _ := ret[0].([]*protos.Log)
 	return ret0
 }
 

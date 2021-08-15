@@ -9,6 +9,8 @@ import (
 
 	gomock "github.com/golang/mock/gomock"
 	raft "github.com/xaraphix/Sif/internal/raft"
+	protos "github.com/xaraphix/Sif/internal/raft/protos"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 // MockRaftLog is a mock of RaftLog interface.
@@ -35,10 +37,10 @@ func (m *MockRaftLog) EXPECT() *MockRaftLogMockRecorder {
 }
 
 // GetLog mocks base method.
-func (m *MockRaftLog) GetLog(arg0 *raft.RaftNode, arg1 int32) raft.Log {
+func (m *MockRaftLog) GetLog(arg0 *raft.RaftNode, arg1 int32) *protos.Log {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLog", arg0, arg1)
-	ret0, _ := ret[0].(raft.Log)
+	ret0, _ := ret[0].(*protos.Log)
 	return ret0
 }
 
@@ -49,10 +51,10 @@ func (mr *MockRaftLogMockRecorder) GetLog(arg0, arg1 interface{}) *gomock.Call {
 }
 
 // GetLogs mocks base method.
-func (m *MockRaftLog) GetLogs() []raft.Log {
+func (m *MockRaftLog) GetLogs() []*protos.Log {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLogs")
-	ret0, _ := ret[0].([]raft.Log)
+	ret0, _ := ret[0].([]*protos.Log)
 	return ret0
 }
 
@@ -75,10 +77,10 @@ func (mr *MockRaftLogMockRecorder) ReplicateLog(arg0, arg1 interface{}) *gomock.
 }
 
 // RespondToBroadcastMsgRequest mocks base method.
-func (m *MockRaftLog) RespondToBroadcastMsgRequest(arg0 *raft.RaftNode, arg1 map[string]interface{}) raft.BroadcastMessageResponse {
+func (m *MockRaftLog) RespondToBroadcastMsgRequest(arg0 *raft.RaftNode, arg1 *structpb.Struct) *protos.BroadcastMessageResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RespondToBroadcastMsgRequest", arg0, arg1)
-	ret0, _ := ret[0].(raft.BroadcastMessageResponse)
+	ret0, _ := ret[0].(*protos.BroadcastMessageResponse)
 	return ret0
 }
 
@@ -89,10 +91,10 @@ func (mr *MockRaftLogMockRecorder) RespondToBroadcastMsgRequest(arg0, arg1 inter
 }
 
 // RespondToLogReplicationRequest mocks base method.
-func (m *MockRaftLog) RespondToLogReplicationRequest(arg0 *raft.RaftNode, arg1 raft.LogRequest) raft.LogResponse {
+func (m *MockRaftLog) RespondToLogReplicationRequest(arg0 *raft.RaftNode, arg1 *protos.LogRequest) *protos.LogResponse {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "RespondToLogReplicationRequest", arg0, arg1)
-	ret0, _ := ret[0].(raft.LogResponse)
+	ret0, _ := ret[0].(*protos.LogResponse)
 	return ret0
 }
 

@@ -1,9 +1,12 @@
 package raftelection
 
-import "github.com/xaraphix/Sif/internal/raft"
+import (
+	"github.com/xaraphix/Sif/internal/raft"
+	"github.com/xaraphix/Sif/internal/raft/protos"
+)
 
-func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteRequest {
-	return raft.VoteRequest{
+func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) *protos.VoteRequest {
+	return &protos.VoteRequest{
 		NodeId:      rn.Id,
 		CurrentTerm: rn.CurrentTerm,
 		LogLength:   int32(len(rn.Logs)),
@@ -13,7 +16,7 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) raft.VoteReque
 
 func becomeAFollowerAccordingToPeersTerm(
 	rn *raft.RaftNode,
-	v raft.VoteResponse,
+	v *protos.VoteResponse,
 	electionUpdates *raft.ElectionUpdates) {
 
 	rn.CurrentTerm = v.Term
@@ -23,8 +26,8 @@ func becomeAFollowerAccordingToPeersTerm(
 	rn.LeaderHeartbeatMonitor.Start(rn)
 }
 
-func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest raft.VoteRequest) raft.VoteResponse {
-	voteResponse := raft.VoteResponse{}
+func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest *protos.VoteRequest) *protos.VoteResponse {
+	voteResponse := &protos.VoteResponse{}
 	logOk := isCandidateLogOK(rn, voteRequest)
 	termOK := isCandidateTermOK(rn, voteRequest)
 
@@ -52,7 +55,7 @@ func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, vote
 	return voteResponse
 }
 
-func isCandidateLogOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
+func isCandidateLogOK(rn *raft.RaftNode, vr *protos.VoteRequest) bool {
 
 	myLogTerm := rn.LogMgr.GetLog(rn, int32(len(rn.Logs)-1)).Term
 	logOk := vr.LastTerm > myLogTerm ||
@@ -60,27 +63,27 @@ func isCandidateLogOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
 	return logOk
 }
 
-func isCandidateTermOK(rn *raft.RaftNode, vr raft.VoteRequest) bool {
+func isCandidateTermOK(rn *raft.RaftNode, vr *protos.VoteRequest) bool {
 	termOk := vr.CurrentTerm > rn.CurrentTerm ||
 		(vr.CurrentTerm == rn.CurrentTerm && hasCandidateBeenVotedPreviously(rn, vr))
 
 	return termOk
 }
 
-func hasCandidateBeenVotedPreviously(rn *raft.RaftNode, voteRequest raft.VoteRequest) bool {
+func hasCandidateBeenVotedPreviously(rn *raft.RaftNode, voteRequest *protos.VoteRequest) bool {
 	return false
 }
 
 func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
 
-	em.followerAccordingToPeer = make(chan raft.VoteResponse)
+	em.followerAccordingToPeer = make(chan *protos.VoteResponse)
 	em.leader = make(chan bool)
 	em.follower = make(chan bool)
 
 	go func() {
 		for {
 			if em.VotesReceived == nil {
-				em.VotesReceived = []raft.VoteResponse{}
+				em.VotesReceived = []*protos.VoteResponse{}
 			}
 			if len(em.VotesReceived) == len(rn.Peers) {
 				continue
@@ -96,7 +99,7 @@ func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
 	}()
 }
 
-func (em *ElectionManager) concludeFromReceivedVote(rn *raft.RaftNode, vr raft.VoteResponse) {
+func (em *ElectionManager) concludeFromReceivedVote(rn *raft.RaftNode, vr *protos.VoteResponse) {
 	valid := isElectionValid(rn, vr)
 	if !valid && isPeerTermHigher(rn, vr) {
 		em.followerAccordingToPeer <- vr
@@ -110,11 +113,11 @@ func (em *ElectionManager) concludeFromReceivedVote(rn *raft.RaftNode, vr raft.V
 
 }
 
-func isPeerTermHigher(rn *raft.RaftNode, vr raft.VoteResponse) bool {
+func isPeerTermHigher(rn *raft.RaftNode, vr *protos.VoteResponse) bool {
 	return rn.CurrentTerm < vr.Term
 }
 
-func isElectionValid(rn *raft.RaftNode, vr raft.VoteResponse) bool {
+func isElectionValid(rn *raft.RaftNode, vr *protos.VoteResponse) bool {
 	if rn.CurrentRole == raft.CANDIDATE &&
 		rn.CurrentTerm == vr.Term {
 		return true
@@ -123,7 +126,7 @@ func isElectionValid(rn *raft.RaftNode, vr raft.VoteResponse) bool {
 	}
 }
 
-func (em *ElectionManager) whatDoesTheMajorityWant(numOfPeers int, vr raft.VoteResponse) (bool, bool) {
+func (em *ElectionManager) whatDoesTheMajorityWant(numOfPeers int, vr *protos.VoteResponse) (bool, bool) {
 
 	majorityCount := numOfPeers / 2
 	votesInFavor := 0

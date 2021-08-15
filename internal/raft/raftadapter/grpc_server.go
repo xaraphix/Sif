@@ -13,7 +13,7 @@ import (
 )
 
 type RaftGRPCServer struct {
-	pb.UnimplementedRaftRPCAdapterServer
+	pb.UnimplementedRaftServer
 }
 
 type RaftRPCServer struct {
@@ -30,7 +30,7 @@ func (s *RaftRPCServer) Start(rn *raft.RaftNode) {
 	}
 	fmt.Printf("Server is listening on %v ...", address)
 	server := grpc.NewServer()
-	pb.RegisterRaftRPCAdapterServer(server, &RaftGRPCServer{})
+	pb.RegisterRaftServer(server, &RaftGRPCServer{})
 	server.Serve(lis)
 }
 
