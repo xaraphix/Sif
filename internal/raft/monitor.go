@@ -3,6 +3,8 @@ package raft
 import (
 	"math/rand"
 	"time"
+
+	"github.com/sirupsen/logrus"
 )
 
 func NewLeaderHeartbeatMonitor(forceNew bool) *LeaderHeartbeatMonitor {
@@ -18,7 +20,7 @@ func NewLeaderHeartbeatMonitor(forceNew bool) *LeaderHeartbeatMonitor {
 
 func DestructLeaderHeartbeatMonitor(lhm *LeaderHeartbeatMonitor) {
 	lhm = nil
-}  
+}
 
 type LeaderHeartbeatMonitor struct {
 	*Monitor
@@ -37,6 +39,12 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 				rn.VotedFor == 0 &&
 				rn.ElectionInProgress == false &&
 				rn.CurrentRole != LEADER {
+
+				logrus.WithFields(logrus.Fields{
+					"FollowerId": rn.Id,
+					"MyTerm":     rn.CurrentTerm,
+				}).Debug("Did not hear leader's heartbeat for quite some time")
+
 				rn.ElectionMgr.StartElection(rn)
 			}
 

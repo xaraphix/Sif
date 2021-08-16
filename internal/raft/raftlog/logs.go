@@ -96,10 +96,11 @@ func (l LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequ
 		rn.CurrentRole = raft.FOLLOWER
 		rn.CurrentLeader = lr.LeaderId
 
-	
 		logrus.WithFields(logrus.Fields{
-			"LeaderId" : lr.LeaderId,
+			"LeaderId":   lr.LeaderId,
 			"FollowerId": rn.Id,
+			"MyTerm": rn.CurrentTerm,
+			"Leader Term": lr.CurrentTerm,
 		}).Debug("Received Heartbeat from leader")
 
 		rn.LeaderHeartbeatMonitor.Reset()
@@ -124,10 +125,12 @@ func (l LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequ
 func (l LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse) {
 
 	if lr == nil {
-		return 
+		return
 	}
 
-	if  lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
+	if lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
+		rn.LogAckMu.Lock()
+		defer rn.LogAckMu.Unlock()
 		if lr.Success {
 			rn.SentLength[lr.FollowerId] = lr.AckLength
 			rn.AckedLength[lr.FollowerId] = lr.AckLength
@@ -135,7 +138,9 @@ func (l LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse
 		} else if rn.SentLength[lr.FollowerId] > 0 {
 			rn.SentLength[lr.FollowerId] = rn.SentLength[lr.FollowerId] - 1
 			follower := rn.GetPeerById(lr.FollowerId)
-			l.ReplicateLog(rn, follower)
+			go func() {
+				l.ReplicateLog(rn, follower)
+			}()
 		}
 	} else if lr.Term > rn.CurrentTerm {
 		rn.CurrentTerm = lr.Term
@@ -176,6 +181,10 @@ func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int) int {
 }
 
 func (l LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
+	logrus.WithFields(logrus.Fields{
+		"Delivered By": rn.Id,
+	}).Debug("Delivering msgs to application")
+
 	rn.SendSignal(raft.DeliveredToApplication)
 }
 

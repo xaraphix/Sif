@@ -9,4 +9,8 @@ peers:
     address: localhost:5051
   - id: 2
     address: localhost:5052
+  - id: 4
+    address: localhost:5054
+  - id: 5
+    address: localhost:5055
 

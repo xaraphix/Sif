@@ -37,11 +37,6 @@ func NewElectionManager() raft.RaftElection {
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 
-	logrus.WithFields(logrus.Fields{
-		"Started By": rn.Config.InstanceName(),
-		"Started By Id": rn.Config.InstanceId(),
-	}).Debug("Starting election")
-
 	em.initChannels()
 	em.becomeACandidate(rn)
 	em.askForVotes(rn)
@@ -74,6 +69,12 @@ func (em *ElectionManager) becomeACandidate(rn *raft.RaftNode) {
 	rn.VotedFor = rn.Id
 	rn.CurrentTerm = rn.CurrentTerm + 1
 	em.VotesReceived = nil
+
+	logrus.WithFields(logrus.Fields{
+		"Started By": rn.Config.InstanceName(),
+		"Started By Id": rn.Config.InstanceId(),
+		"Term": rn.CurrentTerm,
+	}).Debug("Starting election")
 }
 
 func (em *ElectionManager) handleElection(rn *raft.RaftNode) bool {

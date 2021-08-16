@@ -2,6 +2,7 @@ package raft
 
 import (
 	"os"
+	"sync"
 	"time"
 
 	"github.com/sirupsen/logrus"
@@ -10,18 +11,18 @@ import (
 )
 
 func init() {
-    lvl, ok := os.LookupEnv("LOG_LEVEL")
-    // LOG_LEVEL not set, let's default to debug
-    if !ok {
-        lvl = "debug"
-    }
-    // parse string, this is built-in feature of logrus
-    ll, err := logrus.ParseLevel(lvl)
-    if err != nil {
-        ll = logrus.DebugLevel
-    }
-    // set global log level
-    logrus.SetLevel(ll)
+	lvl, ok := os.LookupEnv("LOG_LEVEL")
+	// LOG_LEVEL not set, let's default to debug
+	if !ok {
+		lvl = "debug"
+	}
+	// parse string, this is built-in feature of logrus
+	ll, err := logrus.ParseLevel(lvl)
+	if err != nil {
+		ll = logrus.DebugLevel
+	}
+	// set global log level
+	logrus.SetLevel(ll)
 }
 
 var (
@@ -29,6 +30,8 @@ var (
 )
 
 type Node struct {
+	LogAckMu sync.Mutex
+
 	Id            int32
 	CurrentTerm   int32
 	CurrentRole   string
@@ -109,7 +112,7 @@ type RaftElection interface {
 //go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
 	RequestVoteFromPeer(Peer, *pb.VoteRequest) *pb.VoteResponse
-	ReplicateLog(Peer, *pb.LogRequest)*pb.LogResponse
+	ReplicateLog(Peer, *pb.LogRequest) *pb.LogResponse
 	BroadcastMessage(leader Peer, msg *structpb.Struct) *pb.BroadcastMessageResponse
 
 	StartAdapter(*RaftNode)
@@ -147,7 +150,6 @@ type Monitor struct {
 }
 
 type BroadcastMessageResponse struct {
-	
 }
 type ElectionUpdates struct {
 	ElectionOvertimed    bool
@@ -163,14 +165,14 @@ type Peer struct {
 }
 
 type RaftDeps struct {
-	FileManager RaftFile
-	ConfigManager RaftConfig
-	ElectionManager RaftElection
+	FileManager      RaftFile
+	ConfigManager    RaftConfig
+	ElectionManager  RaftElection
 	HeartbeatMonitor RaftMonitor
-	RPCAdapter RaftRPCAdapter
-	LogManager RaftLog
-	Heart RaftHeart
-	Options RaftOptions
+	RPCAdapter       RaftRPCAdapter
+	LogManager       RaftLog
+	Heart            RaftHeart
+	Options          RaftOptions
 }
 
 func NewRaftNode(deps RaftDeps) *RaftNode {
