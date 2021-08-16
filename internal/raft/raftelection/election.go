@@ -89,9 +89,6 @@ func (em *ElectionManager) handleElection(rn *raft.RaftNode) bool {
 		case l := <-em.leaderHeartbeatChannel:
 			em.becomeAFollowerAccordingToLeader(rn, l)
 			return false
-		case p := <-em.peerVoteChannel:
-			em.becomeAFollowerAccordingToCandidatePeer(rn, p)
-			return false
 		case <-em.follower:
 			em.becomeAFollower(rn)
 			return false
@@ -150,20 +147,6 @@ func (em *ElectionManager) becomeAFollowerAccordingToLeader(rn *raft.RaftNode, l
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
 		}).Info("I became a follower according to leader")
-	}
-}
-
-func (em *ElectionManager) becomeAFollowerAccordingToCandidatePeer(rn *raft.RaftNode, peer raft.RaftNode) {
-	if rn.ElectionInProgress == true {
-		rn.CurrentRole = raft.FOLLOWER
-		rn.SendSignal(raft.BecameFollower)
-		rn.CurrentTerm = peer.CurrentTerm
-		rn.VotedFor = 0
-		rn.ElectionInProgress = false
-		rn.SendSignal(raft.ElectionTimerStopped)
-		logrus.WithFields(logrus.Fields{
-			"Name": rn.Config.InstanceName(),
-		}).Info("I became a follower according to candidate")
 	}
 }
 
