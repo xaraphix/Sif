@@ -601,6 +601,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			FIt("Don't know yet what to do", func() {
 
+				
 				node1, node2, node3 := setup3FollowerNodes()
 
 				if node1 == nil || node2 == nil || node3 == nil {
