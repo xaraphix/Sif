@@ -101,7 +101,7 @@ func (l LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequ
 			"FollowerId": rn.Id,
 			"MyTerm": rn.CurrentTerm,
 			"Leader Term": lr.CurrentTerm,
-		}).Debug("Received Heartbeat from leader")
+		}).Info("Received Heartbeat from leader")
 
 		rn.LeaderHeartbeatMonitor.Reset()
 		l.appendEntries(rn, lr.SentLength, lr.CommitLength, lr.Entries)
@@ -183,7 +183,7 @@ func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int) int {
 func (l LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
 	logrus.WithFields(logrus.Fields{
 		"Delivered By": rn.Id,
-	}).Debug("Delivering msgs to application")
+	}).Info("Delivering msgs to application")
 
 	rn.SendSignal(raft.DeliveredToApplication)
 }

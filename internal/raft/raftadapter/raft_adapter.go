@@ -1,8 +1,6 @@
 package raftadapter
 
 import (
-	"fmt"
-
 	"github.com/xaraphix/Sif/internal/raft"
 	. "github.com/xaraphix/Sif/internal/raft"
 	pb "github.com/xaraphix/Sif/internal/raft/protos"
@@ -24,7 +22,6 @@ func (a *RaftNodeAdapter) StartAdapter(rn *raft.RaftNode) {
 }
 
 func (a *RaftNodeAdapter) initializeClients(rn *raft.RaftNode) {
-	fmt.Println(rn.ElectionMgr.GetElectionTimeoutDuration())
 	a.clients = make(map[int32]*RaftGRPCClient)
 	for _, peer := range rn.Peers {
 		a.clients[peer.Id] =NewRaftGRPCClient(peer.Address, rn.ElectionMgr.GetElectionTimeoutDuration())

@@ -13,7 +13,8 @@ import (
 )
 
 type RaftGRPCClient struct {
-	client              pb.RaftClient
+	client          pb.RaftClient
+	timeoutDuration time.Duration
 }
 
 func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient {
@@ -25,13 +26,14 @@ func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient 
 	}
 	c := pb.NewRaftClient(conn)
 	grpcClient.client = c
+	grpcClient.timeoutDuration = timeoutIn*5
 
 	return &grpcClient
 }
 
 func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(400 * time.Millisecond))
-	x,y := c.client.ReplicateLog(ctx, lr)
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	x, y := c.client.ReplicateLog(ctx, lr)
 
 	if x == nil {
 		return nil, y
@@ -40,10 +42,10 @@ func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error
 	logrus.WithFields(logrus.Fields{
 		"MyId": lr.LeaderId,
 		"From": x.FollowerId,
-	}).Debug("Received log response")
-	
+	}).Info("Received log response")
+
 	if y != nil {
-		logrus.Error("In repl log :: " +y.Error())
+		logrus.Error("In repl log :: " + y.Error())
 		fmt.Printf(y.Error())
 	}
 
@@ -51,32 +53,32 @@ func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error
 }
 
 func (c *RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteResponse, error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(400 * time.Millisecond))
-	x,y := c.client.RequestVoteFromPeer(ctx, vr)	
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	x, y := c.client.RequestVoteFromPeer(ctx, vr)
 	if x == nil {
 		return nil, y
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"Requested From": vr.NodeId,
-		"Response by": x.PeerId,
-	}).Debug("Received vote response")
+		"Response by":    x.PeerId,
+	}).Info("Received vote response")
 
 	if y != nil {
-		logrus.Error( "In req vote :: " + y.Error())
+		logrus.Error("In req vote :: " + y.Error())
 		fmt.Printf(y.Error())
 	}
 
-	return x,nil
+	return x, nil
 }
 
 func (c *RaftGRPCClient) BroadcastMessage(m *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(400 * time.Millisecond))
-	x,y := c.client.BroadcastMessage(ctx, m)	
+	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	x, y := c.client.BroadcastMessage(ctx, m)
 	if y != nil {
-		logrus.Error( "In broadcast msg :: " + y.Error())
+		logrus.Error("In broadcast msg :: " + y.Error())
 		fmt.Printf(y.Error())
 	}
 
-	return x,nil
+	return x, nil
 }

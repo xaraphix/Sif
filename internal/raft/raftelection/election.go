@@ -74,7 +74,7 @@ func (em *ElectionManager) becomeACandidate(rn *raft.RaftNode) {
 		"Started By": rn.Config.InstanceName(),
 		"Started By Id": rn.Config.InstanceId(),
 		"Term": rn.CurrentTerm,
-	}).Debug("Starting election")
+	}).Info("Starting election")
 }
 
 func (em *ElectionManager) handleElection(rn *raft.RaftNode) bool {
@@ -114,7 +114,7 @@ func (em *ElectionManager) becomeALeader(rn *raft.RaftNode) {
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
 			"Id": rn.Config.InstanceId(),
-		}).Debug("I became the leader")
+		}).Info("I became the leader")
 	}
 }
 
@@ -126,7 +126,7 @@ func (em *ElectionManager) becomeAFollower(rn *raft.RaftNode) {
 		rn.SendSignal(raft.ElectionTimerStopped)
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
-		}).Debug("I became a follower because peers voted against me")
+		}).Info("I became a follower because peers voted against me")
 	}
 }
 
@@ -149,7 +149,7 @@ func (em *ElectionManager) becomeAFollowerAccordingToLeader(rn *raft.RaftNode, l
 		rn.SendSignal(raft.ElectionTimerStopped)
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
-		}).Debug("I became a follower according to leader")
+		}).Info("I became a follower according to leader")
 	}
 }
 
@@ -163,7 +163,7 @@ func (em *ElectionManager) becomeAFollowerAccordingToCandidatePeer(rn *raft.Raft
 		rn.SendSignal(raft.ElectionTimerStopped)
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
-		}).Debug("I became a follower according to candidate")
+		}).Info("I became a follower according to candidate")
 	}
 }
 
@@ -176,7 +176,7 @@ func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v *
 		rn.ElectionInProgress = false
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
-		}).Debug("I became a follower according to peer")
+		}).Info("I became a follower according to peer")
 	}
 }
 
