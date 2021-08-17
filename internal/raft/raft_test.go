@@ -599,7 +599,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 		//TODO
 		When("The commit is successful it should send the log message to the client of Sif", func() {
 
-			XIt("Don't know yet what to do", func() {
+			FIt("Don't know yet what to do", func() {
 
 				node1, node2, node3, node4, node5 := setup5FollowerNodes()
 
