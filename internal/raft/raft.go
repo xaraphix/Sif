@@ -69,13 +69,13 @@ type RaftNode struct {
 	Heart                  RaftHeart
 }
 
-//go:generate mockgen -destination=mocks/mock_raftfile.go -package=mocks . RaftFile
+//go:generate mockgen -destination=../../test/mocks/mock_raftfile.go -package=mocks . RaftFile
 type RaftFile interface {
 	LoadFile(filepath string) ([]byte, error)
 	SaveFile(filepath string) error
 }
 
-//go:generate mockgen -destination=mocks/mock_raftconfig.go -package=mocks . RaftConfig
+//go:generate mockgen -destination=../../test/mocks/mock_raftconfig.go -package=mocks . RaftConfig
 type RaftConfig interface {
 	LoadConfig(*RaftNode)
 	SetConfigFilePath(string)
@@ -94,7 +94,7 @@ type RaftConfig interface {
 	Port() string
 }
 
-//go:generate mockgen -destination=mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
+//go:generate mockgen -destination=../../test/mocks/mock_raftmonitor.go -package=mocks . RaftMonitor
 type RaftMonitor interface {
 	Start(raftNode *RaftNode)
 	Stop()
@@ -103,7 +103,7 @@ type RaftMonitor interface {
 	Reset()
 }
 
-//go:generate mockgen -destination=mocks/mock_raftelection.go -package=mocks . RaftElection
+//go:generate mockgen -destination=../../test/mocks/mock_raftelection.go -package=mocks . RaftElection
 type RaftElection interface {
 	GetReceivedVotes() []*pb.VoteResponse
 	StartElection(*RaftNode)
@@ -113,7 +113,7 @@ type RaftElection interface {
 	GetElectionTimeoutDuration() time.Duration
 }
 
-//go:generate mockgen -destination=mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
+//go:generate mockgen -destination=../../test/mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
 type RaftRPCAdapter interface {
 	RequestVoteFromPeer(Peer, *pb.VoteRequest) *pb.VoteResponse
 	ReplicateLog(Peer, *pb.LogRequest) *pb.LogResponse
@@ -122,14 +122,14 @@ type RaftRPCAdapter interface {
 	StartAdapter(*RaftNode)
 }
 
-//go:generate mockgen -destination=mocks/mock_raftheart.go -package=mocks . RaftHeart
+//go:generate mockgen -destination=../../test/mocks/mock_raftheart.go -package=mocks . RaftHeart
 type RaftHeart interface {
 	StopBeating(*RaftNode)
 	StartBeating(*RaftNode)
 	Sleep(*RaftNode)
 }
 
-//go:generate mockgen -destination=mocks/mock_raftlog.go -package=mocks . RaftLog
+//go:generate mockgen -destination=../../test/mocks/mock_raftlog.go -package=mocks . RaftLog
 type RaftLog interface {
 	GetLogs() []*pb.Log
 	GetLog(rn *RaftNode, idx int32) *pb.Log
