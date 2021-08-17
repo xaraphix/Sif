@@ -42,7 +42,7 @@ func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error
 	logrus.WithFields(logrus.Fields{
 		"MyId": lr.LeaderId,
 		"From": x.FollowerId,
-	}).Info("Received log response")
+	}).Debug("Received log response")
 
 	if y != nil {
 		logrus.Error("In repl log :: " + y.Error())
@@ -62,7 +62,7 @@ func (c *RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteRespon
 	logrus.WithFields(logrus.Fields{
 		"Requested From": vr.NodeId,
 		"Response by":    x.PeerId,
-	}).Info("Received vote response")
+	}).Debug("Received vote response")
 
 	if y != nil {
 		logrus.Error("In req vote :: " + y.Error())

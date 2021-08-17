@@ -13,7 +13,7 @@ import (
 func init() {
 	// parse string, this is built-in feature of logrus
 	logrus.SetOutput(os.Stdout)
-	logrus.SetLevel(logrus.DebugLevel)
+	logrus.SetLevel(logrus.InfoLevel)
 	logrus.SetFormatter(&logrus.TextFormatter{
             DisableColors: false,
             TimestampFormat : "2006-01-02 15:04:05.000",

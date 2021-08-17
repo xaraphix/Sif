@@ -43,7 +43,7 @@ func (l *LeaderHeartbeatMonitor) Start(rn *RaftNode) {
 				logrus.WithFields(logrus.Fields{
 					"FollowerId": rn.Id,
 					"MyTerm":     rn.CurrentTerm,
-				}).Info("Did not hear leader's heartbeat for quite some time")
+				}).Debug("Did not hear leader's heartbeat for quite some time")
 
 				rn.ElectionMgr.StartElection(rn)
 			}

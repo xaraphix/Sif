@@ -454,7 +454,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			When("Candidate receives vote request from another candidate", func() {
-				It("should reject the vote request", func() {
+				XIt("should reject the vote request", func() {
 					Fail("Not Yet Implemented")
 				})
 			})
@@ -1435,7 +1435,7 @@ func setup5FollowerNodes() (*raft.RaftNode, *raft.RaftNode, *raft.RaftNode, *raf
 
 func getNewNodeDeps() raft.RaftDeps {
 	options := raft.RaftOptions{
-		StartLeaderHeartbeatMonitorAfterInitializing: true,
+		StartLeaderHeartbeatMonitorAfterInitializing: false,
 	}
 
 	return raft.RaftDeps{
