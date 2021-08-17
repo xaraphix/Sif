@@ -89,3 +89,15 @@ func (mr *MockRaftRPCAdapterMockRecorder) StartAdapter(arg0 interface{}) *gomock
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StartAdapter", reflect.TypeOf((*MockRaftRPCAdapter)(nil).StartAdapter), arg0)
 }
+
+// StopAdapter mocks base method.
+func (m *MockRaftRPCAdapter) StopAdapter() {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "StopAdapter")
+}
+
+// StopAdapter indicates an expected call of StopAdapter.
+func (mr *MockRaftRPCAdapterMockRecorder) StopAdapter() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "StopAdapter", reflect.TypeOf((*MockRaftRPCAdapter)(nil).StopAdapter))
+}

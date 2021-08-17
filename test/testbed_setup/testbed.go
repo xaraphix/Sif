@@ -257,6 +257,7 @@ func SetupRaftNodeBootsUpFromCrash() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&pb.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
@@ -300,6 +301,7 @@ func SetupRaftNodeInitialization() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&pb.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
@@ -342,6 +344,7 @@ func SetupLeaderHeartbeatTimeout() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&pb.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
@@ -394,6 +397,7 @@ func SetupMajorityVotesAgainst() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(gomock.Any(), gomock.Any()).DoAndReturn(func(interface{}, interface{}) *pb.VoteResponse {
 
@@ -446,6 +450,7 @@ func SetupMajorityVotesInFavor() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&pb.VoteResponse{
 			VoteGranted: true,
 			Term:        1,
@@ -504,6 +509,7 @@ func SetupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&pb.VoteResponse{
 			VoteGranted: true,
 			Term:        1,
@@ -561,6 +567,7 @@ func SetupPeerTakesTooMuchTimeToRespond() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Do(
 			func(p raft.Peer, vr *pb.VoteRequest) *pb.VoteResponse {
@@ -610,6 +617,7 @@ func SetupGettingLeaderHeartbeatDuringElection() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&pb.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
@@ -652,6 +660,7 @@ func SetupFindingOtherLeaderThroughVoteResponses() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(&pb.VoteResponse{
 			VoteGranted: false,
 			Term:        1,
@@ -707,6 +716,7 @@ func SetupCandidateReceivesVoteResponseWithHigherTerm() MockSetupVars {
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[0], gomock.Any()).Return(vr1).AnyTimes()
 		adapter.EXPECT().RequestVoteFromPeer(testConfig.Peers()[1], gomock.Any()).Return(vr2).AnyTimes()
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
@@ -743,6 +753,7 @@ func SetupPeerReceivingCandidateVoteRequest() MockSetupVars {
 		testConfig := LoadTestRaftConfig()
 		testPersistentStorageFile, _ := LoadTestRaftPersistentStorageFile()
 		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
 		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(LoadTestRaftConfigFile())
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
 		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))

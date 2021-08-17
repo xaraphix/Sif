@@ -120,6 +120,7 @@ type RaftRPCAdapter interface {
 	BroadcastMessage(leader Peer, msg *structpb.Struct) *pb.BroadcastMessageResponse
 
 	StartAdapter(*RaftNode)
+	StopAdapter()
 }
 
 //go:generate mockgen -destination=../../test/mocks/mock_raftheart.go -package=mocks . RaftHeart
@@ -200,6 +201,7 @@ func NewRaftNode(deps RaftDeps) *RaftNode {
 }
 
 func DestructRaftNode(rn *RaftNode) {
+	rn.RPCAdapter.StopAdapter()
 	rn = nil
 }
 

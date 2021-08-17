@@ -15,6 +15,7 @@ import (
 type GRPCServer struct {
 	pb.UnimplementedRaftServer
 	raftnode *raft.RaftNode
+	server *grpc.Server
 }
 
 func NewGRPCServer(rn *raft.RaftNode) *GRPCServer {
@@ -35,10 +36,14 @@ func (s *GRPCServer) Start(host string, port string) {
 			"Address": address,
 		}).Debug("Starting GRPC Server")
 
-		server := grpc.NewServer()
-		pb.RegisterRaftServer(server, s)
-		server.Serve(lis)
+		s.server = grpc.NewServer()
+		pb.RegisterRaftServer(s.server, s)
+		s.server.Serve(lis)
 	}()
+}
+
+func (s *GRPCServer) Stop() {
+	s.server.Stop()
 }
 
 func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {

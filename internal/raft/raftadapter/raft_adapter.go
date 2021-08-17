@@ -9,6 +9,7 @@ import (
 
 type RaftNodeAdapter struct {
 	clients map[int32]*RaftGRPCClient
+	grpcServer *GRPCServer
 }
 
 func NewRaftNodeAdapter() *RaftNodeAdapter {
@@ -17,8 +18,12 @@ func NewRaftNodeAdapter() *RaftNodeAdapter {
 
 func (a *RaftNodeAdapter) StartAdapter(rn *raft.RaftNode) {
 	a.initializeClients(rn)
-	grpcServer := NewGRPCServer(rn)
-	grpcServer.Start(rn.Config.Host(), rn.Config.Port())
+	a.grpcServer = NewGRPCServer(rn)
+	a.grpcServer.Start(rn.Config.Host(), rn.Config.Port())
+}
+
+func (a *RaftNodeAdapter) StopAdapter() {
+	a.grpcServer.Stop()
 }
 
 func (a *RaftNodeAdapter) initializeClients(rn *raft.RaftNode) {
