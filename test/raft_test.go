@@ -592,5 +592,4 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 		})
 	})
-
 })
