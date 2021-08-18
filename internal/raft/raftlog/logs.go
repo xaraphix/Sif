@@ -12,19 +12,19 @@ import (
 type LogMgr struct {
 }
 
-func NewLogManager() LogMgr {
-	return LogMgr{}
+func NewLogManager() *LogMgr {
+	return &LogMgr{}
 }
 
-func (l LogMgr) GetLogs() []*pb.Log {
+func (l *LogMgr) GetLogs() []*pb.Log {
 	return nil
 }
 
-func (l LogMgr) GetLog(rn *raft.RaftNode, idx int32) *pb.Log {
+func (l *LogMgr) GetLog(rn *raft.RaftNode, idx int32) *pb.Log {
 	return &pb.Log{}
 }
 
-func (l LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
+func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	i := rn.SentLength[peer.Id]
 	entries := (rn.Logs)[i:len(rn.Logs)]
 	prevLogTerm := int32(0)
@@ -47,7 +47,7 @@ func (l LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	rn.SendSignal(raft.LogRequestSent)
 }
 
-func (l LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
+func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
 	if rn.CurrentRole == raft.LEADER {
 		rn.SendSignal(raft.MsgAppendedToLogs)
 		rn.Logs = append(rn.Logs, &pb.Log{
@@ -70,7 +70,7 @@ func (l LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.St
 	}
 }
 
-func (l LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequest) (*pb.LogResponse, error) {
+func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequest) (*pb.LogResponse, error) {
 	if lr.CurrentTerm > rn.CurrentTerm {
 		rn.CurrentTerm = lr.CurrentTerm
 		rn.VotedFor = 0
@@ -123,7 +123,7 @@ func (l LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequ
 	}
 }
 
-func (l LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse) {
+func (l *LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse) {
 
 	if lr == nil {
 		return
@@ -150,7 +150,7 @@ func (l LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse
 	}
 }
 
-func (l LogMgr) commitLogEntries(rn *raft.RaftNode) {
+func (l *LogMgr) commitLogEntries(rn *raft.RaftNode) {
 	minAcks := int(math.Ceil(float64((len(rn.Peers) + 1) / 2)))
 	maxReady := 0
 	for i := 0; i < len(rn.Logs); i++ {
@@ -181,7 +181,7 @@ func countOfNodesWithAckLengthGTE(rn *raft.RaftNode, ackLength int) int {
 	return count
 }
 
-func (l LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
+func (l *LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
 	logrus.WithFields(logrus.Fields{
 		"Delivered By": rn.Id,
 	}).Debug("Delivering msgs to application")
@@ -189,7 +189,7 @@ func (l LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
 	rn.SendSignal(raft.DeliveredToApplication)
 }
 
-func (l LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []*pb.Log) {
+func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []*pb.Log) {
 	if len(entries) > 0 && int32(len(rn.Logs)) > logLength {
 		if rn.Logs[logLength].Term != entries[0].Term {
 			//truncate logs

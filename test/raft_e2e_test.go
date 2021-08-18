@@ -118,7 +118,7 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 					if node2.CurrentLeader == lId &&
 						node3.CurrentLeader == lId &&
 						node4.CurrentLeader == lId &&
-						node5.CurrentLeader == lId && {
+						node5.CurrentLeader == lId {
 						break
 					}
 				}
