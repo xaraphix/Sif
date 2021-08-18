@@ -398,7 +398,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 						}
 
 						Expect(node.VotedFor).To(Equal(int32(0)))
-						defer node.Close()
 					})
 				})
 			})

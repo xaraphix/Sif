@@ -12,7 +12,7 @@ import (
 var _ = Describe("Sif Raft Consensus E2E", func() {
 	Context("Multiple raft nodes", func() {
 		When("A node starts an election", func() {
-			FSpecify("The first node to start the election must win it if there is no other candidate and network errors", func() {
+			Specify("The first node to start the election must win it if there is no other candidate and network errors", func() {
 
 				node1, node2, node3, node4, node5 := Setup5FollowerNodes()
 
@@ -76,7 +76,7 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				DestructAllNodes(nodes)
 			})
 
-			Specify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
+			XSpecify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
 
 				node1, node2, node3, node4, node5 := Setup5FollowerNodes()
 
