@@ -188,9 +188,9 @@ func NewRaftNode(deps RaftDeps) *RaftNode {
 
 func (rn *RaftNode) Close() {
 	rn.RPCAdapter.StopAdapter()
-	if rn.CurrentRole == LEADER {  
+	if rn.CurrentRole == LEADER {
 		rn.HeartDone <- true
-	}	
+	}
 	close(rn.HeartDone)
 	rn = nil
 }

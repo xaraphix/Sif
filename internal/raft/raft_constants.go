@@ -36,4 +36,3 @@ const (
 	MsgAppendedToLogs
 	LeaderHeartbeatReceived
 )
-

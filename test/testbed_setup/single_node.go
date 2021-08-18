@@ -21,7 +21,6 @@ import (
 	"gopkg.in/yaml.v2"
 )
 
-
 func SetupRaftNode(preNodeSetupCB func(
 	fileMgr *mocks.MockRaftFile,
 	logMgr *mocks.MockRaftLog,

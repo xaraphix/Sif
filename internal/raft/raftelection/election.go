@@ -71,9 +71,9 @@ func (em *ElectionManager) becomeACandidate(rn *raft.RaftNode) {
 	em.VotesReceived = nil
 
 	logrus.WithFields(logrus.Fields{
-		"Started By": rn.Config.InstanceName(),
+		"Started By":    rn.Config.InstanceName(),
 		"Started By Id": rn.Config.InstanceId(),
-		"Term": rn.CurrentTerm,
+		"Term":          rn.CurrentTerm,
 	}).Debug("Starting election")
 }
 
@@ -110,7 +110,7 @@ func (em *ElectionManager) becomeALeader(rn *raft.RaftNode) {
 
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
-			"Id": rn.Config.InstanceId(),
+			"Id":   rn.Config.InstanceId(),
 		}).Debug("I became the leader")
 	}
 }

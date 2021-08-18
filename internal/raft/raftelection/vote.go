@@ -43,8 +43,8 @@ func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, vote
 		}
 
 		logrus.WithFields(logrus.Fields{
-			"MyId":  rn.Id,
-			"Candidate":   voteRequest.NodeId,
+			"MyId":      rn.Id,
+			"Candidate": voteRequest.NodeId,
 		}).Debug("Started Following the candidate")
 
 		rn.CurrentTerm = voteRequest.CurrentTerm

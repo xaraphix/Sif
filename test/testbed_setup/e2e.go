@@ -83,7 +83,7 @@ func ProceedWhenLeaderAccepted(nodes []**raft.RaftNode, leaderId int32) {
 }
 
 func DestructAllNodes(nodes []**raft.RaftNode) {
-	for i, _ := range nodes {
+	for i := range nodes {
 		(*nodes[i]).Close()
 		*nodes[i] = nil
 	}

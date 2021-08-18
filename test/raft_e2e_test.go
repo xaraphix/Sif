@@ -23,7 +23,6 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				node1.LeaderHeartbeatMonitor.Start(node1)
 				lId := node1.Id
 
-
 				ProceedWhenLeaderAccepted(nodes, lId)
 
 				Expect(node1.CurrentRole).To(Equal(raft.LEADER))
@@ -86,14 +85,14 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 							Kind: &structpb.Value_StringValue{
 								StringValue: "B",
 							},
-					},}}},
+						}}}},
 					&protos.Log{Term: 1, Message: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"C": {
-							Kind: &structpb.Value_StringValue{
-								StringValue: "B",
-							},
-					},}}},
+						Fields: map[string]*structpb.Value{
+							"C": {
+								Kind: &structpb.Value_StringValue{
+									StringValue: "B",
+								},
+							}}}},
 				)
 
 				node1.LeaderHeartbeatMonitor.Start(node1)
@@ -108,12 +107,10 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 					}
 				}
 
-
 				Expect(len(node2.Logs)).To(Equal(2))
 				Expect(len(node3.Logs)).To(Equal(2))
 				Expect(len(node4.Logs)).To(Equal(2))
 				Expect(len(node5.Logs)).To(Equal(2))
-
 
 			})
 		})

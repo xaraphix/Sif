@@ -5,7 +5,6 @@ import (
 	"path/filepath"
 )
 
-
 type RaftFileMgr struct {
 }
 

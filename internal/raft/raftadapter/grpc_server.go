@@ -15,7 +15,7 @@ import (
 type GRPCServer struct {
 	pb.UnimplementedRaftServer
 	raftnode *raft.RaftNode
-	server *grpc.Server
+	server   *grpc.Server
 }
 
 func NewGRPCServer(rn *raft.RaftNode) *GRPCServer {
@@ -49,7 +49,7 @@ func (s *GRPCServer) Stop() {
 func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
 
 	logrus.WithFields(logrus.Fields{
-		"From": vr.NodeId,
+		"From":        vr.NodeId,
 		"Received by": s.raftnode.Id,
 	}).Debug("Received Vote Request")
 
@@ -59,7 +59,7 @@ func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest
 func (s *GRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*pb.LogResponse, error) {
 
 	logrus.WithFields(logrus.Fields{
-		"From": vr.LeaderId,
+		"From":        vr.LeaderId,
 		"Received by": s.raftnode.Id,
 	}).Debug("Replicate Log Receieved")
 
@@ -72,10 +72,8 @@ func (s *GRPCServer) BroadcastMessage(ctx context.Context, msg *structpb.Struct)
 
 func (s *GRPCServer) GetRaftInfo(ctx context.Context, in *pb.RaftInfoRequest) (*pb.RaftInfoResponse, error) {
 	return &pb.RaftInfoResponse{
-		NodeId: s.raftnode.Id,
+		NodeId:        s.raftnode.Id,
 		CurrentLeader: s.raftnode.CurrentLeader,
-		CurrentTerm: s.raftnode.CurrentTerm,
+		CurrentTerm:   s.raftnode.CurrentTerm,
 	}, nil
 }
-
-

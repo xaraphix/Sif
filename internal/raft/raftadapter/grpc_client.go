@@ -25,7 +25,7 @@ func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient 
 	}
 	c := pb.NewRaftClient(conn)
 	grpcClient.client = c
-	grpcClient.timeoutDuration = timeoutIn*5
+	grpcClient.timeoutDuration = timeoutIn * 5
 
 	return &grpcClient
 }

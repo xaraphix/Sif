@@ -97,10 +97,10 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 		rn.CurrentLeader = lr.LeaderId
 
 		logrus.WithFields(logrus.Fields{
-			"LeaderId":    lr.LeaderId,
-			"FollowerId":  rn.Id,
-			"MyTerm":      rn.CurrentTerm,
-			"Leader Term": lr.CurrentTerm,
+			"LeaderId":      lr.LeaderId,
+			"FollowerId":    rn.Id,
+			"MyTerm":        rn.CurrentTerm,
+			"Leader Term":   lr.CurrentTerm,
 			"CurrentLeader": rn.CurrentLeader,
 		}).Debug("Received Heartbeat from leader")
 
