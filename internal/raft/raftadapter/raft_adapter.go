@@ -47,3 +47,8 @@ func (a *RaftNodeAdapter) BroadcastMessage(peer Peer, msg *structpb.Struct) *pb.
 	r, _ := a.clients[peer.Id].BroadcastMessage(msg)
 	return r
 }
+
+func (a *RaftNodeAdapter) GetRaftInfo(peer raft.Peer, req *pb.RaftInfoRequest) *pb.RaftInfoResponse {
+	r, _ := a.clients[peer.Id].GetRaftInfo(req)
+	return r
+}

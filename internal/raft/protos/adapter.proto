@@ -7,6 +7,8 @@ service Raft {
   rpc RequestVoteFromPeer(VoteRequest) returns (VoteResponse);
   rpc ReplicateLog(LogRequest) returns (LogResponse);
   rpc BroadcastMessage(.google.protobuf.Struct) returns (BroadcastMessageResponse);
+
+  rpc GetRaftInfo(RaftInfoRequest) returns (RaftInfoResponse);
 }
 
 message VoteRequest {
@@ -54,4 +56,13 @@ message RaftPersistentState {
   int32 RaftCurrentTerm = 2;
   int32 RaftVotedFor = 3;
   int32 RaftCommitLength = 4;
+}
+
+message RaftInfoRequest {
+}
+
+message RaftInfoResponse {
+  int32 NodeId = 1;
+  int32 CurrentLeader = 2;
+  int32 CurrentTerm = 3;
 }

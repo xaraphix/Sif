@@ -22,17 +22,22 @@ func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
 	go func(rn *raft.RaftNode) {
 		rn.SendSignal(raft.HeartbeatStarted)
 		for {
-			if rn.CurrentRole != raft.LEADER {
-				rn.SendSignal(raft.HeartbeatStopped)
+			select {
+			case <-rn.HeartDone:
 				break
-			} else {
-				go func(n *raft.RaftNode) {
-					for _, peer := range rn.Peers {
-						rn.LogMgr.ReplicateLog(rn, peer)
-					}
-				}(rn)
+			default:
+				if rn.CurrentRole != raft.LEADER {
+					rn.SendSignal(raft.HeartbeatStopped)
+					break
+				} else {
+					go func(n *raft.RaftNode) {
+						for _, peer := range rn.Peers {
+							rn.LogMgr.ReplicateLog(rn, peer)
+						}
+					}(rn)
 
-				rn.Heart.Sleep(rn)
+					rn.Heart.Sleep(rn)
+				}
 			}
 		}
 	}(rn)

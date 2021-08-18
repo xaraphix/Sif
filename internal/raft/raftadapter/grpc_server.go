@@ -43,7 +43,7 @@ func (s *GRPCServer) Start(host string, port string) {
 }
 
 func (s *GRPCServer) Stop() {
-	s.server.Stop()
+	s.server.GracefulStop()
 }
 
 func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
@@ -69,3 +69,13 @@ func (s *GRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*pb.L
 func (s *GRPCServer) BroadcastMessage(ctx context.Context, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
 	return s.raftnode.LogMgr.RespondToBroadcastMsgRequest(s.raftnode, msg)
 }
+
+func (s *GRPCServer) GetRaftInfo(ctx context.Context, in *pb.RaftInfoRequest) (*pb.RaftInfoResponse, error) {
+	return &pb.RaftInfoResponse{
+		NodeId: s.raftnode.Id,
+		CurrentLeader: s.raftnode.CurrentLeader,
+		CurrentTerm: s.raftnode.CurrentTerm,
+	}, nil
+}
+
+

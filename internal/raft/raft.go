@@ -41,7 +41,9 @@ type RaftNode struct {
 	Node
 
 	ElectionInProgress bool
+	StartedRPCAdapter  bool
 	raftSignal         chan int
+	HeartDone          chan bool
 
 	FileMgr                RaftFile
 	Config                 RaftConfig
@@ -104,6 +106,7 @@ type RaftRPCAdapter interface {
 
 	StartAdapter(*RaftNode)
 	StopAdapter()
+	GetRaftInfo(Peer, *pb.RaftInfoRequest) *pb.RaftInfoResponse
 }
 
 //go:generate mockgen -destination=../../test/mocks/mock_raftheart.go -package=mocks . RaftHeart
@@ -183,8 +186,12 @@ func NewRaftNode(deps RaftDeps) *RaftNode {
 	return raftnode
 }
 
-func DestructRaftNode(rn *RaftNode) {
+func (rn *RaftNode) Close() {
 	rn.RPCAdapter.StopAdapter()
+	if rn.CurrentRole == LEADER {  
+		rn.HeartDone <- true
+	}	
+	close(rn.HeartDone)
 	rn = nil
 }
 
@@ -202,6 +209,7 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.VotesReceived = nil
 	rn.ElectionInProgress = false
 	rn.RPCAdapter.StartAdapter(rn)
+	rn.HeartDone = make(chan bool)
 }
 
 func (rn *RaftNode) GetRaftSignalsChan() <-chan int {

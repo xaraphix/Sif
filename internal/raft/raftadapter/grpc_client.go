@@ -2,7 +2,6 @@ package raftadapter
 
 import (
 	"context"
-	"fmt"
 	"log"
 	"time"
 
@@ -32,7 +31,8 @@ func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient 
 }
 
 func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	defer cancel()
 	x, y := c.client.ReplicateLog(ctx, lr)
 
 	if x == nil {
@@ -46,14 +46,14 @@ func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error
 
 	if y != nil {
 		logrus.Error("In repl log :: " + y.Error())
-		fmt.Printf(y.Error())
 	}
 
 	return x, nil
 }
 
 func (c *RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteResponse, error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	defer cancel()
 	x, y := c.client.RequestVoteFromPeer(ctx, vr)
 	if x == nil {
 		return nil, y
@@ -66,19 +66,25 @@ func (c *RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteRespon
 
 	if y != nil {
 		logrus.Error("In req vote :: " + y.Error())
-		fmt.Printf(y.Error())
 	}
 
 	return x, nil
 }
 
 func (c *RaftGRPCClient) BroadcastMessage(m *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
-	ctx, _ := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	defer cancel()
 	x, y := c.client.BroadcastMessage(ctx, m)
 	if y != nil {
 		logrus.Error("In broadcast msg :: " + y.Error())
-		fmt.Printf(y.Error())
 	}
 
+	return x, nil
+}
+
+func (c *RaftGRPCClient) GetRaftInfo(r *pb.RaftInfoRequest) (*pb.RaftInfoResponse, error) {
+	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
+	defer cancel()
+	x, _ := c.client.GetRaftInfo(ctx, r)
 	return x, nil
 }

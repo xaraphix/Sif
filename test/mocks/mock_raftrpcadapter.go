@@ -50,6 +50,20 @@ func (mr *MockRaftRPCAdapterMockRecorder) BroadcastMessage(arg0, arg1 interface{
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BroadcastMessage", reflect.TypeOf((*MockRaftRPCAdapter)(nil).BroadcastMessage), arg0, arg1)
 }
 
+// GetRaftInfo mocks base method.
+func (m *MockRaftRPCAdapter) GetRaftInfo(arg0 raft.Peer, arg1 *protos.RaftInfoRequest) *protos.RaftInfoResponse {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetRaftInfo", arg0, arg1)
+	ret0, _ := ret[0].(*protos.RaftInfoResponse)
+	return ret0
+}
+
+// GetRaftInfo indicates an expected call of GetRaftInfo.
+func (mr *MockRaftRPCAdapterMockRecorder) GetRaftInfo(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRaftInfo", reflect.TypeOf((*MockRaftRPCAdapter)(nil).GetRaftInfo), arg0, arg1)
+}
+
 // ReplicateLog mocks base method.
 func (m *MockRaftRPCAdapter) ReplicateLog(arg0 raft.Peer, arg1 *protos.LogRequest) *protos.LogResponse {
 	m.ctrl.T.Helper()

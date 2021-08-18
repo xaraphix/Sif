@@ -22,6 +22,7 @@ type RaftClient interface {
 	RequestVoteFromPeer(ctx context.Context, in *VoteRequest, opts ...grpc.CallOption) (*VoteResponse, error)
 	ReplicateLog(ctx context.Context, in *LogRequest, opts ...grpc.CallOption) (*LogResponse, error)
 	BroadcastMessage(ctx context.Context, in *structpb.Struct, opts ...grpc.CallOption) (*BroadcastMessageResponse, error)
+	GetRaftInfo(ctx context.Context, in *RaftInfoRequest, opts ...grpc.CallOption) (*RaftInfoResponse, error)
 }
 
 type raftClient struct {
@@ -59,6 +60,15 @@ func (c *raftClient) BroadcastMessage(ctx context.Context, in *structpb.Struct, 
 	return out, nil
 }
 
+func (c *raftClient) GetRaftInfo(ctx context.Context, in *RaftInfoRequest, opts ...grpc.CallOption) (*RaftInfoResponse, error) {
+	out := new(RaftInfoResponse)
+	err := c.cc.Invoke(ctx, "/Raft/GetRaftInfo", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // RaftServer is the server API for Raft service.
 // All implementations must embed UnimplementedRaftServer
 // for forward compatibility
@@ -66,6 +76,7 @@ type RaftServer interface {
 	RequestVoteFromPeer(context.Context, *VoteRequest) (*VoteResponse, error)
 	ReplicateLog(context.Context, *LogRequest) (*LogResponse, error)
 	BroadcastMessage(context.Context, *structpb.Struct) (*BroadcastMessageResponse, error)
+	GetRaftInfo(context.Context, *RaftInfoRequest) (*RaftInfoResponse, error)
 	mustEmbedUnimplementedRaftServer()
 }
 
@@ -81,6 +92,9 @@ func (UnimplementedRaftServer) ReplicateLog(context.Context, *LogRequest) (*LogR
 }
 func (UnimplementedRaftServer) BroadcastMessage(context.Context, *structpb.Struct) (*BroadcastMessageResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BroadcastMessage not implemented")
+}
+func (UnimplementedRaftServer) GetRaftInfo(context.Context, *RaftInfoRequest) (*RaftInfoResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetRaftInfo not implemented")
 }
 func (UnimplementedRaftServer) mustEmbedUnimplementedRaftServer() {}
 
@@ -149,6 +163,24 @@ func _Raft_BroadcastMessage_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Raft_GetRaftInfo_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RaftInfoRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RaftServer).GetRaftInfo(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/Raft/GetRaftInfo",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RaftServer).GetRaftInfo(ctx, req.(*RaftInfoRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Raft_ServiceDesc is the grpc.ServiceDesc for Raft service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -167,6 +199,10 @@ var Raft_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BroadcastMessage",
 			Handler:    _Raft_BroadcastMessage_Handler,
+		},
+		{
+			MethodName: "GetRaftInfo",
+			Handler:    _Raft_GetRaftInfo_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

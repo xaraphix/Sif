@@ -33,7 +33,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				setupVars.Ctrls.ElectionCtrl.Finish()
 				setupVars.Ctrls.HeartCtrl.Finish()
 				setupVars.Ctrls.RpcCtrl.Finish()
-				raft.DestructRaftNode(node)
+				defer node.Close()
 			})
 
 			It("Should become a follower", func() {
@@ -79,7 +79,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				setupVars.Ctrls.ElectionCtrl.Finish()
 				setupVars.Ctrls.HeartCtrl.Finish()
 				setupVars.Ctrls.RpcCtrl.Finish()
-				raft.DestructRaftNode(node)
+				defer node.Close()
 			})
 
 			It("should load up currentTerm from persistent storage", func() {
@@ -119,7 +119,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					defer setupVars.Ctrls.ElectionCtrl.Finish()
 					defer setupVars.Ctrls.HeartCtrl.Finish()
 					defer setupVars.Ctrls.RpcCtrl.Finish()
-					defer raft.DestructRaftNode(node)
+					defer node.Close()
 				})
 
 				It("Should become a candidate", func() {
@@ -171,7 +171,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars.Ctrls.ElectionCtrl.Finish()
 						setupVars.Ctrls.HeartCtrl.Finish()
 						setupVars.Ctrls.RpcCtrl.Finish()
-						raft.DestructRaftNode(node)
+						defer node.Close()
 					})
 
 					It("Should restart election", func() {
@@ -207,7 +207,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars.Ctrls.ElectionCtrl.Finish()
 						setupVars.Ctrls.HeartCtrl.Finish()
 						setupVars.Ctrls.RpcCtrl.Finish()
-						raft.DestructRaftNode(node)
+						defer node.Close()
 					})
 
 					It("should become a leader", func() {
@@ -293,7 +293,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars.Ctrls.ElectionCtrl.Finish()
 						setupVars.Ctrls.HeartCtrl.Finish()
 						setupVars.Ctrls.RpcCtrl.Finish()
-						raft.DestructRaftNode(node)
+						defer node.Close()
 					})
 
 					It("Should become a follower", func() {
@@ -347,7 +347,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars.Ctrls.ElectionCtrl.Finish()
 						setupVars.Ctrls.HeartCtrl.Finish()
 						setupVars.Ctrls.RpcCtrl.Finish()
-						raft.DestructRaftNode(node)
+						defer node.Close()
 					})
 
 					It("Should vote yes", func() {
@@ -377,7 +377,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars.Ctrls.ElectionCtrl.Finish()
 						setupVars.Ctrls.HeartCtrl.Finish()
 						setupVars.Ctrls.RpcCtrl.Finish()
-						raft.DestructRaftNode(node)
+						defer node.Close()
 					})
 
 					It("Should vote no", func() {
@@ -398,7 +398,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						}
 
 						Expect(node.VotedFor).To(Equal(int32(0)))
-						raft.DestructRaftNode(node)
+						defer node.Close()
 					})
 				})
 			})
@@ -412,7 +412,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars.Ctrls.ElectionCtrl.Finish()
 						setupVars.Ctrls.HeartCtrl.Finish()
 						setupVars.Ctrls.RpcCtrl.Finish()
-						raft.DestructRaftNode(node)
+						defer node.Close()
 					})
 					It("Should become a follower", func() {
 						setupVars = SetupMajorityVotesAgainst()
@@ -488,7 +488,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				setupVars.Ctrls.ElectionCtrl.Finish()
 				setupVars.Ctrls.HeartCtrl.Finish()
 				setupVars.Ctrls.RpcCtrl.Finish()
-				raft.DestructRaftNode(node)
+				defer node.Close()
 			})
 
 			Specify(`The log request should have leaderId, 

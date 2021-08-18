@@ -12,20 +12,19 @@ import (
 var _ = Describe("Sif Raft Consensus E2E", func() {
 	Context("Multiple raft nodes", func() {
 		When("A node starts an election", func() {
-			Specify("The first node to start the election must win it if there is no other candidate and network errors", func() {
+			FSpecify("The first node to start the election must win it if there is no other candidate and network errors", func() {
 
 				node1, node2, node3, node4, node5 := Setup5FollowerNodes()
 
+				nodes := make([]**raft.RaftNode, 0)
+				nodes = append(nodes, &node1, &node2, &node3, &node4, &node5)
+				ProceedWhenRPCAdapterStarted(nodes)
+
 				node1.LeaderHeartbeatMonitor.Start(node1)
 				lId := node1.Id
-				for {
-					if node2.CurrentLeader == lId &&
-						node3.CurrentLeader == lId &&
-						node4.CurrentLeader == lId &&
-						node5.CurrentLeader == lId {
-						break
-					}
-				}
+
+
+				ProceedWhenLeaderAccepted(nodes, lId)
 
 				Expect(node1.CurrentRole).To(Equal(raft.LEADER))
 				Expect(node2.CurrentRole).To(Equal(raft.FOLLOWER))
@@ -45,25 +44,16 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				Expect(node4.CurrentLeader).To(Equal(lId))
 				Expect(node5.CurrentLeader).To(Equal(lId))
 
-				raft.DestructRaftNode(node1)
-				raft.DestructRaftNode(node2)
-				raft.DestructRaftNode(node3)
-				raft.DestructRaftNode(node4)
-				raft.DestructRaftNode(node5)
-
+				DestructAllNodes(nodes)
 				node1, node2, node3, node4, node5 = Setup5FollowerNodes()
 
+				nodes = make([]**raft.RaftNode, 0)
+				nodes = append(nodes, &node3, &node1, &node2, &node4, &node5)
+				ProceedWhenRPCAdapterStarted(nodes)
 				node3.LeaderHeartbeatMonitor.Start(node3)
 
 				lId = node3.Id
-				for {
-					if node2.CurrentLeader == lId &&
-						node1.CurrentLeader == lId &&
-						node4.CurrentLeader == lId &&
-						node5.CurrentLeader == lId {
-						break
-					}
-				}
+				ProceedWhenLeaderAccepted(nodes, lId)
 
 				Expect(node3.CurrentRole).To(Equal(raft.LEADER))
 				Expect(node2.CurrentRole).To(Equal(raft.FOLLOWER))
@@ -83,15 +73,10 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				Expect(node4.CurrentLeader).To(Equal(lId))
 				Expect(node5.CurrentLeader).To(Equal(lId))
 
-				raft.DestructRaftNode(node1)
-				raft.DestructRaftNode(node2)
-				raft.DestructRaftNode(node3)
-				raft.DestructRaftNode(node4)
-				raft.DestructRaftNode(node5)
-
+				DestructAllNodes(nodes)
 			})
 
-			FSpecify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
+			Specify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
 
 				node1, node2, node3, node4, node5 := Setup5FollowerNodes()
 
@@ -130,11 +115,6 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				Expect(len(node5.Logs)).To(Equal(2))
 
 
-				raft.DestructRaftNode(node1)
-				raft.DestructRaftNode(node2)
-				raft.DestructRaftNode(node3)
-				raft.DestructRaftNode(node4)
-				raft.DestructRaftNode(node5)
 			})
 		})
 	})
