@@ -75,7 +75,7 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				DestructAllNodes(nodes)
 			})
 
-			FSpecify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
+			Specify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
 
 				node1, node2, node3, node4, node5 := Setup5FollowerNodes()
 
@@ -117,6 +117,7 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				Expect(len(node3.Logs)).To(Equal(2))
 				Expect(len(node4.Logs)).To(Equal(2))
 				Expect(len(node5.Logs)).To(Equal(2))
+
 			})
 		})
 	})
