@@ -75,7 +75,7 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				DestructAllNodes(nodes)
 			})
 
-			XSpecify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
+			Specify("If a node becomes a leader and has logs more recent than other nodes, it should replicate the logs to peers", func() {
 
 				node1, node2, node3, node4, node5 := Setup5FollowerNodes()
 
@@ -95,17 +95,19 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 							}}}},
 				)
 
+				nodes := make([]**raft.RaftNode, 0)
+				nodes = append(nodes, &node1, &node2, &node3, &node4, &node5)
+				ProceedWhenRPCAdapterStarted(nodes)
+
+				Expect(len(node2.Logs)).To(Equal(0))
+				Expect(len(node3.Logs)).To(Equal(0))
+				Expect(len(node4.Logs)).To(Equal(0))
+				Expect(len(node5.Logs)).To(Equal(0))
+
 				node1.LeaderHeartbeatMonitor.Start(node1)
 				lId := node1.Id
 
-				for {
-					if node2.CurrentLeader == lId &&
-						node3.CurrentLeader == lId &&
-						node4.CurrentLeader == lId &&
-						node5.CurrentLeader == lId {
-						break
-					}
-				}
+				ProceedWhenLeaderAccepted(nodes, lId)
 
 				Expect(len(node2.Logs)).To(Equal(2))
 				Expect(len(node3.Logs)).To(Equal(2))
