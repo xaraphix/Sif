@@ -191,6 +191,7 @@ func (rn *RaftNode) Close() {
 	if rn.CurrentRole == LEADER {
 		rn.HeartDone <- true
 	}
+	close(rn.raftSignal)
 	close(rn.HeartDone)
 	rn = nil
 }

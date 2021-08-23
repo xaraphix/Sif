@@ -82,6 +82,32 @@ func ProceedWhenLeaderAccepted(nodes []**raft.RaftNode, leaderId int32) {
 	}
 }
 
+
+func ProceedLogAckReceived(nodes []**raft.RaftNode, leaderId int32) {
+	for {
+		if len((*nodes[0]).AckedLength) == len(nodes) - 1 &&
+		(*nodes[0]).AckedLength[(*nodes[1]).Id] == int32(2) && 
+		(*nodes[0]).AckedLength[(*nodes[2]).Id] == int32(2) && 
+		(*nodes[0]).AckedLength[(*nodes[3]).Id] == int32(2) && 
+		(*nodes[0]).AckedLength[(*nodes[4]).Id] == int32(2) {
+			break
+		}
+	}
+}
+
+func ProceedWhenFollowersCommitLogs(nodes []**raft.RaftNode, cl int32) {
+	for {
+		if 
+		(*nodes[0]).CommitLength == cl && 
+		(*nodes[0]).CommitLength == (*nodes[1]).CommitLength && 
+		(*nodes[0]).CommitLength == (*nodes[2]).CommitLength && 
+		(*nodes[0]).CommitLength == (*nodes[3]).CommitLength && 
+		(*nodes[0]).CommitLength == (*nodes[4]).CommitLength {
+			break
+		}
+	}
+}
+
 func DestructAllNodes(nodes []**raft.RaftNode) {
 	for i := range nodes {
 		(*nodes[i]).Close()

@@ -124,7 +124,6 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 }
 
 func (l *LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogResponse) {
-
 	if lr == nil {
 		return
 	}
@@ -155,7 +154,7 @@ func (l *LogMgr) commitLogEntries(rn *raft.RaftNode) {
 	maxReady := 0
 	for i := 0; i < len(rn.Logs); i++ {
 		if countOfNodesWithAckLengthGTE(rn, i) > minAcks && i > maxReady {
-			maxReady = i
+			maxReady = i + 1
 		}
 	}
 
