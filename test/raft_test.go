@@ -232,18 +232,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = SetupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.Node
 
-						for e := range node.GetRaftSignalsChan() {
-							if e == raft.ElectionTimerStarted {
-								break
-							}
-						}
-
-						for e := range node.GetRaftSignalsChan() {
-							if e == raft.ElectionTimerStopped {
-								break
-							}
-						}
-
 						counter := 0
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.LogRequestSent {
@@ -264,24 +252,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 						setupVars = SetupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.Node
-
-						for e := range setupVars.Node.GetRaftSignalsChan() {
-							if e == raft.ElectionTimerStarted {
-								break
-							}
-						}
-
-						for e := range node.GetRaftSignalsChan() {
-							if e == raft.BecameLeader {
-								break
-							}
-						}
-
-						for e := range node.GetRaftSignalsChan() {
-							if e == raft.HeartbeatStarted {
-								break
-							}
-						}
 
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.LogRequestSent {
