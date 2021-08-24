@@ -450,30 +450,107 @@ var _ = Describe("Sif Raft Consensus", func() {
 	})
 
 	Context("Broadcasting Messages", func() {
+		var setupVars MockSetupVars
+		node := &raft.RaftNode{}
 		When("A Leader receives a broadcast request", func() {
 
-			XIt("Should Append the entry to its log", func() {
-
+			AfterEach(func() {
+				setupVars.Ctrls.FileCtrl.Finish()
+				setupVars.Ctrls.ElectionCtrl.Finish()
+				setupVars.Ctrls.HeartCtrl.Finish()
+				setupVars.Ctrls.RpcCtrl.Finish()
+				defer node.Close()
 			})
 
-			XIt("Should update the Acknowledged log length for itself", func() {
+			It("Should Append the entry to its log", func() {
 
+				setupVars = SetupLeaderReceivesABroadcastRequest()
+				node = setupVars.Node
+
+				msg := GetBroadcastMsg()
+
+				go func ()  {
+					<- node.ElectionDone
+				}()
+
+				go func ()  {
+					<- node.HeartDone
+				}()
+
+				Expect(len(node.Logs)).To(Equal(0))
+				node.LogMgr.RespondToBroadcastMsgRequest(node, msg)
+				Expect(len(node.Logs)).To(Equal(1))
 			})
 
-			XIt("Should Replicate the log to its followers after appending to its own logs", func() {
+			It("Should update the Acknowledged log length for itself", func() {
 
+				setupVars = SetupLeaderReceivesABroadcastRequest()
+				node = setupVars.Node
+
+				msg := GetBroadcastMsg()
+
+				go func ()  {
+					<- node.ElectionDone
+				}()
+
+				go func ()  {
+					<- node.HeartDone
+				}()
+
+				Expect(len(node.Logs)).To(Equal(0))
+				node.LogMgr.RespondToBroadcastMsgRequest(node, msg)
+				Expect(node.AckedLength[node.Id]).To(Equal(int32(1)))
 			})
-		})
 
-		When("A Raft node is a leader", func() {
-			XIt("Should send heart beats to its followers", func() {
+			It("Should Replicate the log to its followers after appending to its own logs", func() {
 
+				setupVars = SetupLeaderReceivesABroadcastRequest()
+				node = setupVars.Node
+
+				msg := GetBroadcastMsg()
+
+				go func ()  {
+					<- node.ElectionDone
+				}()
+
+				go func ()  {
+					<- node.HeartDone
+				}()
+
+				Expect(len(node.Logs)).To(Equal(0))
+				node.LogMgr.RespondToBroadcastMsgRequest(node, msg)
+
+				for e := range node.GetRaftSignalsChan() {
+					if e == raft.LogRequestSent {
+						break
+					}
+				}
 			})
 		})
 
 		When("A Follower receives a broadcast request", func() {
-			XIt("Should forward the request to the leader node", func() {
+			It("Should forward the request to the leader node", func() {
+				setupVars = SetupFollowerReceivesBroadcastRequest()
+				node = setupVars.Node
 
+				msg := GetBroadcastMsg()
+
+				go func ()  {
+					<- node.ElectionDone
+				}()
+
+				go func ()  {
+					<- node.HeartDone
+				}()
+
+				Expect(len(node.Logs)).To(Equal(0))
+				node.LogMgr.RespondToBroadcastMsgRequest(node, msg)
+
+				for e := range node.GetRaftSignalsChan() {
+					if e == raft.ForwardedBroadcastReq {
+						break
+					}
+				}
 			})
 		})
 	})
@@ -617,7 +694,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					defer node.Close()
 				})
 
-				FIt(`Should send its currentTerm
+				It(`Should send its currentTerm
 			acknowledged length as 0
 			acknowledgment as false to the leader`, func() {
 
@@ -735,13 +812,4 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 	})
 
-	Context("Commiting log entries to persistent storage", func() {
-		//TODO
-		When("The commit is successful it should send the log message to the client of Sif", func() {
-
-			XIt("Don't know yet what to do", func() {
-				Fail("Not yet Implemented")
-			})
-		})
-	})
 })

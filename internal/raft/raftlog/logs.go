@@ -66,6 +66,7 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 		return &pb.BroadcastMessageResponse{}, nil
 	} else {
 		leaderPeer := rn.GetPeerById(rn.CurrentLeader)
+		rn.SendSignal(raft.ForwardedBroadcastReq)
 		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg), nil
 	}
 }
