@@ -19,4 +19,4 @@ jobs:
         go-version: 1.17
 
     - name: Test
-      run: cd test && LOG_LEVEL=debug go test -v
+      run: cd test && LOG_LEVEL=debug go test -ginkgo.v
