@@ -38,6 +38,11 @@ func (a *RaftNodeAdapter) RequestVoteFromPeer(peer Peer, voteRequest *pb.VoteReq
 	return r
 }
 
+func (a *RaftNodeAdapter)	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest *pb.VoteRequest) (*pb.VoteResponse, error) {
+	r, err := raftnode.ElectionMgr.GetResponseForVoteRequest(raftnode, voteRequest)
+	return r, err
+}
+
 func (a *RaftNodeAdapter) ReplicateLog(peer Peer, logRequest *pb.LogRequest) *pb.LogResponse {
 	r, _ := a.clients[peer.Id].ReplicateLog(logRequest)
 	return r

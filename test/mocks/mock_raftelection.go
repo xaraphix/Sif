@@ -36,6 +36,18 @@ func (m *MockRaftElection) EXPECT() *MockRaftElectionMockRecorder {
 	return m.recorder
 }
 
+// BecomeACandidate mocks base method.
+func (m *MockRaftElection) BecomeACandidate(arg0 *raft.RaftNode) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "BecomeACandidate", arg0)
+}
+
+// BecomeACandidate indicates an expected call of BecomeACandidate.
+func (mr *MockRaftElectionMockRecorder) BecomeACandidate(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "BecomeACandidate", reflect.TypeOf((*MockRaftElection)(nil).BecomeACandidate), arg0)
+}
+
 // GenerateVoteRequest mocks base method.
 func (m *MockRaftElection) GenerateVoteRequest(arg0 *raft.RaftNode) *protos.VoteRequest {
 	m.ctrl.T.Helper()

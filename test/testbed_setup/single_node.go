@@ -370,6 +370,37 @@ func SetupLeaderHeartbeatTimeout() MockSetupVars {
 	return setupVars
 }
 
+func SetupCandidateRequestsVoteFromCandidate() MockSetupVars {
+	options := SetupOptions{
+		MockHeart:      false,
+		MockElection:   false,
+		MockFile:       true,
+		MockLog:        true,
+		MockRPCAdapter: true,
+		StartMonitor:   false,
+	}
+
+	preNodeSetupCB := func(
+		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
+		election *mocks.MockRaftElection,
+		adapter *mocks.MockRaftRPCAdapter,
+		heart *mocks.MockRaftHeart,
+		monitor *mocks.MockRaftMonitor,
+	) {
+
+		testConfig := LoadTestRaftConfig()
+		testPersistentStorageFile, _ := LoadTestRaftPersistentStorageFile()
+		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(LoadTestRaftConfigFile())
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
+		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
+
+	}
+	return SetupRaftNode(preNodeSetupCB, options)
+}
+
 func SetupMajorityVotesAgainst() MockSetupVars {
 	options := SetupOptions{
 		MockHeart:      false,

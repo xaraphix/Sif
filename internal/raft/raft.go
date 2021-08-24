@@ -93,6 +93,7 @@ type RaftElection interface {
 	GetReceivedVotes() []*pb.VoteResponse
 	StartElection(*RaftNode)
 	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest *pb.VoteRequest) (*pb.VoteResponse, error)
+	BecomeACandidate(*RaftNode)
 	GenerateVoteRequest(*RaftNode) *pb.VoteRequest
 	GetLeaderHeartChannel() chan RaftNode
 	GetElectionTimeoutDuration() time.Duration
@@ -103,6 +104,7 @@ type RaftRPCAdapter interface {
 	RequestVoteFromPeer(Peer, *pb.VoteRequest) *pb.VoteResponse
 	ReplicateLog(Peer, *pb.LogRequest) *pb.LogResponse
 	BroadcastMessage(leader Peer, msg *structpb.Struct) *pb.BroadcastMessageResponse
+	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest *pb.VoteRequest) (*pb.VoteResponse, error)
 
 	StartAdapter(*RaftNode)
 	StopAdapter()

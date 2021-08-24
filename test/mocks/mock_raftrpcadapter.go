@@ -64,6 +64,21 @@ func (mr *MockRaftRPCAdapterMockRecorder) GetRaftInfo(arg0, arg1 interface{}) *g
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetRaftInfo", reflect.TypeOf((*MockRaftRPCAdapter)(nil).GetRaftInfo), arg0, arg1)
 }
 
+// GetResponseForVoteRequest mocks base method.
+func (m *MockRaftRPCAdapter) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 *protos.VoteRequest) (*protos.VoteResponse, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetResponseForVoteRequest", arg0, arg1)
+	ret0, _ := ret[0].(*protos.VoteResponse)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// GetResponseForVoteRequest indicates an expected call of GetResponseForVoteRequest.
+func (mr *MockRaftRPCAdapterMockRecorder) GetResponseForVoteRequest(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResponseForVoteRequest", reflect.TypeOf((*MockRaftRPCAdapter)(nil).GetResponseForVoteRequest), arg0, arg1)
+}
+
 // ReplicateLog mocks base method.
 func (m *MockRaftRPCAdapter) ReplicateLog(arg0 raft.Peer, arg1 *protos.LogRequest) *protos.LogResponse {
 	m.ctrl.T.Helper()

@@ -24,7 +24,6 @@ type ElectionManager struct {
 	leader                  chan bool
 	follower                chan bool
 	leaderHeartbeatChannel  chan raft.RaftNode
-	peerVoteChannel         chan raft.RaftNode
 }
 
 func NewElectionManager() raft.RaftElection {
@@ -38,7 +37,7 @@ func NewElectionManager() raft.RaftElection {
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 
 	em.initChannels()
-	em.becomeACandidate(rn)
+	em.BecomeACandidate(rn)
 	em.askForVotes(rn)
 	em.startElectionTimer(rn)
 	em.concludeFromReceivedVotes(rn)
@@ -63,7 +62,7 @@ func (em *ElectionManager) initChannels() {
 	em.follower = make(chan bool)
 }
 
-func (em *ElectionManager) becomeACandidate(rn *raft.RaftNode) {
+func (em *ElectionManager) BecomeACandidate(rn *raft.RaftNode) {
 	rn.ElectionInProgress = true
 	rn.CurrentRole = raft.CANDIDATE
 	rn.VotedFor = rn.Id

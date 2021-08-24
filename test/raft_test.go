@@ -441,8 +441,30 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			When("Candidate receives vote request from another candidate", func() {
-				XIt("should reject the vote request", func() {
-					Fail("Not Yet Implemented")
+
+				var setupVars MockSetupVars
+				node := &raft.RaftNode{}
+
+				AfterEach(func() {
+					setupVars.Ctrls.FileCtrl.Finish()
+					setupVars.Ctrls.ElectionCtrl.Finish()
+					setupVars.Ctrls.HeartCtrl.Finish()
+					setupVars.Ctrls.RpcCtrl.Finish()
+					defer node.Close()
+				})
+
+				It("should reject the vote request", func() {
+					setupVars = SetupCandidateRequestsVoteFromCandidate()
+					node = setupVars.Node
+					node.ElectionMgr.BecomeACandidate(node)
+					voteRequest := &pb.VoteRequest{
+						NodeId: 2,
+						CurrentTerm: 9999,
+						LogLength: 9999,
+						LastTerm: 9998,
+					}
+					voteResponse, _ := node.ElectionMgr.GetResponseForVoteRequest(node, voteRequest)
+					Expect(voteResponse.VoteGranted).To(Equal(false))
 				})
 			})
 		})

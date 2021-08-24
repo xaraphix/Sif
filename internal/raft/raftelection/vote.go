@@ -34,12 +34,10 @@ func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, vote
 
 	if logOk && termOK {
 		if rn.ElectionInProgress {
-			em.peerVoteChannel <- raft.RaftNode{
-				Node: raft.Node{
-					Id:          voteRequest.NodeId,
-					CurrentTerm: voteRequest.CurrentTerm,
-				},
-			}
+			voteResponse.PeerId = rn.Id
+			voteResponse.Term = rn.CurrentTerm
+			voteResponse.VoteGranted = false
+			return voteResponse
 		}
 
 		logrus.WithFields(logrus.Fields{

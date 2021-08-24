@@ -53,7 +53,7 @@ func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest
 		"Received by": s.raftnode.Id,
 	}).Debug("Received Vote Request")
 
-	return s.raftnode.ElectionMgr.GetResponseForVoteRequest(s.raftnode, vr)
+	return s.raftnode.RPCAdapter.GetResponseForVoteRequest(s.raftnode, vr)
 }
 
 func (s *GRPCServer) ReplicateLog(ctx context.Context, vr *pb.LogRequest) (*pb.LogResponse, error) {
