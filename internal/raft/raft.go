@@ -98,6 +98,7 @@ type RaftElection interface {
 	GenerateVoteRequest(*RaftNode) *pb.VoteRequest
 	GetLeaderHeartChannel() chan *RaftNode
 	GetElectionTimeoutDuration() time.Duration
+	SetElectionTimeoutDuration(time.Duration)
 }
 
 //go:generate mockgen -destination=../../test/mocks/mock_raftrpcadapter.go -package=mocks . RaftRPCAdapter
@@ -114,6 +115,7 @@ type RaftRPCAdapter interface {
 
 //go:generate mockgen -destination=../../test/mocks/mock_raftheart.go -package=mocks . RaftHeart
 type RaftHeart interface {
+	SetLeaderHeartbeatTimeout(time.Duration)
 	StopBeating(*RaftNode)
 	StartBeating(*RaftNode)
 	Sleep(*RaftNode)

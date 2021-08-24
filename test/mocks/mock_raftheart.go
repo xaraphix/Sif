@@ -6,6 +6,7 @@ package mocks
 
 import (
 	reflect "reflect"
+	time "time"
 
 	gomock "github.com/golang/mock/gomock"
 	raft "github.com/xaraphix/Sif/internal/raft"
@@ -32,6 +33,18 @@ func NewMockRaftHeart(ctrl *gomock.Controller) *MockRaftHeart {
 // EXPECT returns an object that allows the caller to indicate expected use.
 func (m *MockRaftHeart) EXPECT() *MockRaftHeartMockRecorder {
 	return m.recorder
+}
+
+// SetLeaderHeartbeatTimeout mocks base method.
+func (m *MockRaftHeart) SetLeaderHeartbeatTimeout(arg0 time.Duration) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetLeaderHeartbeatTimeout", arg0)
+}
+
+// SetLeaderHeartbeatTimeout indicates an expected call of SetLeaderHeartbeatTimeout.
+func (mr *MockRaftHeartMockRecorder) SetLeaderHeartbeatTimeout(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetLeaderHeartbeatTimeout", reflect.TypeOf((*MockRaftHeart)(nil).SetLeaderHeartbeatTimeout), arg0)
 }
 
 // Sleep mocks base method.

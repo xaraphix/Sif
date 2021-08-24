@@ -36,6 +36,17 @@ func Setup5FollowerNodes() (*raft.RaftNode, *raft.RaftNode, *raft.RaftNode, *raf
 	deps5.ConfigManager.SetConfigFilePath(currDirPath + "data/node5_config.yml")
 	node5 := raft.NewRaftNode(deps5)
 
+	node1.Heart.SetLeaderHeartbeatTimeout(1*time.Second)
+	node2.Heart.SetLeaderHeartbeatTimeout(1*time.Second)
+	node3.Heart.SetLeaderHeartbeatTimeout(1*time.Second)
+	node4.Heart.SetLeaderHeartbeatTimeout(1*time.Second)
+	node5.Heart.SetLeaderHeartbeatTimeout(1*time.Second)
+
+	node1.ElectionMgr.SetElectionTimeoutDuration(2*time.Second)
+	node2.ElectionMgr.SetElectionTimeoutDuration(2*time.Second)
+	node3.ElectionMgr.SetElectionTimeoutDuration(2*time.Second)
+	node4.ElectionMgr.SetElectionTimeoutDuration(2*time.Second)
+	node5.ElectionMgr.SetElectionTimeoutDuration(2*time.Second)
 	return node1, node2, node3, node4, node5
 }
 

@@ -133,6 +133,18 @@ func (mr *MockRaftElectionMockRecorder) ManageElection(arg0 interface{}) *gomock
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ManageElection", reflect.TypeOf((*MockRaftElection)(nil).ManageElection), arg0)
 }
 
+// SetElectionTimeoutDuration mocks base method.
+func (m *MockRaftElection) SetElectionTimeoutDuration(arg0 time.Duration) {
+	m.ctrl.T.Helper()
+	m.ctrl.Call(m, "SetElectionTimeoutDuration", arg0)
+}
+
+// SetElectionTimeoutDuration indicates an expected call of SetElectionTimeoutDuration.
+func (mr *MockRaftElectionMockRecorder) SetElectionTimeoutDuration(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SetElectionTimeoutDuration", reflect.TypeOf((*MockRaftElection)(nil).SetElectionTimeoutDuration), arg0)
+}
+
 // StartElection mocks base method.
 func (m *MockRaftElection) StartElection(arg0 *raft.RaftNode) {
 	m.ctrl.T.Helper()

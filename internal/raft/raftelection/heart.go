@@ -18,6 +18,10 @@ func NewLeaderHeart() *LeaderHeart {
 	}
 }
 
+func (l *LeaderHeart) SetLeaderHeartbeatTimeout(duration time.Duration) {
+	l.DurationBetweenBeats = duration
+}
+
 func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
 	go func(rn *raft.RaftNode) {
 		rn.SendSignal(raft.HeartbeatStarted)

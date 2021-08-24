@@ -34,6 +34,10 @@ func NewElectionManager() raft.RaftElection {
 	}
 }
 
+func (em *ElectionManager) SetElectionTimeoutDuration(timeoutDuration time.Duration) {
+	em.ElectionTimeoutDuration = timeoutDuration
+}
+
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 
 	em.initChannels()
