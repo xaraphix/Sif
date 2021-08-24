@@ -121,12 +121,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 					setupVars = SetupLeaderHeartbeatTimeout()
 					node = setupVars.Node
 					term_0 = setupVars.Term_0
-					for e := range node.GetRaftSignalsChan() {
-						if e == raft.ElectionTimerStarted {
+					for {
+						if node.CurrentRole == raft.CANDIDATE {
 							break
 						}
 					}
-					Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
+					Succeed()
 				})
 
 				It("Should Vote for itself", func() {
