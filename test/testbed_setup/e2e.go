@@ -3,7 +3,6 @@ package testbed_setup
 import (
 	"time"
 
-	"github.com/sirupsen/logrus"
 	"github.com/xaraphix/Sif/internal/raft"
 	"github.com/xaraphix/Sif/internal/raft/protos"
 	"github.com/xaraphix/Sif/internal/raft/raftadapter"
@@ -58,7 +57,6 @@ func GetNewNodeDeps() raft.RaftDeps {
 }
 
 func ProceedWhenRPCAdapterStarted(nodes []**raft.RaftNode) {
-
 	for {
 		peer1 := (*nodes[0]).RPCAdapter.GetRaftInfo((*nodes[0]).Peers[0], &protos.RaftInfoRequest{})
 		peer2 := (*nodes[0]).RPCAdapter.GetRaftInfo((*nodes[0]).Peers[1], &protos.RaftInfoRequest{})
@@ -79,43 +77,42 @@ func ProceedWhenLeaderAccepted(nodes []**raft.RaftNode, leaderId int32) {
 			(*nodes[4]).CurrentLeader == leaderId {
 			break
 		}
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 
-
 func ProceedLogAckReceived(nodes []**raft.RaftNode, leaderId int32) {
 	for {
-		if len((*nodes[0]).AckedLength) == len(nodes) - 1 &&
-		(*nodes[0]).AckedLength[(*nodes[1]).Id] == int32(2) && 
-		(*nodes[0]).AckedLength[(*nodes[2]).Id] == int32(2) && 
-		(*nodes[0]).AckedLength[(*nodes[3]).Id] == int32(2) && 
-		(*nodes[0]).AckedLength[(*nodes[4]).Id] == int32(2) {
+		if len((*nodes[0]).AckedLength) == len(nodes)-1 &&
+			(*nodes[0]).AckedLength[(*nodes[1]).Id] == int32(2) &&
+			(*nodes[0]).AckedLength[(*nodes[2]).Id] == int32(2) &&
+			(*nodes[0]).AckedLength[(*nodes[3]).Id] == int32(2) &&
+			(*nodes[0]).AckedLength[(*nodes[4]).Id] == int32(2) {
 			break
 		}
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 
 func ProceedWhenLeaderCommitsLogs(node *raft.RaftNode) {
-	logrus.Debug("------------------------------------------- Leader started")
 	for e := range node.GetRaftSignalsChan() {
-		if e ==raft.DeliveredToApplication {
+		if e == raft.DeliveredToApplication {
 			break
 		}
+		time.Sleep(200 * time.Millisecond)
 	}
-		logrus.Debug("------------------------------------------- Leader Done")
-
 }
 
 func ProceedWhenFollowersCommitLogs(nodes []**raft.RaftNode, cl int32) {
 	for {
-		if 
-		(*nodes[0]).CommitLength == cl && 
-		(*nodes[0]).CommitLength == (*nodes[1]).CommitLength && 
-		(*nodes[0]).CommitLength == (*nodes[2]).CommitLength && 
-		(*nodes[0]).CommitLength == (*nodes[3]).CommitLength && 
-		(*nodes[0]).CommitLength == (*nodes[4]).CommitLength {
+		if (*nodes[0]).CommitLength == cl &&
+			(*nodes[0]).CommitLength == (*nodes[1]).CommitLength &&
+			(*nodes[0]).CommitLength == (*nodes[2]).CommitLength &&
+			(*nodes[0]).CommitLength == (*nodes[3]).CommitLength &&
+			(*nodes[0]).CommitLength == (*nodes[4]).CommitLength {
 			break
 		}
+		time.Sleep(200 * time.Millisecond)
 	}
 }
 

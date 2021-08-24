@@ -41,8 +41,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			It("Should start the leader heartbeat monitor", func() {
-				for {
-					if node.ElectionInProgress == true {
+				for e := range node.GetRaftSignalsChan() {
+					if e == raft.BecameCandidate{
 						break
 					}
 				}
@@ -433,8 +433,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 					setupVars = SetupCandidateRequestsVoteFromCandidate()
 					node = setupVars.Node
 					node.ElectionMgr.BecomeACandidate(node)
-					go func () {
-						<- node.ElectionDone
+					go func() {
+						<-node.ElectionDone
 					}()
 					voteRequest := &pb.VoteRequest{
 						NodeId:      2,
@@ -676,12 +676,40 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			When("log replication is not acknowledged by the follower", func() {
 
-				XIt("Should update the sent length for the follower to one less than the previously attempted sent length value of the log", func() {
+				var setupVars MockSetupVars
+				node := &raft.RaftNode{}
 
+				AfterEach(func() {
+					setupVars.Ctrls.FileCtrl.Finish()
+					setupVars.Ctrls.HeartCtrl.Finish()
+					setupVars.Ctrls.RpcCtrl.Finish()
+					defer node.Close()
 				})
-				XIt("Should send a log replication request to the follower with log length = last request log length - 1", func() {
 
+				It("Should update the sent length for the follower to one less than the previously attempted sent length value of the log", func() {
+
+					setupVars = SetupLogReplicationNotAckByFollower()
+					node = setupVars.Node
+					node.SentLength[node.Peers[0].Id] = int32(2)
+					node.SentLength[node.Peers[1].Id] = int32(2)
+					node.LogMgr.ReplicateLog(node, node.Peers[0])
+					node.LogMgr.ReplicateLog(node, node.Peers[1])
+
+					go func() bool {
+						done := <-node.HeartDone
+						return done
+					}()
+
+					for {
+						if node.SentLength[node.Peers[0].Id] == int32(1) &&
+							node.SentLength[node.Peers[1].Id] == int32(1) {
+							break
+						}
+						time.Sleep(200 * time.Microsecond)
+					}
+					Succeed()
 				})
+
 			})
 
 		})
