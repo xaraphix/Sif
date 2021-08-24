@@ -141,12 +141,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				It("Should Increment the current term", func() {
-					for e := range node.GetRaftSignalsChan() {
-						if e == raft.ElectionTimerStarted {
+					for {
+						if node.CurrentTerm == term_0 + 1 {
 							break
 						}
 					}
-					Expect(node.CurrentTerm).To(BeNumerically("==", term_0+1))
+					Succeed()
 				})
 
 				It("Should Request votes from peers", func() {
