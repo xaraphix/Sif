@@ -108,11 +108,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 			var setupVars MockSetupVars
 
 			When("Raft Node doesn't receive leader heartbeat for the leader heartbeat duration", func() {
-				BeforeEach(func() {
-					setupVars = SetupLeaderHeartbeatTimeout()
-					node = setupVars.Node
-					term_0 = setupVars.Term_0
-				})
 
 				AfterEach(func() {
 					defer setupVars.Ctrls.FileCtrl.Finish()
@@ -123,6 +118,9 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				It("Should become a candidate", func() {
+					setupVars = SetupLeaderHeartbeatTimeout()
+					node = setupVars.Node
+					term_0 = setupVars.Term_0
 					for e := range node.GetRaftSignalsChan() {
 						if e == raft.ElectionTimerStarted {
 							break
@@ -132,6 +130,9 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				It("Should Vote for itself", func() {
+					setupVars = SetupLeaderHeartbeatTimeout()
+					node = setupVars.Node
+					term_0 = setupVars.Term_0
 					for e := range node.GetRaftSignalsChan() {
 						if e == raft.ElectionTimerStarted {
 							break
@@ -141,6 +142,9 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				It("Should Increment the current term", func() {
+					setupVars = SetupLeaderHeartbeatTimeout()
+					node = setupVars.Node
+					term_0 = setupVars.Term_0
 					for {
 						if node.CurrentTerm == term_0 + 1 {
 							break
@@ -150,6 +154,9 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				It("Should Request votes from peers", func() {
+					setupVars = SetupLeaderHeartbeatTimeout()
+					node = setupVars.Node
+					term_0 = setupVars.Term_0
 					for {
 						if len(node.ElectionMgr.GetReceivedVotes()) == len(node.Peers) {
 							break
