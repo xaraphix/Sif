@@ -44,6 +44,7 @@ type RaftNode struct {
 	StartedRPCAdapter  bool
 	raftSignal         chan int
 	HeartDone          chan bool
+	ElectionDone       chan bool
 
 	FileMgr                RaftFile
 	Config                 RaftConfig
@@ -196,7 +197,14 @@ func (rn *RaftNode) Close() {
 	if rn.CurrentRole == LEADER {
 		rn.HeartDone <- true
 	}
+
+	if rn.ElectionInProgress {
+		rn.ElectionDone <- true
+	}
+
+	rn.LeaderHeartbeatMonitor.Stop()
 	close(rn.HeartDone)
+	close(rn.ElectionDone)
 	rn = nil
 }
 
@@ -215,6 +223,7 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.ElectionInProgress = false
 	rn.RPCAdapter.StartAdapter(rn)
 	rn.HeartDone = make(chan bool)
+	rn.ElectionDone = make(chan bool)
 }
 
 func (rn *RaftNode) GetRaftSignalsChan() <-chan int {

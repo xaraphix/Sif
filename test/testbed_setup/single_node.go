@@ -867,7 +867,7 @@ func SetupPeerReceivingCandidateVoteRequest() MockSetupVars {
 		MockLog:           false,
 		MockFile:          true,
 		MockRPCAdapter:    true,
-		MockLeaderMonitor: true,
+		MockLeaderMonitor: false,
 	}
 
 	preNodeSetupCB := func(

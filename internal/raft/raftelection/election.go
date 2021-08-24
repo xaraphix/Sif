@@ -39,7 +39,6 @@ func (em *ElectionManager) SetElectionTimeoutDuration(timeoutDuration time.Durat
 }
 
 func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
-
 	em.initChannels()
 	em.BecomeACandidate(rn)
 	em.askForVotes(rn)
@@ -185,6 +184,9 @@ func (em *ElectionManager) startElectionTimer(rn *raft.RaftNode) {
 					timer.Stop()
 					return
 				}
+			case <-rn.ElectionDone:
+				rn.ElectionInProgress = false
+				break
 			}
 		}
 	}()

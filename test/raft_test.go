@@ -434,6 +434,9 @@ var _ = Describe("Sif Raft Consensus", func() {
 					setupVars = SetupCandidateRequestsVoteFromCandidate()
 					node = setupVars.Node
 					node.ElectionMgr.BecomeACandidate(node)
+					go func () {
+						<- node.ElectionDone
+					}()
 					voteRequest := &pb.VoteRequest{
 						NodeId:      2,
 						CurrentTerm: 9999,
