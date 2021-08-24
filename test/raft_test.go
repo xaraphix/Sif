@@ -42,7 +42,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			It("Should start the leader heartbeat monitor", func() {
 				for e := range node.GetRaftSignalsChan() {
-					if e == raft.BecameCandidate{
+					if e == raft.BecameCandidate {
 						break
 					}
 				}
@@ -607,10 +607,29 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			When("The received log or term is not ok", func() {
 
-				XIt(`Should send its currentTerm
+				var setupVars MockSetupVars
+				node := &raft.RaftNode{}
+				AfterEach(func() {
+					setupVars.Ctrls.FileCtrl.Finish()
+					setupVars.Ctrls.ElectionCtrl.Finish()
+					setupVars.Ctrls.HeartCtrl.Finish()
+					setupVars.Ctrls.RpcCtrl.Finish()
+					defer node.Close()
+				})
+
+				FIt(`Should send its currentTerm
 			acknowledged length as 0
 			acknowledgment as false to the leader`, func() {
 
+					setupVars = SetupLeaderLogsAreNotOK()
+					logReplReq := *setupVars.SentLogReplicationReq
+					node = setupVars.Node
+
+					node.CurrentTerm = logReplReq.GetCurrentTerm()
+					logResponse, _ := node.LogMgr.RespondToLogReplicationRequest(node, logReplReq)
+
+					Expect(logResponse.AckLength).To(Equal(int32(0)))
+					Expect(logResponse.Success).To(Equal(false))
 				})
 			})
 
