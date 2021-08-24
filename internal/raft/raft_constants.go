@@ -29,6 +29,7 @@ const (
 	ReceivedVoteResponse
 	BecameFollower
 	BecameLeader
+	BecameCandidate
 	HeartbeatStarted
 	HeartbeatStopped
 	LogRequestSent

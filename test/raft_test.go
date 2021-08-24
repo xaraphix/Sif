@@ -121,8 +121,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 					setupVars = SetupLeaderHeartbeatTimeout()
 					node = setupVars.Node
 					term_0 = setupVars.Term_0
-					for {
-						if node.CurrentRole == raft.CANDIDATE {
+					for e := range node.GetRaftSignalsChan() {
+						if e == raft.BecameCandidate {
 							break
 						}
 					}
@@ -146,7 +146,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					node = setupVars.Node
 					term_0 = setupVars.Term_0
 					for {
-						if node.CurrentTerm == term_0 + 1 {
+						if node.CurrentTerm == term_0+1 {
 							break
 						}
 					}
@@ -670,17 +670,16 @@ var _ = Describe("Sif Raft Consensus", func() {
 					setupVars = SetupLeaderReceivingLogReplicationAck()
 					receivedLogResponses := setupVars.ReceivedLogResponse
 					node = setupVars.Node
-				  node.LogMgr.ReplicateLog(node, node.Peers[0])
-				  node.LogMgr.ReplicateLog(node, node.Peers[1])
+					node.LogMgr.ReplicateLog(node, node.Peers[0])
+					node.LogMgr.ReplicateLog(node, node.Peers[1])
 
-					go func () bool{
-						done := <- node.HeartDone 
+					go func() bool {
+						done := <-node.HeartDone
 						return done
 					}()
 
 					Expect(node.AckedLength[node.Peers[0].Id]).To(Equal((*receivedLogResponses)[node.Peers[0].Id].AckLength))
 					Expect(node.AckedLength[node.Peers[1].Id]).To(Equal((*receivedLogResponses)[node.Peers[1].Id].AckLength))
-
 
 					Expect(node.SentLength[node.Peers[0].Id]).To(Equal((*receivedLogResponses)[node.Peers[0].Id].AckLength))
 					Expect(node.SentLength[node.Peers[1].Id]).To(Equal((*receivedLogResponses)[node.Peers[1].Id].AckLength))
@@ -691,11 +690,11 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 					setupVars = SetupLeaderReceivingLogReplicationAck()
 					node = setupVars.Node
-				  node.LogMgr.ReplicateLog(node, node.Peers[0])
-				  node.LogMgr.ReplicateLog(node, node.Peers[1])
+					node.LogMgr.ReplicateLog(node, node.Peers[0])
+					node.LogMgr.ReplicateLog(node, node.Peers[1])
 
-					go func () bool{
-						done := <- node.HeartDone 
+					go func() bool {
+						done := <-node.HeartDone
 						return done
 					}()
 

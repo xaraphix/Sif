@@ -69,6 +69,7 @@ func (em *ElectionManager) BecomeACandidate(rn *raft.RaftNode) {
 	rn.CurrentTerm = rn.CurrentTerm + 1
 	em.VotesReceived = nil
 
+	rn.SendSignal(raft.BecameCandidate)
 	logrus.WithFields(logrus.Fields{
 		"Started By":    rn.Config.InstanceName(),
 		"Started By Id": rn.Config.InstanceId(),
