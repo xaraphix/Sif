@@ -419,7 +419,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 						for e := range node.GetRaftSignalsChan() {
 							if e == raft.ElectionTimerStarted {
-								node.ElectionMgr.GetLeaderHeartChannel() <- raft.RaftNode{
+								node.ElectionMgr.GetLeaderHeartChannel() <- &raft.RaftNode{
 									Node: raft.Node{
 										CurrentTerm: int32(10),
 									},
@@ -458,10 +458,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 					node = setupVars.Node
 					node.ElectionMgr.BecomeACandidate(node)
 					voteRequest := &pb.VoteRequest{
-						NodeId: 2,
+						NodeId:      2,
 						CurrentTerm: 9999,
-						LogLength: 9999,
-						LastTerm: 9998,
+						LogLength:   9999,
+						LastTerm:    9998,
 					}
 					voteResponse, _ := node.ElectionMgr.GetResponseForVoteRequest(node, voteRequest)
 					Expect(voteResponse.VoteGranted).To(Equal(false))
@@ -534,26 +534,94 @@ var _ = Describe("Sif Raft Consensus", func() {
 		})
 
 		When("Follower receives a log replication request", func() {
+			var setupVars MockSetupVars
+			node := &raft.RaftNode{}
 			When("the received log is ok", func() {
 
-				XIt("Should update its currentTerm to to new term", func() {
-
+				AfterEach(func() {
+					setupVars.Ctrls.FileCtrl.Finish()
+					setupVars.Ctrls.ElectionCtrl.Finish()
+					setupVars.Ctrls.HeartCtrl.Finish()
+					setupVars.Ctrls.RpcCtrl.Finish()
+					defer node.Close()
 				})
 
-				XIt("Should continue being the follower and cancel the election it started (if any)", func() {
+			It("Should update its currentTerm to to new term", func() {
+					setupVars = SetupFollowerReceivesLogReplicationRequest()
+					logReplReq := *setupVars.SentLogReplicationReq
+					node = setupVars.Node
 
+					node.LogMgr.RespondToLogReplicationRequest(node, logReplReq)
+
+					Expect(node.CurrentTerm).To(Equal(logReplReq.CurrentTerm))
+					Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 				})
 
-				XIt("Should update its acknowledged length of the log", func() {
+				It("Should cancel the election it started (if any) if the leader is genuine", func() {
+					setupVars = SetupFollowerReceivesLogReplicationRequest()
+					logReplReq := *setupVars.SentLogReplicationReq
+					node = setupVars.Node
+					node.ElectionMgr.BecomeACandidate(node)
+				
+					logReplReq.CurrentTerm = node.CurrentTerm + 1
+					Expect(node.ElectionInProgress).To(Equal(true))
+					Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
 
+					go func ()  {
+						node.ElectionMgr.ManageElection(node)
+					}()
+
+					node.LogMgr.RespondToLogReplicationRequest(node, logReplReq)
+
+					for e := range node.GetRaftSignalsChan() {
+						if e == raft.BecameFollower {
+							break
+						}
+					}
+
+					Expect(node.ElectionInProgress).To(Equal(false))
+					Expect(node.CurrentTerm).To(Equal(logReplReq.CurrentTerm))
+					Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 				})
 
-				XIt("Should append the entry to its log", func() {
+				It("Should append the entry to its log", func() {
+					setupVars = SetupFollowerReceivesLogReplicationRequest()
+					logReplReq := *setupVars.SentLogReplicationReq
+					node = setupVars.Node
 
+					Expect(len(node.Logs)).To(Equal(0))
+
+					node.CurrentTerm = logReplReq.GetCurrentTerm()
+					node.LogMgr.RespondToLogReplicationRequest(node, logReplReq)
+
+					Expect(len(node.Logs)).To(Equal(2))
 				})
 
-				XIt("Should send the log response back to the leader with the acknowledged new length", func() {
+				It("Should update its Commit length of the log", func() {
+					setupVars = SetupFollowerReceivesLogReplicationRequest()
+					logReplReq := *setupVars.SentLogReplicationReq
+					node = setupVars.Node
 
+					Expect(len(node.Logs)).To(Equal(0))
+
+					node.CurrentTerm = logReplReq.GetCurrentTerm()
+					node.LogMgr.RespondToLogReplicationRequest(node, logReplReq)
+
+					Expect(len(node.Logs)).To(Equal(2))
+					Expect(node.CommitLength).To(Equal(int32(2)))
+				})
+
+				It("Should send the log response back to the leader with the acknowledged new length", func() {
+					setupVars = SetupFollowerReceivesLogReplicationRequest()
+					logReplReq := *setupVars.SentLogReplicationReq
+					node = setupVars.Node
+
+					Expect(len(node.Logs)).To(Equal(0))
+
+					node.CurrentTerm = logReplReq.GetCurrentTerm()
+					logResponse, _ := node.LogMgr.RespondToLogReplicationRequest(node, logReplReq)
+
+					Expect(logResponse.AckLength).To(Equal(int32(2)))
 				})
 
 			})

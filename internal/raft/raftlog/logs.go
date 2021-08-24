@@ -71,25 +71,22 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 }
 
 func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequest) (*pb.LogResponse, error) {
-	if lr.CurrentTerm > rn.CurrentTerm {
-		rn.CurrentTerm = lr.CurrentTerm
-		rn.VotedFor = 0
-	}
-
-	logOk := int32(len(rn.Logs)) >= lr.SentLength
+	logOk := int32(len(rn.Logs)) >=lr.SentLength
 
 	if logOk && lr.SentLength > 0 {
 		logOk = lr.PrevLogTerm == rn.Logs[lr.SentLength-1].Term
 	}
 
 	if rn.ElectionInProgress && rn.CurrentTerm < lr.CurrentTerm && logOk {
-		rn.ElectionMgr.GetLeaderHeartChannel() <- raft.RaftNode{
+		rn.ElectionMgr.GetLeaderHeartChannel() <- &raft.RaftNode{
 			Node: raft.Node{
 				Id:          lr.LeaderId,
 				CurrentTerm: lr.CurrentTerm,
 			},
 		}
 		rn.CurrentTerm = lr.CurrentTerm
+		rn.CurrentLeader = lr.LeaderId
+		rn.VotedFor = 0
 	}
 
 	if lr.CurrentTerm == rn.CurrentTerm && logOk {

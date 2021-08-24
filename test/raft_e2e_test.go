@@ -4,9 +4,7 @@ import (
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	"github.com/xaraphix/Sif/internal/raft"
-	"github.com/xaraphix/Sif/internal/raft/protos"
 	. "github.com/xaraphix/Sif/test/testbed_setup"
-	"google.golang.org/protobuf/types/known/structpb"
 )
 
 var _ = Describe("Sif Raft Consensus E2E", func() {
@@ -82,21 +80,7 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 
 				node1, node2, node3, node4, node5 := Setup5FollowerNodes()
 
-				node1.Logs = append(node1.Logs, &protos.Log{Term: 1, Message: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						"A": {
-							Kind: &structpb.Value_StringValue{
-								StringValue: "B",
-							},
-						}}}},
-					&protos.Log{Term: 1, Message: &structpb.Struct{
-						Fields: map[string]*structpb.Value{
-							"C": {
-								Kind: &structpb.Value_StringValue{
-									StringValue: "B",
-								},
-							}}}},
-				)
+				node1.Logs = Get2LogEntries()
 
 				nodes := make([]**raft.RaftNode, 0)
 				nodes = append(nodes, &node1, &node2, &node3, &node4, &node5)

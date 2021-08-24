@@ -92,10 +92,11 @@ type RaftMonitor interface {
 type RaftElection interface {
 	GetReceivedVotes() []*pb.VoteResponse
 	StartElection(*RaftNode)
+	ManageElection(*RaftNode) bool
 	GetResponseForVoteRequest(raftnode *RaftNode, voteRequest *pb.VoteRequest) (*pb.VoteResponse, error)
 	BecomeACandidate(*RaftNode)
 	GenerateVoteRequest(*RaftNode) *pb.VoteRequest
-	GetLeaderHeartChannel() chan RaftNode
+	GetLeaderHeartChannel() chan *RaftNode
 	GetElectionTimeoutDuration() time.Duration
 }
 

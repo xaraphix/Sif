@@ -18,6 +18,7 @@ import (
 	"github.com/xaraphix/Sif/internal/raft/raftlog"
 	"github.com/xaraphix/Sif/test/mocks"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v2"
 )
 
@@ -399,6 +400,49 @@ func SetupCandidateRequestsVoteFromCandidate() MockSetupVars {
 
 	}
 	return SetupRaftNode(preNodeSetupCB, options)
+}
+
+func SetupFollowerReceivesLogReplicationRequest() MockSetupVars {
+	options := SetupOptions{
+		MockHeart:      false,
+		MockElection:   false,
+		MockFile:       true,
+		MockLog:        true,
+		MockRPCAdapter: true,
+		StartMonitor:   false,
+	}
+
+	preNodeSetupCB := func(
+		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
+		election *mocks.MockRaftElection,
+		adapter *mocks.MockRaftRPCAdapter,
+		heart *mocks.MockRaftHeart,
+		monitor *mocks.MockRaftMonitor,
+	) {
+
+		testConfig := LoadTestRaftConfig()
+		testPersistentStorageFile, _ := LoadTestRaftPersistentStorageFile()
+		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(LoadTestRaftConfigFile())
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
+		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
+
+	}
+
+	logReplicationReq := &pb.LogRequest{
+		LeaderId:     999,
+		CurrentTerm:  0,
+		SentLength:   0,
+		PrevLogTerm:  0,
+		CommitLength: 2,
+		Entries: Get2LogEntries(),
+	}
+
+	setupVars := SetupRaftNode(preNodeSetupCB, options)
+	setupVars.SentLogReplicationReq = &logReplicationReq
+	return setupVars
 }
 
 func SetupMajorityVotesAgainst() MockSetupVars {
@@ -854,4 +898,27 @@ func LoadTestRaftConfig() *raftconfig.Config {
 		panic(err)
 	}
 	return cfg
+}
+
+func Get2LogEntries() []*pb.Log {
+
+	logs := []*pb.Log{}
+	logs = append(logs, &pb.Log{Term: 1, Message: &structpb.Struct{
+		Fields: map[string]*structpb.Value{
+			"A": {
+				Kind: &structpb.Value_StringValue{
+					StringValue: "B",
+				},
+			}}}},
+		&pb.Log{Term: 1, Message: &structpb.Struct{
+			Fields: map[string]*structpb.Value{
+				"C": {
+					Kind: &structpb.Value_StringValue{
+						StringValue: "B",
+					},
+				}}}},
+	)
+
+	return logs
+
 }

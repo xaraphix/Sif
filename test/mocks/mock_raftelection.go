@@ -77,10 +77,10 @@ func (mr *MockRaftElectionMockRecorder) GetElectionTimeoutDuration() *gomock.Cal
 }
 
 // GetLeaderHeartChannel mocks base method.
-func (m *MockRaftElection) GetLeaderHeartChannel() chan raft.RaftNode {
+func (m *MockRaftElection) GetLeaderHeartChannel() chan *raft.RaftNode {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetLeaderHeartChannel")
-	ret0, _ := ret[0].(chan raft.RaftNode)
+	ret0, _ := ret[0].(chan *raft.RaftNode)
 	return ret0
 }
 
@@ -117,6 +117,20 @@ func (m *MockRaftElection) GetResponseForVoteRequest(arg0 *raft.RaftNode, arg1 *
 func (mr *MockRaftElectionMockRecorder) GetResponseForVoteRequest(arg0, arg1 interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetResponseForVoteRequest", reflect.TypeOf((*MockRaftElection)(nil).GetResponseForVoteRequest), arg0, arg1)
+}
+
+// ManageElection mocks base method.
+func (m *MockRaftElection) ManageElection(arg0 *raft.RaftNode) bool {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ManageElection", arg0)
+	ret0, _ := ret[0].(bool)
+	return ret0
+}
+
+// ManageElection indicates an expected call of ManageElection.
+func (mr *MockRaftElectionMockRecorder) ManageElection(arg0 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ManageElection", reflect.TypeOf((*MockRaftElection)(nil).ManageElection), arg0)
 }
 
 // StartElection mocks base method.
