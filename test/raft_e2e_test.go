@@ -97,7 +97,7 @@ var _ = Describe("Sif Raft Consensus E2E", func() {
 				ProceedWhenLeaderAccepted(nodes, lId)
 
 				ProceedLogAckReceived(nodes, lId)
-				Expect(node1.CommitLength).To(Equal(int32(2)))
+				ProceedWhenLeaderCommitsLogs(node1)
 				ProceedWhenFollowersCommitLogs(nodes, node1.CommitLength)
 
 				Expect(len(node2.Logs)).To(Equal(2))
