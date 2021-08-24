@@ -3,6 +3,7 @@ package testbed_setup
 import (
 	"time"
 
+	"github.com/sirupsen/logrus"
 	"github.com/xaraphix/Sif/internal/raft"
 	"github.com/xaraphix/Sif/internal/raft/protos"
 	"github.com/xaraphix/Sif/internal/raft/raftadapter"
@@ -95,11 +96,14 @@ func ProceedLogAckReceived(nodes []**raft.RaftNode, leaderId int32) {
 }
 
 func ProceedWhenLeaderCommitsLogs(node *raft.RaftNode) {
-	for {
-		if node.CommitLength == int32(len(node.Logs)) {
+	logrus.Debug("------------------------------------------- Leader started")
+	for e := range node.GetRaftSignalsChan() {
+		if e ==raft.DeliveredToApplication {
 			break
 		}
 	}
+		logrus.Debug("------------------------------------------- Leader Done")
+
 }
 
 func ProceedWhenFollowersCommitLogs(nodes []**raft.RaftNode, cl int32) {
