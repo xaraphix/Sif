@@ -43,7 +43,7 @@ func (s *GRPCServer) Start(host string, port string) {
 }
 
 func (s *GRPCServer) Stop() {
-	s.server.GracefulStop()
+	s.server.Stop()
 }
 
 func (s *GRPCServer) RequestVoteFromPeer(ctx context.Context, vr *pb.VoteRequest) (*pb.VoteResponse, error) {

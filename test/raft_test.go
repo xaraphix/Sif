@@ -132,13 +132,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 				It("Should Vote for itself", func() {
 					setupVars = SetupLeaderHeartbeatTimeout()
 					node = setupVars.Node
-					term_0 = setupVars.Term_0
-					for e := range node.GetRaftSignalsChan() {
-						if e == raft.ElectionTimerStarted {
+					for {
+						if node.VotedFor == node.Id {
 							break
 						}
 					}
-					Expect(node.VotedFor).To(Equal(node.Id))
+					Succeed()
 				})
 
 				It("Should Increment the current term", func() {
