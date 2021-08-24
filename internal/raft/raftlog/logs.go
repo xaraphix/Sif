@@ -43,8 +43,8 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	}
 
 	logResponse := rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
-	l.processLogAcknowledgements(rn, logResponse)
 	rn.SendSignal(raft.LogRequestSent)
+	l.processLogAcknowledgements(rn, logResponse)
 }
 
 func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
@@ -71,13 +71,19 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 }
 
 func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogRequest) (*pb.LogResponse, error) {
+
+	if lr.CurrentTerm > rn.CurrentTerm {
+		rn.CurrentTerm = lr.CurrentTerm
+		rn.VotedFor = 0
+	}
+
 	logOk := int32(len(rn.Logs)) >=lr.SentLength
 
 	if logOk && lr.SentLength > 0 {
 		logOk = lr.PrevLogTerm == rn.Logs[lr.SentLength-1].Term
 	}
 
-	if rn.ElectionInProgress && rn.CurrentTerm < lr.CurrentTerm && logOk {
+	if rn.ElectionInProgress && rn.CurrentTerm <= lr.CurrentTerm && logOk {
 		rn.ElectionMgr.GetLeaderHeartChannel() <- &raft.RaftNode{
 			Node: raft.Node{
 				Id:          lr.LeaderId,
@@ -90,6 +96,7 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 	}
 
 	if lr.CurrentTerm == rn.CurrentTerm && logOk {
+
 		rn.CurrentRole = raft.FOLLOWER
 		rn.CurrentLeader = lr.LeaderId
 

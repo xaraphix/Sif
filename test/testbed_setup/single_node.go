@@ -227,6 +227,7 @@ type MockSetupVars struct {
 	SentVoteRequests      *map[int]*pb.VoteRequest
 	ReceivedVoteResponse  *map[int32]*pb.VoteResponse
 	SentLogReplicationReq **pb.LogRequest
+	ReceivedLogResponse   *map[int32]*pb.LogResponse
 	Ctrls                 Controllers
 	LeaderId              int32
 }
@@ -437,11 +438,66 @@ func SetupFollowerReceivesLogReplicationRequest() MockSetupVars {
 		SentLength:   0,
 		PrevLogTerm:  0,
 		CommitLength: 2,
-		Entries: Get2LogEntries(),
+		Entries:      Get2LogEntries(),
 	}
 
 	setupVars := SetupRaftNode(preNodeSetupCB, options)
 	setupVars.SentLogReplicationReq = &logReplicationReq
+	return setupVars
+}
+
+func SetupLeaderReceivingLogReplicationAck() MockSetupVars {
+	options := SetupOptions{
+		MockHeart:      false,
+		MockElection:   false,
+		MockFile:       true,
+		MockLog:        true,
+		MockRPCAdapter: true,
+		StartMonitor:   false,
+	}
+
+	logResponseMap := make(map[int32]*pb.LogResponse)
+
+	preNodeSetupCB := func(
+		fileMgr *mocks.MockRaftFile,
+		logMgr *mocks.MockRaftLog,
+		election *mocks.MockRaftElection,
+		adapter *mocks.MockRaftRPCAdapter,
+		heart *mocks.MockRaftHeart,
+		monitor *mocks.MockRaftMonitor,
+	) {
+
+		testConfig := LoadTestRaftConfig()
+		testPersistentStorageFile, _ := LoadTestRaftPersistentStorageFile()
+		fileMgr.EXPECT().LoadFile("./sifconfig.yml").AnyTimes().Return(LoadTestRaftConfigFile())
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+".siflock").AnyTimes().Return(nil, errors.New(""))
+		fileMgr.EXPECT().LoadFile(testConfig.RaftInstanceDirPath+"raft_state.json").AnyTimes().Return(testPersistentStorageFile, errors.New(""))
+		adapter.EXPECT().StartAdapter(gomock.Any()).Return().AnyTimes()
+		adapter.EXPECT().StopAdapter().Return().AnyTimes()
+		lrPeer1 := &pb.LogResponse{
+			FollowerId: testConfig.Peers()[0].Id,
+			Term:       1,
+			AckLength:  2,
+			Success:    true,
+		}
+		lrPeer2 := &pb.LogResponse{
+			FollowerId: testConfig.Peers()[1].Id,
+			Term:       1,
+			AckLength:  2,
+			Success:    true,
+		}
+		logResponseMap[testConfig.Peers()[0].Id] = lrPeer1
+		logResponseMap[testConfig.Peers()[1].Id] = lrPeer2
+
+		adapter.EXPECT().ReplicateLog(testConfig.RaftPeers[0], gomock.Any()).Return(logResponseMap[testConfig.RaftPeers[0].Id]).Times(1)
+		adapter.EXPECT().ReplicateLog(testConfig.RaftPeers[1], gomock.Any()).Return(logResponseMap[testConfig.RaftPeers[1].Id]).Times(1)
+	}
+
+	setupVars := SetupRaftNode(preNodeSetupCB, options)
+	setupVars.ReceivedLogResponse = &logResponseMap
+	setupVars.Node.CurrentRole = raft.LEADER
+	setupVars.Node.CurrentTerm = 1
+	setupVars.Node.Logs = Get2LogEntries()
 	return setupVars
 }
 

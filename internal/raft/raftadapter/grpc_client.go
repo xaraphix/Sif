@@ -33,22 +33,22 @@ func NewRaftGRPCClient(address string, timeoutIn time.Duration) *RaftGRPCClient 
 func (c *RaftGRPCClient) ReplicateLog(lr *pb.LogRequest) (*pb.LogResponse, error) {
 	ctx, cancel := context.WithDeadline(context.Background(), time.Now().Add(c.timeoutDuration))
 	defer cancel()
-	x, y := c.client.ReplicateLog(ctx, lr)
+	logResponse, err := c.client.ReplicateLog(ctx, lr)
 
-	if x == nil {
-		return nil, y
+	if logResponse == nil {
+		return nil, err
 	}
 
 	logrus.WithFields(logrus.Fields{
 		"MyId": lr.LeaderId,
-		"From": x.FollowerId,
+		"From": logResponse.FollowerId,
 	}).Debug("Received log response")
 
-	if y != nil {
-		logrus.Error("In repl log :: " + y.Error())
+	if err != nil {
+		logrus.Error("In repl log :: " + err.Error())
 	}
 
-	return x, nil
+	return logResponse, nil
 }
 
 func (c *RaftGRPCClient) RequestVoteFromPeer(vr *pb.VoteRequest) (*pb.VoteResponse, error) {

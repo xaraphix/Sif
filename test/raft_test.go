@@ -546,7 +546,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					defer node.Close()
 				})
 
-			It("Should update its currentTerm to to new term", func() {
+				It("Should update its currentTerm to to new term", func() {
 					setupVars = SetupFollowerReceivesLogReplicationRequest()
 					logReplReq := *setupVars.SentLogReplicationReq
 					node = setupVars.Node
@@ -562,12 +562,12 @@ var _ = Describe("Sif Raft Consensus", func() {
 					logReplReq := *setupVars.SentLogReplicationReq
 					node = setupVars.Node
 					node.ElectionMgr.BecomeACandidate(node)
-				
+
 					logReplReq.CurrentTerm = node.CurrentTerm + 1
 					Expect(node.ElectionInProgress).To(Equal(true))
 					Expect(node.CurrentRole).To(Equal(raft.CANDIDATE))
 
-					go func ()  {
+					go func() {
 						node.ElectionMgr.ManageElection(node)
 					}()
 
@@ -648,13 +648,51 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			When("log replication is acknowledged by the follower", func() {
 
-				XIt(`Should update its acknowledged and 
-					sentLength for the follower`, func() {
+				var setupVars MockSetupVars
+				node := &raft.RaftNode{}
+
+				AfterEach(func() {
+					setupVars.Ctrls.FileCtrl.Finish()
+					setupVars.Ctrls.HeartCtrl.Finish()
+					setupVars.Ctrls.RpcCtrl.Finish()
+					defer node.Close()
+				})
+
+				It(`Should update its acknowledged and sentLength for the follower`, func() {
+
+					setupVars = SetupLeaderReceivingLogReplicationAck()
+					receivedLogResponses := setupVars.ReceivedLogResponse
+					node = setupVars.Node
+				  node.LogMgr.ReplicateLog(node, node.Peers[0])
+				  node.LogMgr.ReplicateLog(node, node.Peers[1])
+
+					go func () bool{
+						done := <- node.HeartDone 
+						return done
+					}()
+
+					Expect(node.AckedLength[node.Peers[0].Id]).To(Equal((*receivedLogResponses)[node.Peers[0].Id].AckLength))
+					Expect(node.AckedLength[node.Peers[1].Id]).To(Equal((*receivedLogResponses)[node.Peers[1].Id].AckLength))
+
+
+					Expect(node.SentLength[node.Peers[0].Id]).To(Equal((*receivedLogResponses)[node.Peers[0].Id].AckLength))
+					Expect(node.SentLength[node.Peers[1].Id]).To(Equal((*receivedLogResponses)[node.Peers[1].Id].AckLength))
 
 				})
 
-				XIt("Should commit the log entries to persistent storage", func() {
+				It("should commit the logs", func() {
 
+					setupVars = SetupLeaderReceivingLogReplicationAck()
+					node = setupVars.Node
+				  node.LogMgr.ReplicateLog(node, node.Peers[0])
+				  node.LogMgr.ReplicateLog(node, node.Peers[1])
+
+					go func () bool{
+						done := <- node.HeartDone 
+						return done
+					}()
+
+					Expect(node.CommitLength).To(Equal(int32(len(node.Logs))))
 				})
 			})
 
