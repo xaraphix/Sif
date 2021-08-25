@@ -23,24 +23,25 @@ func (l *LeaderHeart) SetLeaderHeartbeatTimeout(duration time.Duration) {
 }
 
 func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
-	go func(rn *raft.RaftNode) {
-		rn.LogEvent(raft.HeartbeatStarted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+  timer := time.NewTicker(l.DurationBetweenBeats)
+	go func(n *raft.RaftNode) {
+		n.LogEvent(raft.HeartbeatStarted, raft.RaftEventDetails{CurrentTerm: n.CurrentTerm, CurrentRole: n.CurrentRole})
 		for {
 			select {
-			case <-rn.HeartDone:
+			case <-n.HeartDone:
+        timer.Stop()
 				break
-			default:
-				if rn.CurrentRole != raft.LEADER {
-					rn.LogEvent(raft.HeartbeatStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
+			case <- timer.C:
+				if n.CurrentRole != raft.LEADER {
+					n.LogEvent(raft.HeartbeatStopped, raft.RaftEventDetails{CurrentTerm: n.CurrentTerm, CurrentRole: n.CurrentRole, CurrentLeader: n.CurrentLeader})
+          timer.Stop()
 					break
 				} else {
-					go func(n *raft.RaftNode) {
-						for _, peer := range rn.Peers {
-							rn.LogMgr.ReplicateLog(rn, peer)
+					go func(node *raft.RaftNode) {
+						for _, peer := range node.Peers {
+							node.LogMgr.ReplicateLog(node, peer)
 						}
-					}(rn)
-
-					rn.Heart.Sleep(rn)
+					}(n)
 				}
 			}
 		}

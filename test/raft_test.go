@@ -123,7 +123,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					setupVars = SetupLeaderHeartbeatTimeout()
 					node = setupVars.Node
 					term_0 = setupVars.Term_0
-					CheckIfEventTriggered(node, raft.BecameCandidate, raft.RaftEventDetails{})
+					CheckIfEventTriggered(node, raft.BecameCandidate, raft.RaftEventDetails{CurrentTerm: term_0 + 1})
 					Succeed()
 				})
 
@@ -258,9 +258,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("Should Make its current term equal to the one in the voteResponse", func() {
 						setupVars = SetupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.Node
-						testConfig := LoadTestRaftConfig()
-						CheckIfEventTriggered(node, raft.BecameFollower, raft.RaftEventDetails{})
-						Expect(node.CurrentTerm).To(Equal((*setupVars.ReceivedVoteResponse)[testConfig.Peers()[0].Id].Term))
+						CheckIfEventTriggered(node, raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: int32(10)})
 					})
 
 					It("Should cancel election timer", func() {

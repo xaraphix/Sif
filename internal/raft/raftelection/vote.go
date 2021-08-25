@@ -81,13 +81,14 @@ func (em *ElectionManager) concludeFromReceivedVotes(rn *raft.RaftNode) {
 
 	go func() {
 		for {
-			if em.VotesReceived == nil {
-				em.VotesReceived = []*pb.VoteResponse{}
-			}
-			if len(em.VotesReceived) == len(rn.Peers) {
-				continue
-			}
-			for vr := range em.votesResponse {
+			select {
+			case vr := <-em.votesResponse:
+				if em.VotesReceived == nil {
+					em.VotesReceived = []*pb.VoteResponse{}
+				}
+				if len(em.VotesReceived) == len(rn.Peers) {
+					continue
+				}
 				em.VotesReceived = append(em.VotesReceived, vr)
 				em.concludeFromReceivedVote(rn, vr)
 				if len(em.VotesReceived) == len(rn.Peers) {

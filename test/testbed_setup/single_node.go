@@ -363,13 +363,6 @@ func SetupLeaderHeartbeatTimeout() MockSetupVars {
 	}
 
 	setupVars := SetupRaftNode(preNodeSetupCB, options)
-	for {
-		if setupVars.Node.ElectionInProgress == true {
-			setupVars.Node.LeaderHeartbeatMonitor.Stop()
-			break
-		}
-	}
-
 	return setupVars
 }
 

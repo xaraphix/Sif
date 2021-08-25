@@ -133,17 +133,19 @@ func (l *LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogRespons
 	}
 
 	if lr.Term == rn.CurrentTerm && rn.CurrentRole == raft.LEADER {
-		rn.LogAckMu.Lock()
-		defer rn.LogAckMu.Unlock()
 		if lr.Success {
+      rn.LogAckMu.Lock()
 			rn.SentLength[lr.FollowerId] = lr.AckLength
 			rn.AckedLength[lr.FollowerId] = lr.AckLength
+      rn.LogAckMu.Unlock()
 			rn.LogEvent(raft.AckLengthUpdated, raft.RaftEventDetails{Id: rn.Id, Peer: lr.FollowerId, AckLength: lr.AckLength})
 			rn.LogEvent(raft.SentLengthUpdated, raft.RaftEventDetails{Id: rn.Id, Peer: lr.FollowerId, SentLength: lr.AckLength})
 			l.commitLogEntries(rn)
 		} else if rn.SentLength[lr.FollowerId] > 0 {
+      rn.LogAckMu.Lock()
 			rn.SentLength[lr.FollowerId] = rn.SentLength[lr.FollowerId] - 1
 			rn.LogEvent(raft.SentLengthUpdated, raft.RaftEventDetails{Id: rn.Id, Peer: lr.FollowerId, SentLength: rn.SentLength[lr.FollowerId]})
+      rn.LogAckMu.Unlock()
 			follower := rn.GetPeerById(lr.FollowerId)
 			go func() {
 				l.ReplicateLog(rn, follower)
