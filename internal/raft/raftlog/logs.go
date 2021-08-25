@@ -43,13 +43,13 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	}
 
 	logResponse := rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
-	rn.SendSignal(raft.LogRequestSent)
+	raft.LogEvent(raft.LogRequestSent, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: peer.Id})
 	l.processLogAcknowledgements(rn, logResponse)
 }
 
 func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
 	if rn.CurrentRole == raft.LEADER {
-		rn.SendSignal(raft.MsgAppendedToLogs)
+		raft.LogEvent(raft.MsgAppendedToLogs, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 		rn.Logs = append(rn.Logs, &pb.Log{
 			Term:    rn.CurrentTerm,
 			Message: msg,
@@ -66,7 +66,7 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 		return &pb.BroadcastMessageResponse{}, nil
 	} else {
 		leaderPeer := rn.GetPeerById(rn.CurrentLeader)
-		rn.SendSignal(raft.ForwardedBroadcastReq)
+    raft.LogEvent(raft.ForwardedBroadcastReq, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg), nil
 	}
 }
@@ -91,9 +91,6 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 				CurrentTerm: lr.CurrentTerm,
 			},
 		}
-		rn.CurrentTerm = lr.CurrentTerm
-		rn.CurrentLeader = lr.LeaderId
-		rn.VotedFor = ""
 	}
 
 	if lr.CurrentTerm == rn.CurrentTerm && logOk {
@@ -190,7 +187,7 @@ func (l *LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
 		"Delivered By": rn.Id,
 	}).Debug("Delivering msgs to application")
 
-	rn.SendSignal(raft.DeliveredToApplication)
+	raft.LogEvent(raft.DeliveredToApplication, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 }
 
 func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []*pb.Log) {

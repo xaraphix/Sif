@@ -21,13 +21,13 @@ type Node struct {
 
 	Id string
 
-  //to be stored in non volatile storage
+	//to be stored in non volatile storage
 	CurrentTerm  int32
 	CommitLength int32
 	VotedFor     string
 	Logs         []*pb.Log
 
-  //can live in volatile storage
+	//can live in volatile storage
 	CurrentRole   string
 	CurrentLeader string
 	VotesReceived []pb.VoteResponse
@@ -46,7 +46,6 @@ type RaftNode struct {
 
 	ElectionInProgress bool
 	StartedRPCAdapter  bool
-	raftSignal         chan int
 	HeartDone          chan bool
 	ElectionDone       chan bool
 
@@ -161,7 +160,7 @@ type ElectionUpdates struct {
 }
 
 type Peer struct {
-	Id      string  `yaml:"id"`
+	Id      string `yaml:"id"`
 	Address string `yaml:"address"`
 }
 
@@ -185,7 +184,6 @@ func NewRaftNode(deps RaftDeps) *RaftNode {
 		RPCAdapter:             deps.RPCAdapter,
 		LogMgr:                 deps.LogManager,
 		Heart:                  deps.Heart,
-		raftSignal:             make(chan int),
 	}
 
 	raftnode := sif
@@ -213,6 +211,7 @@ func (rn *RaftNode) Close() {
 }
 
 func initializeRaftNode(rn *RaftNode) {
+	RaftEvents = nil
 	rn.Config.LoadConfig(rn)
 	rn.Id = getId(rn)
 	rn.CurrentRole = getCurrentRole(rn)
@@ -228,16 +227,6 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.RPCAdapter.StartAdapter(rn)
 	rn.HeartDone = make(chan bool)
 	rn.ElectionDone = make(chan bool)
-}
-
-func (rn *RaftNode) GetRaftSignalsChan() <-chan int {
-	return rn.raftSignal
-}
-
-func (rn *RaftNode) SendSignal(signal int) {
-	go func() {
-		rn.raftSignal <- signal
-	}()
 }
 
 func (m *Monitor) Stop() {

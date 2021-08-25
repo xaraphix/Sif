@@ -5,36 +5,36 @@ const (
 	CANDIDATE = "candidate"
 	LEADER    = "leader"
 
-	ConfigLoaded = iota
-	ConfigFound
-	ConfigNotFound
-	LockFileFound
-	LockFileNotFound
-	StartingFromCrash
-	StartedFromCrash
-	StartingClean
-	StartedClean
-	NodeInitialized
-	LeaderHeartbeatMonitorStarted
-	LeaderHeartbeatMonitorStopped
-	ElectionStarted
-	ElectionStopped
-	ElectionTimerStarted
-	ElectionTimerStopped
-	ElectionRestarted
-	RequestedVotes
-	VoteRequestReceived
-	VoteGranted
-	VoteNotGranted
-	ReceivedVoteResponse
-	BecameFollower
-	BecameLeader
-	BecameCandidate
-	HeartbeatStarted
-	HeartbeatStopped
-	LogRequestSent
-	ForwardedBroadcastReq
-	DeliveredToApplication
-	MsgAppendedToLogs
-	LeaderHeartbeatReceived
+	ConfigLoaded                  = "CONFIG_LOADED"
+	ConfigFound                   = "CONFIG_FOUND"
+	ConfigNotFound                = "CONFIG_NOT_FOUND"
+	LockFileFound                 = "LOCK_FILE_FOUND"
+	LockFileNotFound              = "LOCK_FILE_NOT_FOUND"
+	StartingFromCrash             = "STARTING_FROM_CRASH"
+	StartedFromCrash              = "STARTED_FROM_CRASH"
+	StartingClean                 = "STARTING_CLEAN"
+	StartedClean                  = "STARTED_CLEAN"
+	NodeInitialized               = "NODE_INITIALIZED"
+	LeaderHeartbeatMonitorStarted = "LEADER_HEARTBEAT_MONITOR_STARTED"
+	LeaderHeartbeatMonitorStopped = "LEADER_HEARTBEAT_MONITOR_STOPPED"
+	ElectionStarted               = "ELECTION_STARTED"
+	ElectionStopped               = "ELECTION_STOPPED"
+	ElectionTimerStarted          = "ELECTION_TIMER_STARTED"
+	ElectionTimerStopped          = "ELECTION_TIMER_STOPPED"
+	ElectionRestarted             = "ELECTION_RESTARTED"
+	RequestedVotes                = "REQUESTED_VOTES"
+	VoteRequestReceived           = "VOTE_REQUESTRECEIVED"
+	VoteGranted                   = "VOTE_GRANTED"
+	VoteNotGranted                = "VOTE_NOT_GRANTED"
+	ReceivedVoteResponse          = "RECEIVED_VOTE_RESPONSE"
+	BecameFollower                = "BECAME_FOLLOWER"
+	BecameLeader                  = "BECAME_LEADER"
+	BecameCandidate               = "BECAME_CANDIDATE"
+	HeartbeatStarted              = "HEARTBEAT_STARTED"
+	HeartbeatStopped              = "HEARTBEAT_STOPPED"
+	LogRequestSent                = "LOG_REQUEST_SENT"
+	ForwardedBroadcastReq         = "FORWARDED_BROADCAST_REQ"
+	DeliveredToApplication        = "DELIVERED_TO_APPLICATION"
+	MsgAppendedToLogs             = "MSG_APPENDED_TO_LOG"
+	LeaderHeartbeatReceived       = "LEADER_HEARTBEAT_RECEIVED"
 )

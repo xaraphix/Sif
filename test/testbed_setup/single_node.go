@@ -656,7 +656,6 @@ func SetupFollowerReceivesBroadcastRequest() MockSetupVars {
 	return setupVars
 }
 
-
 func SetupLogReplicationNotAckByFollower() MockSetupVars {
 	options := SetupOptions{
 		MockHeart:      false,
@@ -1198,4 +1197,31 @@ func GetBroadcastMsg() *structpb.Struct {
 					StringValue: "B",
 				},
 			}}}
+}
+
+func CheckIfEventTriggered(event string, details raft.RaftEventDetails) {
+
+	done := false
+	for {
+    time.Sleep(200 * time.Millisecond)
+
+		for _, e := range raft.RaftEvents {
+			if event == e.Event &&
+				(details.CurrentLeader == "" || e.Details.CurrentLeader == details.CurrentLeader) &&
+				(details.CurrentRole == "" || e.Details.CurrentRole == details.CurrentRole) &&
+				(details.Peer == "" || e.Details.Peer == details.Peer) &&
+				(details.VotedFor == "" || e.Details.VotedFor == details.VotedFor) &&
+				(details.CurrentTerm == int32(0) || e.Details.CurrentTerm == details.CurrentTerm) {
+				done = true
+        break
+			}
+		}
+
+		if done {
+			break
+
+		}
+
+	}
+
 }
