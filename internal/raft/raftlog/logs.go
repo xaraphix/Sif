@@ -56,6 +56,7 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 		})
 
 		rn.AckedLength[rn.Id] = int32(len(rn.Logs))
+		rn.LogEvent(raft.AckLengthUpdated, raft.RaftEventDetails{Id: rn.Id, CurrentRole: rn.CurrentRole, AckLength: rn.AckedLength[rn.Id]})
 
 		for _, peer := range rn.Peers {
 			go func(n *raft.RaftNode, p raft.Peer) {
@@ -66,7 +67,7 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 		return &pb.BroadcastMessageResponse{}, nil
 	} else {
 		leaderPeer := rn.GetPeerById(rn.CurrentLeader)
-    rn.LogEvent(raft.ForwardedBroadcastReq, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
+		rn.LogEvent(raft.ForwardedBroadcastReq, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg), nil
 	}
 }
@@ -75,10 +76,10 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 
 	if lr.CurrentTerm > rn.CurrentTerm {
 		rn.CurrentTerm = lr.CurrentTerm
-		rn.VotedFor = "" 
+		rn.VotedFor = ""
 	}
 
-	logOk := int32(len(rn.Logs)) >=lr.SentLength
+	logOk := int32(len(rn.Logs)) >= lr.SentLength
 
 	if logOk && lr.SentLength > 0 {
 		logOk = lr.PrevLogTerm == rn.Logs[lr.SentLength-1].Term
@@ -97,6 +98,7 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 
 		rn.CurrentRole = raft.FOLLOWER
 		rn.CurrentLeader = lr.LeaderId
+		rn.LogEvent(raft.LeaderAccepted, raft.RaftEventDetails{CurrentLeader: lr.LeaderId, CurrentRole: rn.CurrentRole, CurrentTerm: rn.CurrentTerm})
 
 		logrus.WithFields(logrus.Fields{
 			"LeaderId":      lr.LeaderId,
@@ -136,9 +138,12 @@ func (l *LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogRespons
 		if lr.Success {
 			rn.SentLength[lr.FollowerId] = lr.AckLength
 			rn.AckedLength[lr.FollowerId] = lr.AckLength
+			rn.LogEvent(raft.AckLengthUpdated, raft.RaftEventDetails{Id: rn.Id, Peer: lr.FollowerId, AckLength: lr.AckLength})
+			rn.LogEvent(raft.SentLengthUpdated, raft.RaftEventDetails{Id: rn.Id, Peer: lr.FollowerId, SentLength: lr.AckLength})
 			l.commitLogEntries(rn)
 		} else if rn.SentLength[lr.FollowerId] > 0 {
 			rn.SentLength[lr.FollowerId] = rn.SentLength[lr.FollowerId] - 1
+			rn.LogEvent(raft.SentLengthUpdated, raft.RaftEventDetails{Id: rn.Id, Peer: lr.FollowerId, SentLength: rn.SentLength[lr.FollowerId]})
 			follower := rn.GetPeerById(lr.FollowerId)
 			go func() {
 				l.ReplicateLog(rn, follower)
@@ -167,6 +172,8 @@ func (l *LogMgr) commitLogEntries(rn *raft.RaftNode) {
 		}
 
 		rn.CommitLength = int32(maxReady)
+
+    rn.LogEvent(raft.CommitLengthUpdated, raft.RaftEventDetails{CommitLength: rn.CommitLength, CurrentRole: rn.CurrentRole, Id: rn.Id, CurrentTerm: rn.CurrentTerm})
 	}
 }
 
@@ -210,5 +217,6 @@ func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitL
 		}
 
 		rn.CommitLength = leaderCommitLength
+    rn.LogEvent(raft.CommitLengthUpdated, raft.RaftEventDetails{CommitLength: rn.CommitLength, CurrentRole: rn.CurrentRole, Id: rn.Id, CurrentTerm: rn.CurrentTerm})
 	}
 }

@@ -38,6 +38,9 @@ type RaftEventDetails struct {
 	CurrentLeader string
 	VotedFor      string
 	Peer          string
+	AckLength     int32
+	CommitLength  int32
+	SentLength    int32
 }
 
 func (rn *RaftNode) LogEvent(event string, details RaftEventDetails) {

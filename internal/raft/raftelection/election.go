@@ -123,7 +123,7 @@ func (em *ElectionManager) becomeAFollower(rn *raft.RaftNode) {
 		rn.CurrentRole = raft.FOLLOWER
 		rn.ElectionInProgress = false
 		rn.VotedFor = ""
-		rn.LogEvent(raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+    rn.LogEvent(raft.BecameFollower, raft.RaftEventDetails{CurrentLeader: rn.CurrentLeader, CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),

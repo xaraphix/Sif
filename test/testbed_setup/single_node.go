@@ -6,6 +6,7 @@ import (
 	"log"
 	"path/filepath"
 	"runtime"
+	"sync"
 	"time"
 
 	"github.com/golang/mock/gomock"
@@ -1199,30 +1200,40 @@ func GetBroadcastMsg() *structpb.Struct {
 			}}}
 }
 
-func CheckIfEventTriggered(node *raft.RaftNode, event string, details raft.RaftEventDetails) {
+func CheckIfEventTriggered(node *raft.RaftNode, event string, details raft.RaftEventDetails) bool {
 
-	done := false
-	for {
-    time.Sleep(200 * time.Millisecond)
+	var wg sync.WaitGroup
+	wg.Add(1)
+	go func() {
 
-		for _, e := range node.EventLog {
-			if event == e.Event &&
-				(details.CurrentLeader == "" || e.Details.CurrentLeader == details.CurrentLeader) &&
-				(details.CurrentRole == "" || e.Details.CurrentRole == details.CurrentRole) &&
-				(details.Peer == "" || e.Details.Peer == details.Peer) &&
-				(details.Id == "" || e.Details.Id == details.Id) &&
-				(details.VotedFor == "" || e.Details.VotedFor == details.VotedFor) &&
-				(details.CurrentTerm == int32(0) || e.Details.CurrentTerm == details.CurrentTerm) {
-				done = true
-        break
+		stop := false
+		for {
+			time.Sleep(200 * time.Millisecond)
+
+			for _, e := range node.EventLog {
+				if event == e.Event &&
+					(details.CurrentLeader == "" || e.Details.CurrentLeader == details.CurrentLeader) &&
+					(details.CurrentRole == "" || e.Details.CurrentRole == details.CurrentRole) &&
+					(details.Peer == "" || e.Details.Peer == details.Peer) &&
+					(details.AckLength == 0 || e.Details.AckLength == details.AckLength) &&
+					(details.SentLength == 0 || e.Details.SentLength == details.SentLength) &&
+					(details.CommitLength == 0 || e.Details.CommitLength == details.CommitLength) &&
+					(details.Id == "" || e.Details.Id == details.Id) &&
+					(details.VotedFor == "" || e.Details.VotedFor == details.VotedFor) &&
+					(details.CurrentTerm == int32(0) || e.Details.CurrentTerm == details.CurrentTerm) {
+					stop = true
+					wg.Done()
+					break
+				}
 			}
+
+			if stop {
+				break
+			}
+
 		}
+	}()
 
-		if done {
-			break
-
-		}
-
-	}
-
+	wg.Wait()
+	return true
 }

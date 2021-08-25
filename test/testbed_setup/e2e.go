@@ -70,28 +70,21 @@ func ProceedWhenRPCAdapterStarted(nodes []**raft.RaftNode) {
 }
 
 func ProceedWhenLeaderAccepted(nodes []**raft.RaftNode, leaderId string) {
-	for {
-		if (*nodes[1]).CurrentLeader == leaderId &&
-			(*nodes[2]).CurrentLeader == leaderId &&
-			(*nodes[3]).CurrentLeader == leaderId &&
-			(*nodes[4]).CurrentLeader == leaderId {
-			break
-		}
-		time.Sleep(200 * time.Millisecond)
-	}
+  for i, n := range nodes {
+    if i == 0 {
+      continue
+    }
+    CheckIfEventTriggered((*n), raft.LeaderAccepted, raft.RaftEventDetails{CurrentLeader: leaderId})
+  }
 }
 
 func ProceedLogAckReceived(nodes []**raft.RaftNode, leaderId string) {
-	for {
-		if len((*nodes[0]).AckedLength) == len(nodes)-1 &&
-			(*nodes[0]).AckedLength[(*nodes[1]).Id] == int32(2) &&
-			(*nodes[0]).AckedLength[(*nodes[2]).Id] == int32(2) &&
-			(*nodes[0]).AckedLength[(*nodes[3]).Id] == int32(2) &&
-			(*nodes[0]).AckedLength[(*nodes[4]).Id] == int32(2) {
-			break
-		}
-		time.Sleep(200 * time.Millisecond)
-	}
+  for i, n := range nodes {
+    if i == 0 {
+      continue
+    }
+    CheckIfEventTriggered((*nodes[0]), raft.AckLengthUpdated, raft.RaftEventDetails{Peer: (*n).Id, AckLength: int32(2)})
+  }
 }
 
 func ProceedWhenLeaderCommitsLogs(node *raft.RaftNode) {
@@ -99,16 +92,13 @@ func ProceedWhenLeaderCommitsLogs(node *raft.RaftNode) {
 }
 
 func ProceedWhenFollowersCommitLogs(nodes []**raft.RaftNode, cl int32) {
-	for {
-		if (*nodes[0]).CommitLength == cl &&
-			(*nodes[0]).CommitLength == (*nodes[1]).CommitLength &&
-			(*nodes[0]).CommitLength == (*nodes[2]).CommitLength &&
-			(*nodes[0]).CommitLength == (*nodes[3]).CommitLength &&
-			(*nodes[0]).CommitLength == (*nodes[4]).CommitLength {
-			break
-		}
-		time.Sleep(200 * time.Millisecond)
-	}
+  CheckIfEventTriggered((*nodes[0]), raft.CommitLengthUpdated, raft.RaftEventDetails{Id: (*nodes[0]).Id, CommitLength: cl})
+  for i, n := range nodes {
+    if i == 0 {
+      continue
+    }
+    CheckIfEventTriggered((*n), raft.CommitLengthUpdated, raft.RaftEventDetails{Id: (*n).Id, CommitLength: cl})
+  }
 }
 
 func DestructAllNodes(nodes []**raft.RaftNode) {

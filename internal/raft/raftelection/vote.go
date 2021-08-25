@@ -15,18 +15,6 @@ func (em *ElectionManager) GenerateVoteRequest(rn *raft.RaftNode) *pb.VoteReques
 	}
 }
 
-func becomeAFollowerAccordingToPeersTerm(
-	rn *raft.RaftNode,
-	v *pb.VoteResponse,
-	electionUpdates *raft.ElectionUpdates) {
-
-	rn.CurrentTerm = v.Term
-	rn.CurrentRole = raft.FOLLOWER
-	rn.VotedFor = ""
-	rn.ElectionInProgress = false
-	rn.LeaderHeartbeatMonitor.Start(rn)
-}
-
 func (em *ElectionManager) getVoteResponseForVoteRequest(rn *raft.RaftNode, voteRequest *pb.VoteRequest) *pb.VoteResponse {
 	voteResponse := &pb.VoteResponse{}
 	logOk := isCandidateLogOK(rn, voteRequest)
