@@ -56,6 +56,8 @@ type RaftNode struct {
 	RPCAdapter             RaftRPCAdapter
 	LogMgr                 RaftLog
 	Heart                  RaftHeart
+
+	EventLog []RaftEvent
 }
 
 //go:generate mockgen -destination=../../test/mocks/mock_raftfile.go -package=mocks . RaftFile
@@ -207,11 +209,12 @@ func (rn *RaftNode) Close() {
 	rn.LeaderHeartbeatMonitor.Stop()
 	close(rn.HeartDone)
 	close(rn.ElectionDone)
+	rn.EventLog = nil
 	rn = nil
 }
 
 func initializeRaftNode(rn *RaftNode) {
-	RaftEvents = nil
+	rn.EventLog = nil
 	rn.Config.LoadConfig(rn)
 	rn.Id = getId(rn)
 	rn.CurrentRole = getCurrentRole(rn)

@@ -24,14 +24,14 @@ func (l *LeaderHeart) SetLeaderHeartbeatTimeout(duration time.Duration) {
 
 func (l *LeaderHeart) StartBeating(rn *raft.RaftNode) {
 	go func(rn *raft.RaftNode) {
-		raft.LogEvent(raft.HeartbeatStarted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.HeartbeatStarted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		for {
 			select {
 			case <-rn.HeartDone:
 				break
 			default:
 				if rn.CurrentRole != raft.LEADER {
-					raft.LogEvent(raft.HeartbeatStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
+					rn.LogEvent(raft.HeartbeatStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 					break
 				} else {
 					go func(n *raft.RaftNode) {

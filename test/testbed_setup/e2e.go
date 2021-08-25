@@ -95,7 +95,7 @@ func ProceedLogAckReceived(nodes []**raft.RaftNode, leaderId string) {
 }
 
 func ProceedWhenLeaderCommitsLogs(node *raft.RaftNode) {
-	CheckIfEventTriggered(raft.DeliveredToApplication, raft.RaftEventDetails{})
+	CheckIfEventTriggered(node, raft.DeliveredToApplication, raft.RaftEventDetails{})
 }
 
 func ProceedWhenFollowersCommitLogs(nodes []**raft.RaftNode, cl int32) {

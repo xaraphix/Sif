@@ -41,7 +41,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			It("Should start the leader heartbeat monitor", func() {
-				CheckIfEventTriggered(raft.BecameCandidate, raft.RaftEventDetails{})
+				CheckIfEventTriggered(node, raft.BecameCandidate, raft.RaftEventDetails{})
 				Succeed()
 			})
 
@@ -116,14 +116,14 @@ var _ = Describe("Sif Raft Consensus", func() {
 					setupVars = SetupLeaderHeartbeatTimeout()
 					node = setupVars.Node
 					term_0 = setupVars.Term_0
-					CheckIfEventTriggered(raft.BecameCandidate, raft.RaftEventDetails{})
+					CheckIfEventTriggered(node, raft.BecameCandidate, raft.RaftEventDetails{})
 					Succeed()
 				})
 
 				It("Should Vote for itself", func() {
 					setupVars = SetupLeaderHeartbeatTimeout()
 					node = setupVars.Node
-					CheckIfEventTriggered(raft.BecameCandidate, raft.RaftEventDetails{VotedFor: node.Id})
+					CheckIfEventTriggered(node, raft.BecameCandidate, raft.RaftEventDetails{VotedFor: node.Id})
 				})
 
 				It("Should Increment the current term", func() {
@@ -171,8 +171,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 						node = setupVars.Node
 						term_0 = setupVars.Term_0
 
-						CheckIfEventTriggered(raft.ElectionRestarted, raft.RaftEventDetails{})
-						CheckIfEventTriggered(raft.ElectionTimerStarted, raft.RaftEventDetails{CurrentTerm: term_0 + 2})
+						CheckIfEventTriggered(node, raft.ElectionRestarted, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.ElectionTimerStarted, raft.RaftEventDetails{CurrentTerm: term_0 + 2})
 
 					})
 
@@ -195,7 +195,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("should become a leader", func() {
 						setupVars = SetupMajorityVotesInFavor()
 						node = setupVars.Node
-						CheckIfEventTriggered(raft.BecameLeader, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.BecameLeader, raft.RaftEventDetails{})
 						Succeed()
 					})
 
@@ -203,9 +203,9 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = SetupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.Node
 
-						CheckIfEventTriggered(raft.ElectionTimerStopped, raft.RaftEventDetails{})
-            CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-            CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+						CheckIfEventTriggered(node, raft.ElectionTimerStopped, raft.RaftEventDetails{})
+            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 						Succeed()
 
 					})
@@ -213,8 +213,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("should replicate logs to all its peers", func() {
 						setupVars = SetupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.Node
-            CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-            CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 					})
 				})
 
@@ -231,7 +231,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("Should become a follower", func() {
 						setupVars = SetupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.Node
-						CheckIfEventTriggered(raft.ElectionTimerStopped, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.ElectionTimerStopped, raft.RaftEventDetails{})
 
 						Expect(node.CurrentRole).To(Equal(raft.FOLLOWER))
 					})
@@ -240,7 +240,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = SetupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.Node
 						testConfig := LoadTestRaftConfig()
-						CheckIfEventTriggered(raft.BecameFollower, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.BecameFollower, raft.RaftEventDetails{})
 						Expect(node.CurrentTerm).To(Equal((*setupVars.ReceivedVoteResponse)[testConfig.Peers()[0].Id].Term))
 					})
 
@@ -249,7 +249,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = SetupCandidateReceivesVoteResponseWithHigherTerm()
 						node = setupVars.Node
 
-						CheckIfEventTriggered(raft.ElectionTimerStopped, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.ElectionTimerStopped, raft.RaftEventDetails{})
 
 						Succeed()
 					})
@@ -281,7 +281,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 							LastTerm:    0,
 						})
 
-						CheckIfEventTriggered(raft.VoteGranted, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.VoteGranted, raft.RaftEventDetails{})
 
 						Expect(node.VotedFor).To(Equal(setupVars.LeaderId))
 					})
@@ -307,7 +307,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 							LastTerm:    10,
 						})
 
-						CheckIfEventTriggered(raft.VoteNotGranted, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.VoteNotGranted, raft.RaftEventDetails{})
 
 						Expect(node.VotedFor).To(Equal(""))
 					})
@@ -329,14 +329,14 @@ var _ = Describe("Sif Raft Consensus", func() {
 						setupVars = SetupMajorityVotesAgainst()
 						node = setupVars.Node
 
-						CheckIfEventTriggered(raft.ElectionTimerStarted, raft.RaftEventDetails{})
+						CheckIfEventTriggered(node, raft.ElectionTimerStarted, raft.RaftEventDetails{})
 						node.ElectionMgr.GetLeaderHeartChannel() <- &raft.RaftNode{
 							Node: raft.Node{
 								CurrentTerm: int32(10),
 							},
 						}
 
-						CheckIfEventTriggered(raft.BecameFollower, raft.RaftEventDetails{ CurrentTerm: int32(10) })
+						CheckIfEventTriggered(node, raft.BecameFollower, raft.RaftEventDetails{ CurrentTerm: int32(10) })
 					})
 				})
 			})
@@ -445,8 +445,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 				Expect(len(node.Logs)).To(Equal(0))
 				node.LogMgr.RespondToBroadcastMsgRequest(node, msg)
 
-        CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-        CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 			})
 		})
 
@@ -468,7 +468,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 				Expect(len(node.Logs)).To(Equal(0))
 				node.LogMgr.RespondToBroadcastMsgRequest(node, msg)
 
-				CheckIfEventTriggered(raft.ForwardedBroadcastReq, raft.RaftEventDetails{})
+				CheckIfEventTriggered(node, raft.ForwardedBroadcastReq, raft.RaftEventDetails{})
 			})
 		})
 	})
@@ -496,8 +496,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 				setupVars = SetupMajorityVotesInFavor()
 				node = setupVars.Node
 
-        CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-        CheckIfEventTriggered(raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 
 				Expect((*setupVars.SentLogReplicationReq).CurrentTerm).To(Equal(node.CurrentTerm))
 				Succeed()
@@ -544,7 +544,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 					node.LogMgr.RespondToLogReplicationRequest(node, logReplReq)
 
-					CheckIfEventTriggered(raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: logReplReq.CurrentTerm})
+					CheckIfEventTriggered(node, raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: logReplReq.CurrentTerm})
 				})
 
 				It("Should append the entry to its log", func() {

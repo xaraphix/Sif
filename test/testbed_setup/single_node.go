@@ -1199,17 +1199,18 @@ func GetBroadcastMsg() *structpb.Struct {
 			}}}
 }
 
-func CheckIfEventTriggered(event string, details raft.RaftEventDetails) {
+func CheckIfEventTriggered(node *raft.RaftNode, event string, details raft.RaftEventDetails) {
 
 	done := false
 	for {
     time.Sleep(200 * time.Millisecond)
 
-		for _, e := range raft.RaftEvents {
+		for _, e := range node.EventLog {
 			if event == e.Event &&
 				(details.CurrentLeader == "" || e.Details.CurrentLeader == details.CurrentLeader) &&
 				(details.CurrentRole == "" || e.Details.CurrentRole == details.CurrentRole) &&
 				(details.Peer == "" || e.Details.Peer == details.Peer) &&
+				(details.Id == "" || e.Details.Id == details.Id) &&
 				(details.VotedFor == "" || e.Details.VotedFor == details.VotedFor) &&
 				(details.CurrentTerm == int32(0) || e.Details.CurrentTerm == details.CurrentTerm) {
 				done = true

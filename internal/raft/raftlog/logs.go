@@ -43,13 +43,13 @@ func (l *LogMgr) ReplicateLog(rn *raft.RaftNode, peer raft.Peer) {
 	}
 
 	logResponse := rn.RPCAdapter.ReplicateLog(peer, replicateLogsRequest)
-	raft.LogEvent(raft.LogRequestSent, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: peer.Id})
+	rn.LogEvent(raft.LogRequestSent, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: peer.Id})
 	l.processLogAcknowledgements(rn, logResponse)
 }
 
 func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.Struct) (*pb.BroadcastMessageResponse, error) {
 	if rn.CurrentRole == raft.LEADER {
-		raft.LogEvent(raft.MsgAppendedToLogs, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
+		rn.LogEvent(raft.MsgAppendedToLogs, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 		rn.Logs = append(rn.Logs, &pb.Log{
 			Term:    rn.CurrentTerm,
 			Message: msg,
@@ -66,7 +66,7 @@ func (l *LogMgr) RespondToBroadcastMsgRequest(rn *raft.RaftNode, msg *structpb.S
 		return &pb.BroadcastMessageResponse{}, nil
 	} else {
 		leaderPeer := rn.GetPeerById(rn.CurrentLeader)
-    raft.LogEvent(raft.ForwardedBroadcastReq, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
+    rn.LogEvent(raft.ForwardedBroadcastReq, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 		return rn.RPCAdapter.BroadcastMessage(leaderPeer, msg), nil
 	}
 }
@@ -187,7 +187,7 @@ func (l *LogMgr) deliverToApplication(rn *raft.RaftNode, msg *structpb.Struct) {
 		"Delivered By": rn.Id,
 	}).Debug("Delivering msgs to application")
 
-	raft.LogEvent(raft.DeliveredToApplication, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
+	rn.LogEvent(raft.DeliveredToApplication, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, CurrentLeader: rn.CurrentLeader})
 }
 
 func (l *LogMgr) appendEntries(rn *raft.RaftNode, logLength int32, leaderCommitLength int32, entries []*pb.Log) {

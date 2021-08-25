@@ -50,7 +50,7 @@ func (em *ElectionManager) StartElection(rn *raft.RaftNode) {
 
 func (em *ElectionManager) wrapUpElection(rn *raft.RaftNode, restartElection bool) {
 	if restartElection {
-		raft.LogEvent(raft.ElectionRestarted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.ElectionRestarted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		em.StartElection(rn)
 	} else {
 		rn.ElectionInProgress = false
@@ -72,7 +72,7 @@ func (em *ElectionManager) BecomeACandidate(rn *raft.RaftNode) {
 	rn.CurrentTerm = rn.CurrentTerm + 1
 	em.VotesReceived = nil
 
-  raft.LogEvent(raft.BecameCandidate, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, VotedFor: rn.Id, CurrentRole: rn.CurrentRole})
+  rn.LogEvent(raft.BecameCandidate, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, VotedFor: rn.Id, CurrentRole: rn.CurrentRole})
 	logrus.WithFields(logrus.Fields{
 		"Started By":    rn.Config.InstanceName(),
 		"Started By Id": rn.Config.InstanceId(),
@@ -96,7 +96,7 @@ func (em *ElectionManager) ManageElection(rn *raft.RaftNode) bool {
 			em.becomeAFollower(rn)
 			return false
 		case <-em.electionTimedOut:
-			raft.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+			rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 			return true
 		}
 	}
@@ -105,11 +105,11 @@ func (em *ElectionManager) ManageElection(rn *raft.RaftNode) bool {
 func (em *ElectionManager) becomeALeader(rn *raft.RaftNode) {
 	if rn.ElectionInProgress == true {
 		rn.CurrentRole = raft.LEADER
-		raft.LogEvent(raft.BecameLeader, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.BecameLeader, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		em.replicateLogs(rn)
 		rn.Heart.StartBeating(rn)
 		rn.ElectionInProgress = false
-		raft.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
@@ -123,8 +123,8 @@ func (em *ElectionManager) becomeAFollower(rn *raft.RaftNode) {
 		rn.CurrentRole = raft.FOLLOWER
 		rn.ElectionInProgress = false
 		rn.VotedFor = ""
-		raft.LogEvent(raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
-		raft.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
 		}).Debug("I became a follower because peers voted against me")
@@ -146,8 +146,8 @@ func (em *ElectionManager) becomeAFollowerAccordingToLeader(rn *raft.RaftNode, l
     rn.CurrentLeader = leader.Id
 		rn.VotedFor = ""
 		rn.ElectionInProgress = false
-    raft.LogEvent(raft.BecameFollower, raft.RaftEventDetails{Id: rn.Id, CurrentLeader: leader.Id, CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
-		raft.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+    rn.LogEvent(raft.BecameFollower, raft.RaftEventDetails{Id: rn.Id, CurrentLeader: leader.Id, CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
 		}).Debug("I became a follower according to leader")
@@ -160,8 +160,8 @@ func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v *
 		rn.CurrentRole = raft.FOLLOWER
 		rn.VotedFor = ""
 		rn.ElectionInProgress = false
-		raft.LogEvent(raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
-		raft.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
 		}).Debug("I became a follower according to peer")
@@ -171,18 +171,18 @@ func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v *
 func (em *ElectionManager) startElectionTimer(rn *raft.RaftNode) {
 	em.electionTimedOut = make(chan bool)
 	go func() {
-		raft.LogEvent(raft.ElectionTimerStarted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+		rn.LogEvent(raft.ElectionTimerStarted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 		timer := time.NewTimer(em.ElectionTimeoutDuration)
 		for {
 			select {
 			case <-timer.C:
 				if rn.ElectionInProgress {
-					raft.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+					rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 					timer.Stop()
 					em.electionTimedOut <- true
 					return
 				} else {
-					raft.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
+					rn.LogEvent(raft.ElectionTimerStopped, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole})
 					timer.Stop()
 					return
 				}
@@ -213,13 +213,13 @@ func (em *ElectionManager) GetLeaderHeartChannel() chan *raft.RaftNode {
 }
 
 func (em *ElectionManager) GetResponseForVoteRequest(rn *raft.RaftNode, vr *pb.VoteRequest) (*pb.VoteResponse, error) {
-  raft.LogEvent(raft.VoteRequestReceived, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: vr.NodeId})
+  rn.LogEvent(raft.VoteRequestReceived, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: vr.NodeId})
 	voteResponse := em.getVoteResponseForVoteRequest(rn, vr)
 
 	if voteResponse.VoteGranted {
-    raft.LogEvent(raft.VoteGranted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: vr.NodeId})
+    rn.LogEvent(raft.VoteGranted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: vr.NodeId})
 	} else {
-    raft.LogEvent(raft.VoteNotGranted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: vr.NodeId})
+    rn.LogEvent(raft.VoteNotGranted, raft.RaftEventDetails{CurrentTerm: rn.CurrentTerm, CurrentRole: rn.CurrentRole, Peer: vr.NodeId})
 	}
 	return voteResponse, nil
 }

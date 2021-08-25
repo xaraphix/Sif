@@ -7,8 +7,6 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
-var RaftEvents []RaftEvent
-
 func setupLogging() {
 	logLevel := logrus.InfoLevel
 	for _, a := range os.Environ() {
@@ -25,8 +23,6 @@ func setupLogging() {
 		TimestampFormat: "2006-01-02 15:04:05.000",
 		FullTimestamp:   true,
 	})
-
-	RaftEvents = make([]RaftEvent, 0)
 }
 
 type RaftEvent struct {
@@ -44,8 +40,8 @@ type RaftEventDetails struct {
 	Peer          string
 }
 
-func LogEvent(event string, details RaftEventDetails) {
-	RaftEvents = append(RaftEvents, RaftEvent{
+func (rn *RaftNode) LogEvent(event string, details RaftEventDetails) {
+	rn.EventLog = append(rn.EventLog, RaftEvent{
 		Timestamp: time.Now(),
 		Event:     event,
 		Details:   details,
