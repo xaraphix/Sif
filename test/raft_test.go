@@ -1,7 +1,6 @@
 package raft_test
 
 import (
-	"runtime"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -22,7 +21,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		When("The Raft node initializes", func() {
 			BeforeEach(func() {
-				runtime.GC()
 				persistentState = LoadTestRaftPersistentState()
 				setupVars = SetupRaftNodeInitialization()
 				node = setupVars.Node
@@ -65,7 +63,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		When("On booting up from a crash", func() {
 			BeforeEach(func() {
-				runtime.GC()
 				persistentState = LoadTestRaftPersistentState()
 				setupVars = SetupRaftNodeBootsUpFromCrash()
 				node = setupVars.Node
@@ -108,7 +105,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				BeforeEach(func() {
 
-					runtime.GC()
 				})
 
 				AfterEach(func() {
@@ -167,7 +163,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 				When("Candidate is not able to reach to a conclusion within the election allowed time", func() {
 					BeforeEach(func() {
 
-						runtime.GC()
 					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
@@ -196,7 +191,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 				When("Majority votes in favor", func() {
 					BeforeEach(func() {
 
-						runtime.GC()
 					})
 
 					AfterEach(func() {
@@ -237,7 +231,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 					BeforeEach(func() {
 
-						runtime.GC()
 					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
@@ -281,7 +274,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 					BeforeEach(func() {
 
-						runtime.GC()
 					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
@@ -311,7 +303,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 				When("The candidate's log and term are not ok", func() {
 					BeforeEach(func() {
 
-						runtime.GC()
 					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
@@ -373,7 +364,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				BeforeEach(func() {
 
-					runtime.GC()
 				})
 				AfterEach(func() {
 					setupVars.Ctrls.FileCtrl.Finish()
@@ -410,7 +400,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			BeforeEach(func() {
 
-				runtime.GC()
 			})
 			AfterEach(func() {
 				setupVars.Ctrls.FileCtrl.Finish()
@@ -486,7 +475,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 		When("A Follower receives a broadcast request", func() {
 			BeforeEach(func() {
 
-				runtime.GC()
 			})
 			It("Should forward the request to the leader node", func() {
 				setupVars = SetupFollowerReceivesBroadcastRequest()
@@ -517,7 +505,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			BeforeEach(func() {
 
-				runtime.GC()
 			})
 			AfterEach(func() {
 				setupVars.Ctrls.FileCtrl.Finish()
@@ -552,7 +539,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				BeforeEach(func() {
 
-					runtime.GC()
 				})
 				AfterEach(func() {
 					setupVars.Ctrls.FileCtrl.Finish()
@@ -638,7 +624,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				BeforeEach(func() {
 
-					runtime.GC()
 				})
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
@@ -681,7 +666,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				BeforeEach(func() {
 
-					runtime.GC()
 				})
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
@@ -734,7 +718,6 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				BeforeEach(func() {
 
-					runtime.GC()
 				})
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
