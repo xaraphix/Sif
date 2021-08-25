@@ -1200,8 +1200,7 @@ func GetBroadcastMsg() *structpb.Struct {
 			}}}
 }
 
-func CheckIfEventTriggered(node *raft.RaftNode, event string, details raft.RaftEventDetails) bool {
-
+func CheckIfEventTriggered(node *raft.RaftNode, event string, details raft.RaftEventDetails) {
 	var wg sync.WaitGroup
 	wg.Add(1)
 	go func() {
@@ -1209,7 +1208,6 @@ func CheckIfEventTriggered(node *raft.RaftNode, event string, details raft.RaftE
 		stop := false
 		for {
 			time.Sleep(200 * time.Millisecond)
-
 			for _, e := range node.EventLog {
 				if event == e.Event &&
 					(details.CurrentLeader == "" || e.Details.CurrentLeader == details.CurrentLeader) &&
@@ -1230,10 +1228,8 @@ func CheckIfEventTriggered(node *raft.RaftNode, event string, details raft.RaftE
 			if stop {
 				break
 			}
-
 		}
 	}()
 
 	wg.Wait()
-	return true
 }

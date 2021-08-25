@@ -1,6 +1,7 @@
 package raft_test
 
 import (
+	"runtime"
 	"time"
 
 	. "github.com/onsi/ginkgo"
@@ -13,7 +14,6 @@ import (
 
 var FileMgr raftfile.RaftFileMgr = raftfile.RaftFileMgr{}
 var _ = Describe("Sif Raft Consensus", func() {
-
 	Context("RaftNode initialization", func() {
 		node := &raft.RaftNode{}
 		var persistentState *pb.RaftPersistentState
@@ -22,6 +22,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		When("The Raft node initializes", func() {
 			BeforeEach(func() {
+				runtime.GC()
 				persistentState = LoadTestRaftPersistentState()
 				setupVars = SetupRaftNodeInitialization()
 				node = setupVars.Node
@@ -64,6 +65,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 		When("On booting up from a crash", func() {
 			BeforeEach(func() {
+				runtime.GC()
 				persistentState = LoadTestRaftPersistentState()
 				setupVars = SetupRaftNodeBootsUpFromCrash()
 				node = setupVars.Node
@@ -103,6 +105,11 @@ var _ = Describe("Sif Raft Consensus", func() {
 			var setupVars MockSetupVars
 
 			When("Raft Node doesn't receive leader heartbeat for the leader heartbeat duration", func() {
+
+				BeforeEach(func() {
+
+					runtime.GC()
+				})
 
 				AfterEach(func() {
 					defer setupVars.Ctrls.FileCtrl.Finish()
@@ -158,6 +165,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 				term_0 := int32(0)
 				var setupVars MockSetupVars
 				When("Candidate is not able to reach to a conclusion within the election allowed time", func() {
+					BeforeEach(func() {
+
+						runtime.GC()
+					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
 						setupVars.Ctrls.ElectionCtrl.Finish()
@@ -183,6 +194,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
 				When("Majority votes in favor", func() {
+					BeforeEach(func() {
+
+						runtime.GC()
+					})
 
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
@@ -204,8 +219,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 						node = setupVars.Node
 
 						CheckIfEventTriggered(node, raft.ElectionTimerStopped, raft.RaftEventDetails{})
-            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+						CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+						CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 						Succeed()
 
 					})
@@ -213,13 +228,17 @@ var _ = Describe("Sif Raft Consensus", func() {
 					It("should replicate logs to all its peers", func() {
 						setupVars = SetupLeaderSendsHeartbeatsOnElectionConclusion()
 						node = setupVars.Node
-            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-            CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+						CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+						CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 					})
 				})
 
 				When("The candidate receives a vote response with a higher term than its current term", func() {
 
+					BeforeEach(func() {
+
+						runtime.GC()
+					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
 						setupVars.Ctrls.ElectionCtrl.Finish()
@@ -262,6 +281,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 				When("The candidate's log and term are both ok", func() {
 
+					BeforeEach(func() {
+
+						runtime.GC()
+					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
 						setupVars.Ctrls.ElectionCtrl.Finish()
@@ -288,6 +311,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 				})
 
 				When("The candidate's log and term are not ok", func() {
+					BeforeEach(func() {
+
+						runtime.GC()
+					})
 					AfterEach(func() {
 						setupVars.Ctrls.FileCtrl.Finish()
 						setupVars.Ctrls.ElectionCtrl.Finish()
@@ -336,7 +363,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 							},
 						}
 
-						CheckIfEventTriggered(node, raft.BecameFollower, raft.RaftEventDetails{ CurrentTerm: int32(10) })
+						CheckIfEventTriggered(node, raft.BecameFollower, raft.RaftEventDetails{CurrentTerm: int32(10)})
 					})
 				})
 			})
@@ -346,6 +373,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
 
+				BeforeEach(func() {
+
+					runtime.GC()
+				})
 				AfterEach(func() {
 					setupVars.Ctrls.FileCtrl.Finish()
 					setupVars.Ctrls.ElectionCtrl.Finish()
@@ -379,6 +410,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 		node := &raft.RaftNode{}
 		When("A Leader receives a broadcast request", func() {
 
+			BeforeEach(func() {
+
+				runtime.GC()
+			})
 			AfterEach(func() {
 				setupVars.Ctrls.FileCtrl.Finish()
 				setupVars.Ctrls.ElectionCtrl.Finish()
@@ -445,12 +480,16 @@ var _ = Describe("Sif Raft Consensus", func() {
 				Expect(len(node.Logs)).To(Equal(0))
 				node.LogMgr.RespondToBroadcastMsgRequest(node, msg)
 
-        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+				CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+				CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 			})
 		})
 
 		When("A Follower receives a broadcast request", func() {
+			BeforeEach(func() {
+
+				runtime.GC()
+			})
 			It("Should forward the request to the leader node", func() {
 				setupVars = SetupFollowerReceivesBroadcastRequest()
 				node = setupVars.Node
@@ -478,6 +517,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 		node := &raft.RaftNode{}
 		When("Leader is replicating log to followers", func() {
 
+			BeforeEach(func() {
+
+				runtime.GC()
+			})
 			AfterEach(func() {
 				setupVars.Ctrls.FileCtrl.Finish()
 				setupVars.Ctrls.ElectionCtrl.Finish()
@@ -496,8 +539,8 @@ var _ = Describe("Sif Raft Consensus", func() {
 				setupVars = SetupMajorityVotesInFavor()
 				node = setupVars.Node
 
-        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
-        CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
+				CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[0].Id})
+				CheckIfEventTriggered(node, raft.LogRequestSent, raft.RaftEventDetails{Peer: node.Peers[1].Id})
 
 				Expect((*setupVars.SentLogReplicationReq).CurrentTerm).To(Equal(node.CurrentTerm))
 				Succeed()
@@ -509,6 +552,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 			node := &raft.RaftNode{}
 			When("the received log is ok", func() {
 
+				BeforeEach(func() {
+
+					runtime.GC()
+				})
 				AfterEach(func() {
 					setupVars.Ctrls.FileCtrl.Finish()
 					setupVars.Ctrls.ElectionCtrl.Finish()
@@ -591,6 +638,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			When("The received log or term is not ok", func() {
 
+				BeforeEach(func() {
+
+					runtime.GC()
+				})
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
 				AfterEach(func() {
@@ -630,6 +681,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			When("log replication is acknowledged by the follower", func() {
 
+				BeforeEach(func() {
+
+					runtime.GC()
+				})
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
 
@@ -679,6 +734,10 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 			When("log replication is not acknowledged by the follower", func() {
 
+				BeforeEach(func() {
+
+					runtime.GC()
+				})
 				var setupVars MockSetupVars
 				node := &raft.RaftNode{}
 
