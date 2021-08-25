@@ -19,22 +19,26 @@ var (
 type Node struct {
 	LogAckMu sync.Mutex
 
-	Id            int32
-	CurrentTerm   int32
+	Id string
+
+  //to be stored in non volatile storage
+	CurrentTerm  int32
+	CommitLength int32
+	VotedFor     string
+	Logs         []*pb.Log
+
+  //can live in volatile storage
 	CurrentRole   string
-	CurrentLeader int32
-	VotedFor      int32
+	CurrentLeader string
 	VotesReceived []pb.VoteResponse
 	CommitIndex   int32
-	CommitLength  int32
-	AckedLength   map[int32]int32
-	SentLength    map[int32]int32
+	AckedLength   map[string]int32
+	SentLength    map[string]int32
 	LastApplied   int32
 	NextIndex     int32
 	MatchIndex    int32
 	PrevLogIndex  int32
 	Peers         []Peer
-	Logs          []*pb.Log
 }
 
 type RaftNode struct {
@@ -67,7 +71,7 @@ type RaftConfig interface {
 	SetConfigFilePath(string)
 	DidNodeCrash(*RaftNode) bool
 	InstanceName() string
-	InstanceId() int32
+	InstanceId() string
 	Peers() []Peer
 	InstanceDirPath() string
 	Version() string
@@ -75,7 +79,7 @@ type RaftConfig interface {
 	Logs() []*pb.Log
 	CurrentTerm() int32
 	CommitLength() int32
-	VotedFor() int32
+	VotedFor() string
 	Host() string
 	Port() string
 }
@@ -157,7 +161,7 @@ type ElectionUpdates struct {
 }
 
 type Peer struct {
-	Id      int32  `yaml:"id"`
+	Id      string  `yaml:"id"`
 	Address string `yaml:"address"`
 }
 
@@ -217,8 +221,8 @@ func initializeRaftNode(rn *RaftNode) {
 	rn.VotedFor = getVotedFor(rn)
 	rn.CommitLength = getCommitLength(rn)
 	rn.Peers = rn.Config.Peers()
-	rn.SentLength = map[int32]int32{}
-	rn.AckedLength = map[int32]int32{}
+	rn.SentLength = map[string]int32{}
+	rn.AckedLength = map[string]int32{}
 	rn.VotesReceived = nil
 	rn.ElectionInProgress = false
 	rn.RPCAdapter.StartAdapter(rn)
@@ -252,7 +256,7 @@ func getCurrentRole(rn *RaftNode) string {
 	return FOLLOWER
 }
 
-func getId(rn *RaftNode) int32 {
+func getId(rn *RaftNode) string {
 	return rn.Config.InstanceId()
 }
 
@@ -273,11 +277,11 @@ func getLogs(rn *RaftNode) []*pb.Log {
 	}
 }
 
-func getVotedFor(rn *RaftNode) int32 {
+func getVotedFor(rn *RaftNode) string {
 	if rn.Config.DidNodeCrash(rn) {
 		return rn.Config.VotedFor()
 	} else {
-		return 0
+		return ""
 	}
 }
 
@@ -289,7 +293,7 @@ func getCommitLength(rn *RaftNode) int32 {
 	}
 }
 
-func (rn *RaftNode) GetPeerById(id int32) Peer {
+func (rn *RaftNode) GetPeerById(id string) Peer {
 	for _, peer := range rn.Peers {
 		if peer.Id == id {
 			return peer

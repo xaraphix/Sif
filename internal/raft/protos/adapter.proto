@@ -12,20 +12,20 @@ service Raft {
 }
 
 message VoteRequest {
-  int32 NodeId = 1;
+  string NodeId = 1;
   int32 CurrentTerm = 2;
   int32 LogLength = 3;
   int32 LastTerm = 4;
 }
 
 message VoteResponse {
-  int32 PeerId = 1;
+  string PeerId = 1;
   int32 Term = 2;
   bool VoteGranted = 3;
 }
 
 message LogRequest {
-  int32 LeaderId = 1;
+  string LeaderId = 1;
   int32 CurrentTerm = 2;
   int32 SentLength = 3;
   int32 PrevLogTerm = 4;
@@ -40,7 +40,7 @@ message Log {
 }
 
 message LogResponse {
-  int32 FollowerId = 1;
+  string FollowerId = 1;
   int32 Term = 2;
   int32 AckLength = 3;
   bool Success = 4;
@@ -54,7 +54,7 @@ message BroadcastMessageResponse {
 message RaftPersistentState {
   repeated Log RaftLogs = 1;
   int32 RaftCurrentTerm = 2;
-  int32 RaftVotedFor = 3;
+  string RaftVotedFor = 3;
   int32 RaftCommitLength = 4;
 }
 
@@ -62,7 +62,7 @@ message RaftInfoRequest {
 }
 
 message RaftInfoResponse {
-  int32 NodeId = 1;
-  int32 CurrentLeader = 2;
+  string NodeId = 1;
+  string CurrentLeader = 2;
   int32 CurrentTerm = 3;
 }

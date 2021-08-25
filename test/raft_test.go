@@ -59,7 +59,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 			})
 
 			It("should reset VotedFor", func() {
-				Expect(node.VotedFor).To(Equal(int32(0)))
+				Expect(node.VotedFor).To(Equal(""))
 			})
 
 			It("should reset CommitLength", func() {
@@ -332,7 +332,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 						node.ElectionMgr.GetResponseForVoteRequest(node, &pb.VoteRequest{
 							CurrentTerm: 10,
-							NodeId:      0,
+							NodeId:      "",
 							LogLength:   0,
 							LastTerm:    0,
 						})
@@ -362,7 +362,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 
 						node.ElectionMgr.GetResponseForVoteRequest(node, &pb.VoteRequest{
 							CurrentTerm: 0,
-							NodeId:      1,
+							NodeId:      "1",
 							LogLength:   0,
 							LastTerm:    10,
 						})
@@ -373,7 +373,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 							}
 						}
 
-						Expect(node.VotedFor).To(Equal(int32(0)))
+						Expect(node.VotedFor).To(Equal(""))
 					})
 				})
 			})
@@ -437,7 +437,7 @@ var _ = Describe("Sif Raft Consensus", func() {
 						<-node.ElectionDone
 					}()
 					voteRequest := &pb.VoteRequest{
-						NodeId:      2,
+						NodeId:      "2",
 						CurrentTerm: 9999,
 						LogLength:   9999,
 						LastTerm:    9998,

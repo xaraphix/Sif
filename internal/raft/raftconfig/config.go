@@ -22,7 +22,7 @@ var (
 
 type Config struct {
 	RaftInstanceName                    string      `yaml:"name"`
-	RaftInstanceId                      int32       `yaml:"id"`
+	RaftInstanceId                      string       `yaml:"id"`
 	RaftPeers                           []raft.Peer `yaml:"peers"`
 	RaftInstanceDirPath                 string      `yaml:"sifdir"`
 	RaftVersion                         string      `yaml:"version"`
@@ -53,7 +53,7 @@ func parseConfig(c *Config, rn *raft.RaftNode) {
 	c.RaftPort = getOrDefault(cfg.Port(), nil).(string)
 	c.RaftPeers = getOrDefault(cfg.Peers(), nil).([]raft.Peer)
 	c.RaftInstanceDirPath = getOrDefault(cfg.InstanceDirPath(), RaftInstanceDirPath).(string)
-	c.RaftInstanceId = getOrDefault(cfg.InstanceId(), 0).(int32)
+	c.RaftInstanceId = getOrDefault(cfg.InstanceId(), 0).(string)
 	c.RaftInstanceName = getOrDefault(cfg.InstanceName(), getDefaultName()).(string)
 	c.RaftInstancePersistentStateFilePath = getOrDefault(cfg.InstanceDirPath()+PersistentStateFile, getDefaultName()).(string)
 	c.RaftVersion = RaftVersion
@@ -115,7 +115,7 @@ func (c *Config) InstanceDirPath() string {
 	return c.RaftInstanceDirPath
 }
 
-func (c *Config) InstanceId() int32 {
+func (c *Config) InstanceId() string {
 	return c.RaftInstanceId
 }
 
@@ -139,7 +139,7 @@ func (c *Config) Logs() []*pb.Log {
 	return c.RaftLogs
 }
 
-func (c *Config) VotedFor() int32 {
+func (c *Config) VotedFor() string {
 	return c.RaftVotedFor
 }
 

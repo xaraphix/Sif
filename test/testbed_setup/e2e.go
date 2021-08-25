@@ -69,7 +69,7 @@ func ProceedWhenRPCAdapterStarted(nodes []**raft.RaftNode) {
 	}
 }
 
-func ProceedWhenLeaderAccepted(nodes []**raft.RaftNode, leaderId int32) {
+func ProceedWhenLeaderAccepted(nodes []**raft.RaftNode, leaderId string) {
 	for {
 		if (*nodes[1]).CurrentLeader == leaderId &&
 			(*nodes[2]).CurrentLeader == leaderId &&
@@ -81,7 +81,7 @@ func ProceedWhenLeaderAccepted(nodes []**raft.RaftNode, leaderId int32) {
 	}
 }
 
-func ProceedLogAckReceived(nodes []**raft.RaftNode, leaderId int32) {
+func ProceedLogAckReceived(nodes []**raft.RaftNode, leaderId string) {
 	for {
 		if len((*nodes[0]).AckedLength) == len(nodes)-1 &&
 			(*nodes[0]).AckedLength[(*nodes[1]).Id] == int32(2) &&

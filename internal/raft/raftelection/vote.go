@@ -22,7 +22,7 @@ func becomeAFollowerAccordingToPeersTerm(
 
 	rn.CurrentTerm = v.Term
 	rn.CurrentRole = raft.FOLLOWER
-	rn.VotedFor = 0
+	rn.VotedFor = ""
 	rn.ElectionInProgress = false
 	rn.LeaderHeartbeatMonitor.Start(rn)
 }

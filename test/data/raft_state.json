@@ -1,7 +1,7 @@
 {
   "RaftCurrentTerm": 91919,
   "RaftCommitLength": 111111,
-  "RaftVotedFor": 2,
+  "RaftVotedFor": "2",
   "RaftLogs": [
     {
       "Term": 0,

@@ -1,16 +1,16 @@
 version: v0.1
 name: sif-instance-3
-id: 3
+id: "3"
 sifdir: /tmp/
 host: localhost
 port: 5053
 peers:
-  - id: 1
+  - id: "1"
     address: localhost:5051
-  - id: 2
+  - id: "2"
     address: localhost:5052
-  - id: 4
+  - id: "4"
     address: localhost:5054
-  - id: 5
+  - id: "5"
     address: localhost:5055
 

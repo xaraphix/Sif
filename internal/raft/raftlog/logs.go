@@ -75,7 +75,7 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 
 	if lr.CurrentTerm > rn.CurrentTerm {
 		rn.CurrentTerm = lr.CurrentTerm
-		rn.VotedFor = 0
+		rn.VotedFor = "" 
 	}
 
 	logOk := int32(len(rn.Logs)) >=lr.SentLength
@@ -93,7 +93,7 @@ func (l *LogMgr) RespondToLogReplicationRequest(rn *raft.RaftNode, lr *pb.LogReq
 		}
 		rn.CurrentTerm = lr.CurrentTerm
 		rn.CurrentLeader = lr.LeaderId
-		rn.VotedFor = 0
+		rn.VotedFor = ""
 	}
 
 	if lr.CurrentTerm == rn.CurrentTerm && logOk {
@@ -150,7 +150,7 @@ func (l *LogMgr) processLogAcknowledgements(rn *raft.RaftNode, lr *pb.LogRespons
 	} else if lr.Term > rn.CurrentTerm {
 		rn.CurrentTerm = lr.Term
 		rn.CurrentRole = raft.FOLLOWER
-		rn.VotedFor = 0
+		rn.VotedFor = ""
 	}
 }
 

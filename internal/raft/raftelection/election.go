@@ -122,7 +122,7 @@ func (em *ElectionManager) becomeAFollower(rn *raft.RaftNode) {
 	if rn.ElectionInProgress == true {
 		rn.CurrentRole = raft.FOLLOWER
 		rn.ElectionInProgress = false
-		rn.VotedFor = 0
+		rn.VotedFor = ""
 		rn.SendSignal(raft.ElectionTimerStopped)
 		logrus.WithFields(logrus.Fields{
 			"Name": rn.Config.InstanceName(),
@@ -144,7 +144,7 @@ func (em *ElectionManager) becomeAFollowerAccordingToLeader(rn *raft.RaftNode, l
 		rn.CurrentRole = raft.FOLLOWER
 		rn.SendSignal(raft.BecameFollower)
 		rn.CurrentTerm = leader.CurrentTerm
-		rn.VotedFor = 0
+		rn.VotedFor = ""
 		rn.ElectionInProgress = false
 		rn.SendSignal(raft.ElectionTimerStopped)
 		logrus.WithFields(logrus.Fields{
@@ -157,7 +157,7 @@ func (em *ElectionManager) becomeAFollowerAccordingToPeer(rn *raft.RaftNode, v *
 	if rn.ElectionInProgress == true {
 		rn.CurrentTerm = v.Term
 		rn.CurrentRole = raft.FOLLOWER
-		rn.VotedFor = 0
+		rn.VotedFor =  ""
 		rn.SendSignal(raft.ElectionTimerStopped)
 		rn.ElectionInProgress = false
 		logrus.WithFields(logrus.Fields{

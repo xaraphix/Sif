@@ -8,7 +8,7 @@ import (
 )
 
 type RaftNodeAdapter struct {
-	clients    map[int32]*RaftGRPCClient
+	clients    map[string]*RaftGRPCClient
 	grpcServer *GRPCServer
 }
 
@@ -27,7 +27,7 @@ func (a *RaftNodeAdapter) StopAdapter() {
 }
 
 func (a *RaftNodeAdapter) initializeClients(rn *raft.RaftNode) {
-	a.clients = make(map[int32]*RaftGRPCClient)
+	a.clients = make(map[string]*RaftGRPCClient)
 	for _, peer := range rn.Peers {
 		a.clients[peer.Id] = NewRaftGRPCClient(peer.Address, rn.ElectionMgr.GetElectionTimeoutDuration())
 	}

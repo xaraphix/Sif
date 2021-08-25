@@ -223,13 +223,13 @@ type Controllers struct {
 type MockSetupVars struct {
 	Node                  *raft.RaftNode
 	Term_0                int32
-	SentHeartbeats        *map[int]bool
-	SentVoteRequests      *map[int]*pb.VoteRequest
-	ReceivedVoteResponse  *map[int32]*pb.VoteResponse
+	SentHeartbeats        *map[string]bool
+	SentVoteRequests      *map[string]*pb.VoteRequest
+	ReceivedVoteResponse  *map[string]*pb.VoteResponse
 	SentLogReplicationReq **pb.LogRequest
-	ReceivedLogResponse   *map[int32]*pb.LogResponse
+	ReceivedLogResponse   *map[string]*pb.LogResponse
 	Ctrls                 Controllers
-	LeaderId              int32
+	LeaderId              string
 }
 
 func SetupRaftNodeBootsUpFromCrash() MockSetupVars {
@@ -433,7 +433,7 @@ func SetupFollowerReceivesLogReplicationRequest() MockSetupVars {
 	}
 
 	logReplicationReq := &pb.LogRequest{
-		LeaderId:     999,
+		LeaderId:     "999",
 		CurrentTerm:  0,
 		SentLength:   0,
 		PrevLogTerm:  0,
@@ -476,7 +476,7 @@ func SetupLeaderLogsAreNotOK() MockSetupVars {
 	}
 
 	logReplicationReq := &pb.LogRequest{
-		LeaderId:     999,
+		LeaderId:     "999",
 		CurrentTerm:  0,
 		SentLength:   4,
 		PrevLogTerm:  2,
@@ -500,7 +500,7 @@ func SetupLeaderReceivingLogReplicationAck() MockSetupVars {
 		StartMonitor:   false,
 	}
 
-	logResponseMap := make(map[int32]*pb.LogResponse)
+	logResponseMap := make(map[string]*pb.LogResponse)
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
@@ -555,7 +555,7 @@ func SetupLeaderReceivesABroadcastRequest() MockSetupVars {
 		StartMonitor:   false,
 	}
 
-	logResponseMap := make(map[int32]*pb.LogResponse)
+	logResponseMap := make(map[string]*pb.LogResponse)
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
@@ -609,7 +609,7 @@ func SetupFollowerReceivesBroadcastRequest() MockSetupVars {
 		StartMonitor:   false,
 	}
 
-	logResponseMap := make(map[int32]*pb.LogResponse)
+	logResponseMap := make(map[string]*pb.LogResponse)
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
@@ -667,7 +667,7 @@ func SetupLogReplicationNotAckByFollower() MockSetupVars {
 		StartMonitor:   false,
 	}
 
-	logResponseMap := make(map[int32]*pb.LogResponse)
+	logResponseMap := make(map[string]*pb.LogResponse)
 
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
@@ -820,9 +820,9 @@ func SetupMajorityVotesInFavor() MockSetupVars {
 }
 
 func SetupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
-	sentHeartbeats := &map[int]bool{
-		2: false,
-		3: false,
+	sentHeartbeats := &map[string]bool{
+		"2": false,
+		"3": false,
 	}
 
 	options := SetupOptions{
@@ -863,11 +863,11 @@ func SetupLeaderSendsHeartbeatsOnElectionConclusion() MockSetupVars {
 		}).AnyTimes()
 
 		adapter.EXPECT().ReplicateLog(testConfig.Peers()[0], gomock.Any()).Do(func(interface{}, interface{}) {
-			(*sentHeartbeats)[int(testConfig.Peers()[0].Id)] = true
+			(*sentHeartbeats)[testConfig.Peers()[0].Id] = true
 		}).MinTimes(1)
 
 		adapter.EXPECT().ReplicateLog(gomock.Any(), gomock.Any()).Do(func(interface{}, interface{}) {
-			(*sentHeartbeats)[int(testConfig.Peers()[1].Id)] = true
+			(*sentHeartbeats)[testConfig.Peers()[1].Id] = true
 		}).MinTimes(1)
 
 		heart.EXPECT().StartBeating(gomock.Any()).Return().AnyTimes()
@@ -1029,7 +1029,7 @@ func SetupCandidateReceivesVoteResponseWithHigherTerm() MockSetupVars {
 		StartMonitor:   true,
 	}
 
-	sentVoteResponse := make(map[int32]*pb.VoteResponse)
+	sentVoteResponse := make(map[string]*pb.VoteResponse)
 	preNodeSetupCB := func(
 		fileMgr *mocks.MockRaftFile,
 		logMgr *mocks.MockRaftLog,

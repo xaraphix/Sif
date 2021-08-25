@@ -106,10 +106,10 @@ func (mr *MockRaftConfigMockRecorder) InstanceDirPath() *gomock.Call {
 }
 
 // InstanceId mocks base method.
-func (m *MockRaftConfig) InstanceId() int32 {
+func (m *MockRaftConfig) InstanceId() string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "InstanceId")
-	ret0, _ := ret[0].(int32)
+	ret0, _ := ret[0].(string)
 	return ret0
 }
 
@@ -228,10 +228,10 @@ func (mr *MockRaftConfigMockRecorder) Version() *gomock.Call {
 }
 
 // VotedFor mocks base method.
-func (m *MockRaftConfig) VotedFor() int32 {
+func (m *MockRaftConfig) VotedFor() string {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "VotedFor")
-	ret0, _ := ret[0].(int32)
+	ret0, _ := ret[0].(string)
 	return ret0
 }
 
